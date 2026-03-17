@@ -120,7 +120,6 @@ const FacultyRanking = () => {
           </div>
         </div>
 
-        {/* THIRD PLACE */}
         <div className="order-3 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4 relative overflow-hidden group hover:shadow-xl transition-all">
           <div className="absolute top-0 left-0 w-full h-2 bg-amber-600/30" />
           <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-600 font-black text-xl italic">3</div>
@@ -132,7 +131,6 @@ const FacultyRanking = () => {
         </div>
       </div>
 
-      {/* DETAILED LIST */}
       <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Полная таблица результатов</h3>
@@ -153,8 +151,6 @@ const FacultyRanking = () => {
                    </div>
                 </div>
               </div>
-
-              {/* Progress Bar (Efficiency) */}
               <div className="hidden md:block flex-1 max-w-xs mx-12">
                  <div className="flex justify-between items-center mb-2">
                     <span className="text-[9px] font-black text-slate-400 uppercase">Заполняемость KPI</span>
@@ -182,7 +178,6 @@ const FacultyRanking = () => {
         </div>
       </div>
 
-      {/* FOOTER CALL TO ACTION */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[40px] p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
          <div className="absolute top-0 right-0 p-10 opacity-10">
             <Zap size={150} />

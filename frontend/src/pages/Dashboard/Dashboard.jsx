@@ -42,8 +42,8 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, descr
     <div className="mt-6">
       <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">{label}</p>
       <div className="flex items-baseline gap-2">
-        <p className="text-4xl font-black text-slate-900 tracking-tighter">{value}</p>
-        <span className="text-xs text-slate-400 font-bold uppercase">{subtitle || 'баллов'}</span>
+        <p className="text-3xl font-bold text-slate-900 tracking-tighter">{value}</p>
+        <span className="text-xs text-slate-400 font-semibold uppercase">{subtitle || 'баллов'}</span>
       </div>
       {description && <p className="text-[11px] text-gray-400 mt-2 font-medium leading-relaxed">{description}</p>}
     </div>

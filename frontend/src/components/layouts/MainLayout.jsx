@@ -21,6 +21,7 @@ import ActivityArchive from '../../pages/Archive/ActivityArchive';
 import FacultyRanking from '../../pages/Faculty/FacultyRank/FacultyRanking';
 import Dashboard from '../../pages/Dashboard/Dashboard';
 import PlanningPage from '../../pages/Plan/PlanningPage';
+import ReportGenerator from '../../pages/ReportGenerator/ReportGenerator';
 
 const MainLayout = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -32,6 +33,7 @@ const MainLayout = () => {
     { id: 'archive', icon: <ClipboardList size={20} />, label: 'Архив заявок' },
     { id: 'submit', icon: <CheckCircle size={20} />, label: 'Подать активность' },
     { id: 'rating', icon: <BarChart3 size={20} />, label: 'Рейтинг факультетов' },
+    { id: 'report', icon: <ClipboardList size={20} />, label: 'Генератор отчетов' },
   ];
 
   // Рендер контента в зависимости от выбранной вкладки
@@ -39,6 +41,7 @@ const MainLayout = () => {
     switch(activeTab) {
       case 'dashboard': return <Dashboard />;
       case 'submit': return <SubmissionPortal />;
+      case 'report': return <ReportGenerator />;
       case 'plan': return <PlanningPage />;
       case 'archive': return <ActivityArchive />;
       case 'rating': return <FacultyRanking />;

@@ -22,7 +22,6 @@ import {
   FileText
 } from 'lucide-react';
 
-// Импорт ваших страниц
 import Dashboard from '../../pages/Dashboard/Dashboard';
 import SubmissionPortal from '../../pages/SubmissionPortal/SubmissionPortal';
 import ReportGenerator from '../../pages/ReportGenerator/ReportGenerator';
@@ -32,7 +31,7 @@ import FacultyRanking from '../../pages/Faculty/FacultyRank/FacultyRanking';
 
 const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const location = useLocation(); // Получаем текущий путь для активного стиля
+  const location = useLocation(); 
 
   const menuItems = [
     { id: 'dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Дашборд' },
@@ -46,12 +45,10 @@ const MainLayout = () => {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* SIDEBAR */}
       <aside className={`
         ${isSidebarOpen ? 'w-72' : 'w-20'} 
         bg-white border-r border-slate-200 flex flex-col fixed h-full transition-all duration-300 z-50
       `}>
-        {/* LOGO */}
         <div className="p-6 flex items-center gap-3 h-20 border-b border-slate-50">
           <div className="min-w-[45px] h-12 flex items-center justify-center overflow-hidden">
             <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
@@ -63,7 +60,6 @@ const MainLayout = () => {
           )}
         </div>
 
-        {/* NAVIGATION */}
         <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -91,7 +87,6 @@ const MainLayout = () => {
           })}
         </nav>
 
-        {/* USER PROFILE CARD */}
         <div className="p-4 mt-auto border-t border-slate-50 space-y-4">
           <div className={`flex items-center gap-3 p-3 rounded-2xl transition-colors ${isSidebarOpen ? 'bg-slate-50' : 'bg-transparent justify-center'}`}>
             <div className="min-w-[40px] h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 ring-2 ring-white shadow-sm">
@@ -112,10 +107,8 @@ const MainLayout = () => {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
       <main className={`flex-1 ${isSidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300`}>
         
-        {/* STICKY NAVBAR */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors">
@@ -148,10 +141,8 @@ const MainLayout = () => {
           </div>
         </header>
 
-        {/* PAGE CONTENT CONTAINER WITH ROUTES */}
         <div className="min-h-[calc(100vh-80px)] overflow-x-hidden">
           <Routes>
-            {/* Редирект с корня на дашборд */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
             <Route path="/dashboard" element={<Dashboard />} />

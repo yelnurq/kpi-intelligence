@@ -209,128 +209,233 @@ const PlanningPage = () => {
         </div>
       </div>
 
-      {/* --- МОДАЛЬНОЕ ОКНО ОТЧЕТА --- */}
-      {showReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            
-            {/* Header модалки */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                  <FileText size={20} />
-                </div>
-                <h3 className="font-bold text-slate-900">Предпросмотр отчета KPI</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
-                >
-                  <Printer size={16} /> Печать / PDF
-                </button>
-                <button 
-                  onClick={() => setShowReport(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
+{showReport && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+    <div className="bg-white w-full max-w-[95%] max-h-[98vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      
+      {/* Панель управления (не печатается) */}
+      <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
+        <div className="flex items-center gap-4 ml-4">
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold">
+                <Info size={14} /> ТИТУЛЬНЫЙ ЛИСТ ПО ГОСТУ
             </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95"
+          >
+            <Printer size={16} /> Печать (Альбомная)
+          </button>
+          <button onClick={() => setShowReport(false)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+      </div>
 
-            {/* Тело отчета (то, что пойдет на печать) */}
-            <div className="flex-1 overflow-y-auto p-8 bg-gray-100/30">
-              <div id="printable-report" className="bg-white shadow-sm border border-gray-200 mx-auto w-full max-w-[210mm] p-12 min-h-[297mm]">
-                
-                {/* Шапка документа */}
-                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-                   <div className="text-xs font-black uppercase tracking-tighter">
-                      KazUTB <br /> <span className="text-gray-400 font-normal">Professional KPI System</span>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Дата формирования</p>
-                      <p className="text-xs font-bold text-slate-900">{new Date().toLocaleDateString()}</p>
-                   </div>
-                </div>
+      {/* Область предпросмотра */}
+     <div className="flex-1 overflow-y-auto p-10 bg-slate-100 flex justify-center no-print">
+  <div 
+    id="printable-report" 
+    className="bg-white text-black shadow-2xl print:shadow-none print:border-none" // Убрали тени для печати
+    style={{ 
+      width: '297mm', 
+      minHeight: '210mm', 
+      padding: '14mm 10mm 14mm 13mm',
+      fontFamily: '"Times New Roman", Times, serif',
+      lineHeight: '1.2'
+    }}
+  >
+          {/* ВЕРХНЯЯ ЧАСТЬ (Шифр документа) */}
+          <div className="flex justify-end mb-1">
+            <span className="text-[11px] font-bold">Ф.УОП.8.3/8.1-2025-05-02</span>
+          </div>
 
-                <div className="text-center mb-10">
-                  <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Индивидуальный план развития</h2>
-                  <p className="text-sm text-gray-500 mt-1 font-medium">Учебный период: {selectedYear}</p>
-                </div>
-
-                {/* Информация о сотруднике (пример) */}
-                <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-100">
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">ФИО сотрудника</p>
-                    <p className="text-sm font-bold text-slate-900">Зейнолла Елнур</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Должность</p>
-                    <p className="text-sm font-bold text-slate-900">Преподаватель / Разработчик</p>
-                  </div>
-                </div>
-
-                {/* Таблица индикаторов */}
-                <table className="w-full mb-10">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">№</th>
-                      <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">Индикатор</th>
-                      <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">Категория</th>
-                      <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase">Баллы</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {selectedItems.map((item, idx) => (
-                      <tr key={item.id}>
-                        <td className="py-4 text-xs text-gray-400">{idx + 1}</td>
-                        <td className="py-4 text-xs font-bold text-slate-900">{item.title}</td>
-                        <td className="py-4 text-[10px] font-medium text-gray-500 uppercase">{item.category}</td>
-                        <td className="py-4 text-right text-xs font-bold text-slate-900">{item.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-slate-900">
-                      <td colSpan="3" className="py-6 text-sm font-bold text-slate-900 uppercase">Итого за период:</td>
-                      <td className="py-6 text-right text-lg font-black text-blue-600">{totalPoints}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-
-                {/* Футер документа */}
-                <div className="mt-20 flex justify-between items-center opacity-50">
-                  <div className="text-center">
-                    <div className="w-32 h-px bg-slate-900 mb-2"></div>
-                    <p className="text-[9px] font-bold uppercase">Подпись сотрудника</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-32 h-px bg-slate-900 mb-2"></div>
-                    <p className="text-[9px] font-bold uppercase">Декан факультета</p>
-                  </div>
-                </div>
-
-              </div>
+          {/* ШАПКА: ЛОГО И НАЗВАНИЕ */}
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="w-[40%] text-[12px] font-bold text-center leading-tight uppercase">
+              «Қ. Құлажанов атындағы Қазақ технология және бизнес университеті» <br /> Акционерлік қоғамы
+            </div>
+            <div className="min-w-[45px] h-12 flex items-center justify-center overflow-hidden">
+            <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
+          </div>
+            <div className="w-[40%] text-[12px] font-bold text-center leading-tight uppercase">
+              Акционерное общество <br /> «Казахский университет технологии и бизнеса им. К.Кулажанова»
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Стили для печати (скрываем всё, кроме самого отчета) */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body * { visibility: hidden; }
-          #printable-report, #printable-report * { visibility: visible; }
-          #printable-report { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            border: none !important;
-            box-shadow: none !important;
-          }
-        }
-      `}} />
+          {/* НАЗВАНИЕ ФАКУЛЬТЕТА */}
+          <div className="text-center text-[12px] font-bold uppercase border-t border-b border-black py-2 mb-10">
+            Факультет инжиниринга и информационных технологий / Инжиниринг және ақпараттық технологиялар факультеті
+          </div>
+
+          {/* БЛОК УТВЕРЖДЕНИЯ */}
+          <div className="flex justify-end mb-16">
+            <div className="w-[300px] text-[13px] leading-snug">
+              <p className="font-bold text-right mb-4">БЕКІТЕМІН / УТВЕРЖДАЮ</p>
+              <p className="text-right">Факультет деканы/ Декан факультета</p>
+              <div className="flex justify-end items-end gap-2 mt-4">
+                <div className="border-b border-black w-[150px]"></div>
+                <p className="font-bold">Серимбетов Б.А.</p>
+              </div>
+              <p className="text-right mt-1">«____» ____________ 2026 ж./г.</p>
+            </div>
+          </div>
+
+          {/* ЦЕНТРАЛЬНЫЙ ЗАГОЛОВОК */}
+          <div className="text-center mb-10">
+            <h1 className="text-[15px] font-bold uppercase leading-tight">
+              ОҚЫТУШЫНЫҢ ЖЕКЕ ЖҰМЫС ЖОСПАРЫ / <br />
+              ИНДИВИДУАЛЬНЫЙ ПЛАН РАБОТЫ
+            </h1>
+            <p className="text-[15px] font-bold mt-1">2025 / 2026 оқу жылы / учебный год</p>
+            <p className="text-[12px] mt-4">1 ставка</p>
+          </div>
+
+          {/* ТАБЛИЦА ДАННЫХ ПРЕПОДАВАТЕЛЯ */}
+          <div className="text-[13px] w-full">
+            <table className="w-full border-collapse">
+              <tbody>
+                <tr className="align-bottom">
+                  <td className="w-[450px] pb-2">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
+                  <td className="font-bold pb-2 border-b border-black">Зейнолла Елнур</td>
+                </tr>
+                <tr className="align-bottom">
+                  <td className="pt-3 pb-2">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
+                  <td className="font-bold pb-2 border-b border-black">Fullstack Developer</td>
+                </tr>
+                <tr className="align-bottom">
+                  <td className="pt-3 pb-2">Кафедра</td>
+                  <td className="font-bold pb-2 border-b border-black uppercase">Ақпараттық технологиялар</td>
+                </tr>
+                <tr className="align-bottom">
+                  <td className="pt-3 pb-2">Лауазымы/ Должность</td>
+                  <td className="font-bold pb-2 border-b border-black uppercase">Оқытушы</td>
+                </tr>
+                <tr className="align-bottom">
+                  <td className="pt-3 pb-2">Оқытушының қолы/ Подпись преподавателя</td>
+                  <td className="pb-2 border-b border-black h-[40px]"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* ГОРОД (ВНИЗУ) */}
+          <div className="bottom-[14mm] mt-10 left-0 right-0 text-center font-bold text-[13px]">
+            Астана, 2026
+          </div>
+
+          {/* ВТОРАЯ СТРАНИЦА (Сама таблица KPI) */}
+          <div className="page-break"></div>
+          <h2 className="text-center font-bold text-sm mb-6 uppercase">Запланированные показатели KPI</h2>
+          <table className="w-full text-[11px] border-collapse border border-black">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-black p-2 w-10">№</th>
+                <th className="border border-black p-2 text-left">Индикатор</th>
+                <th className="border border-black p-2">Категория</th>
+                <th className="border border-black p-2 w-20">Баллы</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedItems.map((item, idx) => (
+                <tr key={item.id}>
+                  <td className="border border-black p-2 text-center">{idx + 1}</td>
+                  <td className="border border-black p-2">{item.title}</td>
+                  <td className="border border-black p-2 text-center uppercase">{item.category}</td>
+                  <td className="border border-black p-2 text-center font-bold">{item.points}</td>
+                </tr>
+              ))}
+              <tr className="bg-gray-50 font-bold">
+                <td colSpan="3" className="border border-black p-2 text-right">ИТОГО БАЛЛОВ:</td>
+                <td className="border border-black p-2 text-center text-blue-700">{totalPoints}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+<style dangerouslySetInnerHTML={{ __html: `
+  @media print {
+    @page { 
+      size: A4 landscape; 
+      margin: 0; 
+    }
+
+    /* Разблокируем высоту всех контейнеров, чтобы они не ограничивали контент */
+    html, body, #root, main, .fixed, .overflow-y-auto {
+      height: auto !important;
+      overflow: visible !important;
+      position: static !important;
+    }
+
+    /* Скрываем интерфейс */
+    body * {
+      visibility: hidden;
+    }
+
+    /* Показываем отчет и его содержимое */
+    #printable-report, 
+    #printable-report * {
+      visibility: visible;
+    }
+
+    #printable-report {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 297mm !important;
+      /* Убираем фиксированную высоту, чтобы страницы шли друг за другом */
+      height: auto !important; 
+      min-height: 210mm;
+      padding: 14mm 10mm 14mm 13mm !important;
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      display: block !important;
+      background: white !important;
+    }
+
+    /* Прячем кнопки внутри отчета, если они есть */
+    .no-print {
+      display: none !important;
+    }
+
+    /* Ключевое правило для разрыва страниц */
+    .page-break { 
+      display: block;
+      page-break-before: always !important;
+      clear: both;
+    }
+  }
+
+  /* Стили для экрана (чтобы в модалке тоже выглядело как страницы) */
+  @media screen {
+    .page-break {
+      border-top: 2px dashed #e2e8f0;
+      margin-top: 40px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .page-break::after {
+      content: "Разрыв страницы (следующий лист)";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f8fafc;
+      padding: 0 10px;
+      font-size: 10px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+  }
+`}} />  
+
+
     </main>
   );
 };

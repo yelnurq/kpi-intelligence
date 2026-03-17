@@ -1,0 +1,22 @@
+import React from 'react';
+import './App.css';
+import MainLayout from './components/layouts/MainLayout';
+import Dashboard from './pages/Dashboard/Dashboard'; 
+import PlanningPage from './pages/Plan/PlanningPage';
+import {BrowserRouter, Routes, Route} from "react-router-dom"
+
+function App() {
+  return (
+    <MainLayout>
+      <BrowserRouter>
+          <Routes>
+            <Route path='/' element={<Dashboard/>}></Route>
+            <Route path='/plan' element={<PlanningPage/>}></Route>
+          </Routes>
+      </BrowserRouter>
+      {/* Рендерим Дашборд как children внутри лейаута */}
+    </MainLayout>
+  );
+}
+
+export default App;

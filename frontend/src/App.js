@@ -8,7 +8,7 @@ import PlanningPage from './pages/UserPanel/Plan/PlanningPage';
 import SubmissionPortal from './pages/SubmissionPortal/SubmissionPortal';
 import ActivityArchive from './pages/Archive/ActivityArchive';
 import FacultyRanking from './pages/Faculty/FacultyRank/FacultyRanking';
-import ReportGenerator from './pages/ReportGenerator/ReportGenerator'; // Не забудьте импорт
+import ReportGenerator from './pages/ReportGenerator/ReportGenerator'; 
 import LoginPage from './pages/Auth/Login/Login';
 import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
 

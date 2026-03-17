@@ -20,7 +20,6 @@ class KpiActivity extends Model
         return $this->hasMany(KpiEvidence::class);
     }
 
-    // Авто-расчет баллов перед сохранением
     protected static function booted()
     {
         static::creating(function ($activity) {

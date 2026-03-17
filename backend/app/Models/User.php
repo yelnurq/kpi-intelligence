@@ -30,6 +30,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Token::class);
     }
+    public function department() {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function position() {
+        return $this->belongsTo(Position::class);
+    }
+
+    public function activities() {
+        return $this->hasMany(KpiActivity::class);
+    }
     /**
      * The attributes that should be hidden for serialization.
      *

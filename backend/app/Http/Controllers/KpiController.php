@@ -4,18 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Models\KpiActivity;
 use App\Models\Department;
+use App\Models\Token; // Твоя модель токенов
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class KpiController extends Controller
 {
+    private function getAuthenticatedUser(Request $request)
+    {
+        $bearerToken = $request->bearerToken();
+        if (!$bearerToken) return null;
+
+        $tokenRecord = Token::where("token", $bearerToken)->first();
+        if (!$tokenRecord) return null;
+
+        return User::find($tokenRecord->user_id);
+    }
+
     public function storeActivity(Request $request)
     {
+        $user = $this->getAuthenticatedUser($request);
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
         $validator = Validator::make($request->all(), [
             'indicator_id' => 'required|exists:kpi_indicators,id',
             'quantity' => 'required|integer|min:1',
-            'evidence_link' => 'nullable|url'
         ]);
 
         if ($validator->fails()) {
@@ -23,28 +40,30 @@ class KpiController extends Controller
         }
 
         $activity = KpiActivity::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id, 
             'indicator_id' => $request->indicator_id,
             'quantity' => $request->quantity,
             'status' => 'pending'
         ]);
 
-        if ($request->evidence_link) {
-            $activity->evidence()->create(['link' => $request->evidence_link]);
-        }
-
-        return response()->json(['message' => 'Заявка отправлена', 'data' => $activity], 201);
+        return response()->json(['message' => 'Успешно сохранено', 'data' => $activity], 201);
     }
 
-    public function myRating()
+    public function myRating(Request $request)
     {
-        $user = auth()->user()->loadSum(['activities' => function($query) {
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user->loadSum(['activities' => function($query) {
             $query->where('status', 'approved');
         }], 'total_points');
 
         return response()->json([
             'name' => $user->name,
-            'total_kpi' => $user->activities_sum_total_points ?? 0
+            'total_kpi' => (float) ($user->activities_sum_total_points ?? 0)
         ]);
     }
 
@@ -60,7 +79,7 @@ class KpiController extends Controller
             ->get();
 
         return response()->json([
-            'department' => $department->name,
+            'department' => $department->title, 
             'rating' => $rating
         ]);
     }

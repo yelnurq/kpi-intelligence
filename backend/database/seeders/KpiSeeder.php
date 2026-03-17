@@ -48,9 +48,9 @@ class KpiSeeder extends Seeder
 
         // 4. Создаем Тестового Администратора
         User::create([
-            'name' => 'Zeynolla Elnur',
-            'email' => 'admin@kpi.kz',
-            'password' => Hash::make('password123'),
+            'name' => 'Yelnur Z',
+            'email' => 'test@kpi.test',
+            'password' => Hash::make('test@kpi.test'),
             'department_id' => 1,
             'position_id' => 1,
         ]);

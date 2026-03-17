@@ -46,7 +46,7 @@ const PlanningPage = () => {
   return (
     <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-end mb-8">
+      <div className="no-print flex justify-between items-end mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Планирование KPI</h1>
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
@@ -69,7 +69,7 @@ const PlanningPage = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="no-print grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Левая колонка: Фильтры и Список */}
         <div className="lg:col-span-8 space-y-6">
           {/* Фильтры */}
@@ -201,45 +201,7 @@ const PlanningPage = () => {
         />
       )}
 
-      {/* Стили для печати */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body * { display: none !important; }
-          #printable-report, #printable-report * { 
-            display: block !important; 
-            visibility: visible !important; 
-          }
-          #printable-report { 
-            position: absolute !important; 
-            left: 0 !important; 
-            top: 0 !important; 
-            width: 297mm !important; 
-            margin: 0 !important;
-            padding: 14mm 10mm 14mm 13mm !important;
-          }
-          .page-break { 
-            display: block !important; 
-            page-break-before: always !important; 
-            height: 0 !important;
-          }
-        }
-        @media screen {
-          .page-break { 
-            border-top: 2px dashed #e2e8f0; 
-            margin: 40px 0; 
-            position: relative; 
-          }
-          .page-break::after { 
-            content: "РАЗРЫВ СТРАНИЦЫ"; 
-            position: absolute; 
-            top: -12px; left: 50%; 
-            transform: translateX(-50%); 
-            background: #f8fafc; 
-            padding: 0 10px; 
-            font-size: 10px; color: #94a3b8; 
-          }
-        }
-      `}} />
+    
     </main>
   );
 };

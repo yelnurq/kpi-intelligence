@@ -191,7 +191,6 @@ const PlanningPage = () => {
         </div>
       </div>
 
-      {/* Модалка отчета */}
       {showReport && (
         <KPIPrintReport 
           selectedItems={selectedItems} 
@@ -201,7 +200,6 @@ const PlanningPage = () => {
         />
       )}
 
-      {/* Стили для печати */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
      

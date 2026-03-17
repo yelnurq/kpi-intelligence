@@ -10,6 +10,7 @@ import ActivityArchive from './pages/Archive/ActivityArchive';
 import FacultyRanking from './pages/Faculty/FacultyRank/FacultyRanking';
 import ReportGenerator from './pages/ReportGenerator/ReportGenerator'; // Не забудьте импорт
 import LoginPage from './pages/Auth/Login/Login';
+import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="plan" element={<PlanningPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="submit" element={<SubmissionPortal />} />
           <Route path="archive" element={<ActivityArchive />} />
           <Route path="rating" element={<FacultyRanking />} />

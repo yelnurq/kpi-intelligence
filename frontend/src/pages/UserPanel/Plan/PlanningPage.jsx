@@ -204,11 +204,7 @@ const PlanningPage = () => {
       {/* Стили для печати */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * { display: none !important; }
-          #printable-report, #printable-report * { 
-            display: block !important; 
-            visibility: visible !important; 
-          }
+     
           #printable-report { 
             position: absolute !important; 
             left: 0 !important; 

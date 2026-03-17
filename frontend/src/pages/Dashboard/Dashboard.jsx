@@ -9,7 +9,6 @@ import {
   ArrowUpRight, LayoutDashboard, MoreHorizontal
 } from 'lucide-react';
 
-// --- СТИЛИЗОВАННЫЕ ДАННЫЕ ---
 const planVsFactData = [
   { name: 'Наука', plan: 300, fact: 150 },
   { name: 'Метод.раб', plan: 200, fact: 180 },
@@ -50,8 +49,7 @@ const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState('2025-2026');
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8 animate-in fade-in duration-500">
-      
+    <main className="max-w-7xl mx-auto px-6 py-8">      
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
@@ -68,7 +66,7 @@ const Dashboard = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">Общая статистика выполнения ваших KPI показателей</p>
         </div>
-        <button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg">
+        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-100">
           <FilePlus2 size={18} /> Создать отчет
         </button>
       </div>
@@ -76,13 +74,12 @@ const Dashboard = () => {
       {/* 1. STATS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard icon={Zap} label="Мой Текущий KPI" value="350" trend="12" colorClass="bg-blue-50 text-blue-600" />
-        <StatCard icon={Target} label="Целевой План" value="600" colorClass="bg-slate-100 text-slate-600" />
+        <StatCard icon={Target} label="Целевой План" value="600" colorClass="bg-gray-50 text-gray-600" />
         <StatCard icon={TrendingUp} label="Прогноз выполнения" value="480" trend="5" colorClass="bg-indigo-50 text-indigo-600" />
         <StatCard icon={Calendar} label="Дней до дедлайна" value="45" subtitle="дней" colorClass="bg-orange-50 text-orange-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
         {/* 2. MAIN CHART */}
         <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex justify-between items-center mb-8">
@@ -93,26 +90,13 @@ const Dashboard = () => {
               <MoreHorizontal size={20} />
             </button>
           </div>
-          
           <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={planVsFactData} barGap={8}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
-                />
-                <Tooltip 
-                  cursor={{fill: '#f8fafc', radius: 8}} 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} 
-                />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
+                <Tooltip cursor={{fill: '#f8fafc', radius: 8}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
                 <Bar dataKey="plan" fill="#f1f5f9" radius={[6, 6, 6, 6]} name="План" barSize={32} />
                 <Bar dataKey="fact" fill="#2563eb" radius={[6, 6, 6, 6]} name="Факт" barSize={32} />
               </BarChart>
@@ -120,48 +104,45 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 3. DEADLINES SIDEBAR */}
+        {/* 3. DEADLINES SIDEBAR (Был темным) */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-900 p-7 rounded-2xl shadow-xl text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
-            
-            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-slate-300 uppercase tracking-widest relative z-10">
-              <Clock size={16} className="text-blue-400" /> Ближайшие сроки
+          <div className="bg-white p-7 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-gray-400 uppercase tracking-widest relative z-10">
+              <Clock size={16} className="text-blue-600" /> Ближайшие сроки
             </h3>
             
             <div className="space-y-5 relative z-10">
               {[
                 { title: 'Завершение планирования', time: 'Осталось 3 дня', color: 'bg-blue-500', progress: 90 },
                 { title: 'Отчеты за 1-й квартал', time: 'Дедлайн через 12 дней', color: 'bg-orange-500', progress: 40 },
-                { title: 'Публикации Scopus', time: 'До 15 мая 2026', color: 'bg-slate-700', progress: 10 }
+                { title: 'Публикации Scopus', time: 'До 15 мая 2026', color: 'bg-gray-200', progress: 10 }
               ].map((item, idx) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs font-bold text-white leading-none mb-1">{item.title}</p>
-                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{item.time}</p>
+                      <p className="text-xs font-bold text-slate-800 leading-none mb-1">{item.title}</p>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{item.time}</p>
                     </div>
                   </div>
-                  <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                     <div className={`${item.color} h-full transition-all duration-1000`} style={{ width: `${item.progress}%` }}></div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <button className="w-full mt-8 bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-xs transition-all border border-white/10 uppercase tracking-widest">
+            <button className="w-full mt-8 bg-gray-50 hover:bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-xs transition-all border border-gray-100 uppercase tracking-widest">
               Весь календарь
             </button>
           </div>
 
-          {/* QUICK RECOMMENDATION */}
           <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
             <div className="flex gap-3">
               <Lightbulb className="text-blue-600 flex-shrink-0" size={20} />
               <div>
                 <p className="text-xs font-bold text-blue-900 uppercase tracking-tight">Умная рекомендация</p>
                 <p className="text-xs text-blue-700 mt-2 leading-relaxed font-medium">
-                  Ваша активность в категории <span className="font-bold underline">"Наука"</span> ниже ожидаемой. Добавление одной статьи КОКСНВО увеличит ваш KPI на 14%.
+                  Ваша активность в категории <span className="font-bold underline">"Наука"</span> ниже ожидаемой.
                 </p>
               </div>
             </div>
@@ -171,7 +152,6 @@ const Dashboard = () => {
 
       {/* 4. BOTTOM GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-        {/* PROGRESS CIRCLE */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] self-start mb-4">Общий прогресс</h3>
           <div className="relative flex items-center justify-center">
@@ -190,9 +170,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* RECENT ACTIVITY */}
         <div className="md:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-           <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Последние подтверждения</h3>
             <button className="text-xs font-bold text-blue-600 hover:underline">Смотреть все</button>
           </div>

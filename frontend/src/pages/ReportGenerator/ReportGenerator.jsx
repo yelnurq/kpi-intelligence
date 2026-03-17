@@ -31,7 +31,7 @@ const ReportGenerator = () => {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
         <div className="space-y-3">
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Генератор отчетов</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Генератор отчетов</h1>
 
           <p className="text-slate-500 text-sm font-medium">Сформируйте официальный документ на основе ваших KPI достижений за выбранный период.</p>
         </div>

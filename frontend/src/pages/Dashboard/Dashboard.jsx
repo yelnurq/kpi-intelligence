@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
-  Target, Zap, Award, BookOpen, AlertCircle, 
-  TrendingUp, ArrowUpRight, CheckCircle2, Clock,
-  Lightbulb, Calendar, ChevronRight
+  Target, Zap, TrendingUp, ChevronRight, 
+  Clock, Lightbulb, Calendar, FilePlus2,
+  ArrowUpRight, LayoutDashboard, MoreHorizontal
 } from 'lucide-react';
 
-// --- ДАННЫЕ ДЛЯ ГРАФИКОВ ---
+// --- СТИЛИЗОВАННЫЕ ДАННЫЕ ---
 const planVsFactData = [
   { name: 'Наука', plan: 300, fact: 150 },
   { name: 'Метод.раб', plan: 200, fact: 180 },
@@ -21,136 +21,163 @@ const progressData = [
   { name: 'В процессе', value: 120 },
   { name: 'Осталось', value: 130 },
 ];
-const COLORS = ['#2563eb', '#93c5fd', '#f1f5f9']; 
 
-// --- КОМПОНЕНТ КАРТОЧКИ ---
-const StatCard = ({ icon: Icon, label, value, trend, colorClass }) => (
-  <div className="group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
+const COLORS = ['#2563eb', '#94a3b8', '#f1f5f9']; 
+
+const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle }) => (
+  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
     <div className="flex justify-between items-start">
-      <div className={`p-3 rounded-2xl ${colorClass}`}>
-        <Icon size={24} />
+      <div className={`p-3 rounded-xl ${colorClass}`}>
+        <Icon size={20} />
       </div>
       {trend && (
-        <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-          <ArrowUpRight size={14} /> {trend}%
-        </span>
+        <div className="flex items-center gap-1 text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase tracking-wider">
+          <ArrowUpRight size={12} strokeWidth={3} /> {trend}%
+        </div>
       )}
     </div>
     <div className="mt-5">
-      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{label}</p>
+      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{label}</p>
       <div className="flex items-baseline gap-2 mt-1">
         <p className="text-3xl font-black text-slate-900">{value}</p>
-        <span className="text-slate-400 font-medium tracking-tight">баллов</span>
+        <span className="text-xs text-gray-400 font-bold uppercase">{subtitle || 'баллов'}</span>
       </div>
     </div>
   </div>
 );
 
 const Dashboard = () => {
+  const [selectedYear, setSelectedYear] = useState('2025-2026');
+
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-700">
+    <main className="max-w-7xl mx-auto px-6 py-8 animate-in fade-in duration-500">
       
-      {/* 1. ВЕРХНИЙ РЯД: СТАТИСТИКА */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Zap} label="Мой KPI" value="350" trend="12" colorClass="bg-blue-50 text-blue-600" />
-        <StatCard icon={Target} label="План" value="600" colorClass="bg-indigo-50 text-indigo-600" />
-        <StatCard icon={TrendingUp} label="Прогноз" value="480" trend="5" colorClass="bg-purple-50 text-purple-600" />
-        <StatCard icon={Calendar} label="До конца сезона" value="45" unit="дн." colorClass="bg-emerald-50 text-emerald-600" />
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900">Дашборд активности</h1>
+            <select 
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="bg-gray-100 border-none text-xs font-bold text-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+            </select>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Общая статистика выполнения ваших KPI показателей</p>
+        </div>
+        <button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg">
+          <FilePlus2 size={18} /> Создать отчет
+        </button>
+      </div>
+
+      {/* 1. STATS ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard icon={Zap} label="Мой Текущий KPI" value="350" trend="12" colorClass="bg-blue-50 text-blue-600" />
+        <StatCard icon={Target} label="Целевой План" value="600" colorClass="bg-slate-100 text-slate-600" />
+        <StatCard icon={TrendingUp} label="Прогноз выполнения" value="480" trend="5" colorClass="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={Calendar} label="Дней до дедлайна" value="45" subtitle="дней" colorClass="bg-orange-50 text-orange-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* 2. ГРАФИК: АНАЛИТИКА (8 КОЛОНОК) */}
-        <div className="lg:col-span-8 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-          <h3 className="text-2xl font-bold text-slate-900 mb-6">Аналитика выполнения</h3>
-          <div className="h-[350px] w-full">
+        {/* 2. MAIN CHART */}
+        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <LayoutDashboard size={18} className="text-blue-600" /> Аналитика по категориям
+            </h3>
+            <button className="text-gray-400 hover:text-slate-600 transition-colors">
+              <MoreHorizontal size={20} />
+            </button>
+          </div>
+          
+          <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={planVsFactData} barGap={12}>
+              <BarChart data={planVsFactData} barGap={8}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <Tooltip cursor={{fill: '#f8fafc', radius: 10}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
-                <Bar dataKey="plan" fill="#f1f5f9" radius={[10, 10, 10, 10]} name="План" barSize={40} />
-                <Bar dataKey="fact" fill="#2563eb" radius={[10, 10, 10, 10]} name="Факт" barSize={40} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc', radius: 8}} 
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} 
+                />
+                <Bar dataKey="plan" fill="#f1f5f9" radius={[6, 6, 6, 6]} name="План" barSize={32} />
+                <Bar dataKey="fact" fill="#2563eb" radius={[6, 6, 6, 6]} name="Факт" barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* 3. ДЕДЛАЙНЫ (4 КОЛОНКИ) - ПУНКТ 4 */}
+        {/* 3. DEADLINES SIDEBAR */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-900 p-8 rounded-[32px] shadow-xl text-white relative overflow-hidden h-full">
-             {/* Декоративный круг на фоне */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500 rounded-full opacity-20 blur-3xl"></div>
+          <div className="bg-slate-900 p-7 rounded-2xl shadow-xl text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
             
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 relative z-10">
-              <Clock size={20} className="text-blue-400" /> Ближайшие сроки
+            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-slate-300 uppercase tracking-widest relative z-10">
+              <Clock size={16} className="text-blue-400" /> Ближайшие сроки
             </h3>
             
-            <div className="space-y-6 relative z-10">
-              <div className="border-l-2 border-blue-500 pl-4 py-1">
-                <p className="text-sm font-bold">Завершение планирования</p>
-                <p className="text-xs text-slate-400 mt-1">Осталось 3 дня (до 20 марта)</p>
-                <div className="w-full bg-slate-800 h-1.5 mt-3 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full w-[90%]"></div>
+            <div className="space-y-5 relative z-10">
+              {[
+                { title: 'Завершение планирования', time: 'Осталось 3 дня', color: 'bg-blue-500', progress: 90 },
+                { title: 'Отчеты за 1-й квартал', time: 'Дедлайн через 12 дней', color: 'bg-orange-500', progress: 40 },
+                { title: 'Публикации Scopus', time: 'До 15 мая 2026', color: 'bg-slate-700', progress: 10 }
+              ].map((item, idx) => (
+                <div key={idx} className="space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs font-bold text-white leading-none mb-1">{item.title}</p>
+                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{item.time}</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                    <div className={`${item.color} h-full transition-all duration-1000`} style={{ width: `${item.progress}%` }}></div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="border-l-2 border-amber-500 pl-4 py-1">
-                <p className="text-sm font-bold text-slate-200">Подача отчетов за 1-й кв.</p>
-                <p className="text-xs text-slate-400 mt-1">Дедлайн через 12 дней</p>
-              </div>
-
-              <div className="border-l-2 border-slate-700 pl-4 py-1">
-                <p className="text-sm font-bold text-slate-400">Публикация статей Scopus</p>
-                <p className="text-xs text-slate-500 mt-1">До 15 мая 2026</p>
-              </div>
+              ))}
             </div>
 
-            <button className="w-full mt-8 bg-blue-600 hover:bg-blue-700 py-3 rounded-2xl font-bold text-sm transition-colors">
-              Добавить в календарь
+            <button className="w-full mt-8 bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-xs transition-all border border-white/10 uppercase tracking-widest">
+              Весь календарь
             </button>
+          </div>
+
+          {/* QUICK RECOMMENDATION */}
+          <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
+            <div className="flex gap-3">
+              <Lightbulb className="text-blue-600 flex-shrink-0" size={20} />
+              <div>
+                <p className="text-xs font-bold text-blue-900 uppercase tracking-tight">Умная рекомендация</p>
+                <p className="text-xs text-blue-700 mt-2 leading-relaxed font-medium">
+                  Ваша активность в категории <span className="font-bold underline">"Наука"</span> ниже ожидаемой. Добавление одной статьи КОКСНВО увеличит ваш KPI на 14%.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* 4. УМНЫЕ РЕКОМЕНДАЦИИ (4 КОЛОНКИ) - ПУНКТ 1 */}
-        <div className="lg:col-span-4 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Lightbulb className="text-amber-500" size={24} /> Советы по KPI
-          </h3>
-          <div className="space-y-4">
-            <div className="group p-4 rounded-2xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer">
-              <div className="flex justify-between items-start">
-                <p className="font-bold text-blue-900 text-sm">Опубликуйте статью</p>
-                <ChevronRight size={16} className="text-blue-400" />
-              </div>
-              <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-                В вашем плане "Наука" выполнена на 50%. Публикация в журнале КОКСНВО принесет вам 50 баллов.
-              </p>
-            </div>
-
-            <div className="group p-4 rounded-2xl bg-purple-50 border border-purple-100 hover:bg-purple-100 transition-colors cursor-pointer">
-              <div className="flex justify-between items-start">
-                <p className="font-bold text-purple-900 text-sm">Повышение квалификации</p>
-                <ChevronRight size={16} className="text-purple-400" />
-              </div>
-              <p className="text-xs text-purple-700 mt-1 leading-relaxed">
-                Курс "React для продвинутых" закроет вашу методическую цель на этот год.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 5. КРУГОВОЙ ПРОГРЕСС (4 КОЛОНКИ) */}
-        <div className="lg:col-span-4 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col items-center">
-          <h3 className="text-xl font-bold text-slate-900 self-start mb-6">Общий прогресс</h3>
+      {/* 4. BOTTOM GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+        {/* PROGRESS CIRCLE */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] self-start mb-4">Общий прогресс</h3>
           <div className="relative flex items-center justify-center">
-            <ResponsiveContainer width={220} height={220}>
+            <ResponsiveContainer width={180} height={180}>
               <PieChart>
-                <Pie data={progressData} innerRadius={75} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none" cornerRadius={10}>
+                <Pie data={progressData} innerRadius={65} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none" cornerRadius={6}>
                   {progressData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -158,25 +185,40 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute text-center">
-              <span className="text-4xl font-black text-slate-900">58%</span>
+              <span className="text-3xl font-black text-slate-900 tracking-tighter">58%</span>
             </div>
           </div>
         </div>
 
-        {/* 6. БЫСТРЫЕ ДЕЙСТВИЯ (4 КОЛОНКИ) */}
-        <div className="lg:col-span-4 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[32px] shadow-lg text-white flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold mb-2 text-white">У вас есть достижения?</h3>
-            <p className="text-blue-100 text-sm opacity-80">Загрузите подтверждение прямо сейчас, чтобы получить баллы.</p>
+        {/* RECENT ACTIVITY */}
+        <div className="md:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+           <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Последние подтверждения</h3>
+            <button className="text-xs font-bold text-blue-600 hover:underline">Смотреть все</button>
           </div>
-          <button className="bg-white text-blue-700 w-full py-4 rounded-2xl font-black shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">
-            + ПОДАТЬ ЗАЯВКУ
-          </button>
+          <div className="space-y-4">
+            {[
+              { title: 'Публикация Scopus Q2', status: 'Одобрено', date: 'Вчера, 14:20', points: '+100' },
+              { title: 'Курс повышения квалификации', status: 'На проверке', date: '12 марта', points: '+30' }
+            ].map((task, i) => (
+              <div key={i} className="flex items-center justify-between p-3 border border-gray-50 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-2 h-2 rounded-full ${task.status === 'Одобрено' ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{task.title}</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{task.date} • {task.status}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-slate-900">{task.points}</span>
+                  <ChevronRight size={16} className="text-gray-300 group-hover:text-slate-400" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-
       </div>
-
-    </div>
+    </main>
   );
 };
 

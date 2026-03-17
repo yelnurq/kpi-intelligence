@@ -122,7 +122,7 @@ const MainLayout = () => {
               {isSidebarOpen ? <Menu size={20} /> : <X size={20} />}
             </button>
             <div className="h-6 w-[1px] bg-slate-100 mx-2" />
-            <h1 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">
+            <h1 className="text-sm font-bold text-slate-400 uppercase tracking-[0.1em]">
               {menuItems.find(i => i.path === location.pathname)?.label || 'KPI System'}
             </h1>
           </div>

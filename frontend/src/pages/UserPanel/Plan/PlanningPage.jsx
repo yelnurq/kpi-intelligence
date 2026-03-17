@@ -174,7 +174,7 @@ const PlanningPage = () => {
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Итоговая цель:</span>
                   <div className="text-right">
-                    <span className="text-3xl font-black text-slate-900">{totalPoints}</span>
+                    <span className="text-3xl font-bold text-slate-900">{totalPoints}</span>
                     <span className="text-sm text-gray-400 font-bold ml-1">/ 600</span>
                   </div>
                 </div>

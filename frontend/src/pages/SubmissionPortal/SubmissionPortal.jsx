@@ -59,7 +59,7 @@ const SubmissionPortal = () => {
              </div>
           </div>
           <div className="space-y-3">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Документы приняты</h2>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Документы приняты</h2>
             <p className="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
               ID заявки: <span className="text-blue-600 font-mono">#KPI-2026-0842</span>. 
               Вы получите уведомление, когда модератор проверит данные.
@@ -88,7 +88,7 @@ const SubmissionPortal = () => {
              {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />)}
            </div>
            <div className="pr-4 py-1 border-r border-slate-100">
-             <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Очередь</p>
+             <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Очередь</p>
              <p className="text-xs font-bold text-slate-700 leading-none">12 заявок</p>
            </div>
            <div className="pl-2">
@@ -103,7 +103,7 @@ const SubmissionPortal = () => {
           <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
             {/* Form Steps Info */}
             <div className="bg-slate-50/50 border-b border-slate-100 px-8 py-4 flex justify-between items-center">
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <FileText size={14} /> Основная информация
               </span>
               <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">Шаг 1 из 2</span>
@@ -113,7 +113,7 @@ const SubmissionPortal = () => {
               {/* Category Select */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="group space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-500 transition-colors">Тип активности</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-500 transition-colors">Тип активности</label>
                   <div className="relative">
                     <select 
                       required
@@ -130,7 +130,7 @@ const SubmissionPortal = () => {
                 </div>
 
                 <div className="group space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Дата реализации</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Дата реализации</label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input type="date" className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-14 pr-5 py-4 text-sm font-bold outline-none focus:border-blue-500/20 focus:bg-white transition-all" />
@@ -141,7 +141,7 @@ const SubmissionPortal = () => {
               {/* Title & Priority */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Полное наименование</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Полное наименование</label>
                   <input 
                     required
                     placeholder="Например: Разработка модуля авторизации на Laravel..." 
@@ -164,7 +164,7 @@ const SubmissionPortal = () => {
               {/* Enhanced File Dropzone */}
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Подтверждающие файлы</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Подтверждающие файлы</label>
                   <span className={`text-[10px] font-bold ${sizePercentage > 80 ? 'text-red-500' : 'text-slate-400'}`}>
                     { (totalSize / (1024*1024)).toFixed(1) } MB / 25 MB
                   </span>
@@ -184,7 +184,7 @@ const SubmissionPortal = () => {
                       <FileUp size={32} className="group-hover:translate-y-[-2px] transition-transform" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-black text-slate-900 text-sm">Перетащите файлы или <span className="text-blue-600 cursor-pointer hover:underline">обзор</span></h4>
+                      <h4 className="font-bold text-slate-900 text-sm">Перетащите файлы или <span className="text-blue-600 cursor-pointer hover:underline">обзор</span></h4>
                       <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">{getHelperText()}</p>
                     </div>
                   </div>
@@ -208,7 +208,7 @@ const SubmissionPortal = () => {
                           <FileText size={18} />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-[11px] font-black text-slate-700 truncate">{file.name}</p>
+                          <p className="text-[11px] font-bold text-slate-700 truncate">{file.name}</p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase">{(file.size/1024).toFixed(0)} KB</p>
                         </div>
                       </div>
@@ -225,7 +225,7 @@ const SubmissionPortal = () => {
           <button 
             type="submit"
             disabled={status === 'uploading'}
-            className="w-full bg-slate-900 hover:bg-black text-white p-6 rounded-[30px] font-black text-sm transition-all shadow-2xl shadow-slate-200 flex items-center justify-center gap-4 group disabled:bg-slate-400"
+            className="w-full bg-slate-900 hover:bg-black text-white p-6 rounded-[30px] font-bold text-sm transition-all shadow-2xl shadow-slate-200 flex items-center justify-center gap-4 group disabled:bg-slate-400"
           >
             {status === 'uploading' ? (
               <Loader2 className="animate-spin" size={20} />
@@ -250,14 +250,14 @@ const SubmissionPortal = () => {
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
                     <ShieldCheck size={20} />
                   </div>
-                  <h3 className="font-black text-sm uppercase tracking-widest">Безопасность</h3>
+                  <h3 className="font-bold text-sm uppercase tracking-widest">Безопасность</h3>
                 </div>
                 <p className="text-blue-100 text-xs leading-relaxed font-medium">
                   Все загружаемые документы проходят автоматическую проверку на вирусы и хранятся в зашифрованном виде. Доступ к оригиналам есть только у аттестационной комиссии.
                 </p>
                 <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                  <span className="text-[10px] font-black text-blue-200 uppercase">Статус системы</span>
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase bg-green-400/20 text-green-300 px-3 py-1 rounded-full">
+                  <span className="text-[10px] font-bold text-blue-200 uppercase">Статус системы</span>
+                  <span className="flex items-center gap-2 text-[10px] font-bold uppercase bg-green-400/20 text-green-300 px-3 py-1 rounded-full">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                     Защищено
                   </span>
@@ -267,7 +267,7 @@ const SubmissionPortal = () => {
 
           {/* DYNAMIC HELP BOX */}
           <div className="bg-white rounded-[40px] border border-slate-100 p-8 shadow-sm">
-             <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-6">База знаний</h3>
+             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6">База знаний</h3>
              <div className="space-y-2">
                 {[
                   { q: "Требования к формату", a: "PDF, JPG не более 10МБ" },
@@ -289,7 +289,7 @@ const SubmissionPortal = () => {
           <div className="bg-slate-50 rounded-[40px] p-8 border border-dashed border-slate-200">
              <div className="flex items-center gap-3 mb-6">
                 <Eye size={18} className="text-slate-400" />
-                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Предпросмотр записи</h3>
+                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Предпросмотр записи</h3>
              </div>
              <div className="space-y-4">
                 <div className="h-4 bg-slate-200 rounded-full w-3/4 animate-pulse" />

@@ -37,13 +37,13 @@ const ReportGenerator = () => {
         </div>
 
         <div className="flex gap-3">
-           <button className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
+           <button className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
              <Share2 size={16} /> Поделиться
            </button>
            <button 
              onClick={handleGenerate}
              disabled={isGenerating}
-             className="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
+             className="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
            >
              {isGenerating ? <RefreshCcw size={18} className="animate-spin" /> : <FileCheck size={18} />}
              {isGenerating ? 'Генерация...' : 'Сформировать PDF'}
@@ -58,7 +58,7 @@ const ReportGenerator = () => {
           
           {/* STEP 1: TEMPLATE */}
           <div className="space-y-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
               <span className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px]">1</span>
               Тип документа
             </h3>
@@ -81,7 +81,7 @@ const ReportGenerator = () => {
                     <div className={`p-2 rounded-xl ${reportType === t.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                       {React.cloneElement(t.icon, { size: 18 })}
                     </div>
-                    <span className={`text-sm font-black ${reportType === t.id ? 'text-slate-900' : 'text-slate-500'}`}>{t.label}</span>
+                    <span className={`text-sm font-bold ${reportType === t.id ? 'text-slate-900' : 'text-slate-500'}`}>{t.label}</span>
                   </div>
                   {reportType === t.id && <CheckCircle2 size={18} className="text-blue-600" />}
                 </button>
@@ -91,16 +91,16 @@ const ReportGenerator = () => {
 
           {/* STEP 2: FILTERS */}
           <div className="space-y-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
               <span className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px]">2</span>
               Настройки периода
             </h3>
             <div className="bg-white p-6 rounded-[32px] border border-slate-100 space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Академический год</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Академический год</label>
                 <div className="relative">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <select className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-xs font-black text-slate-900 appearance-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                  <select className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-xs font-bold text-slate-900 appearance-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
                     <option>2025-2026</option>
                     <option>2024-2025</option>
                   </select>
@@ -108,7 +108,7 @@ const ReportGenerator = () => {
               </div>
               
               <div className="space-y-3 pt-2">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">Включить разделы</label>
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-center block">Включить разделы</label>
                  <div className="space-y-2">
                     {['Научные публикации', 'Методическая работа', 'Общественные баллы'].map((label, i) => (
                       <label key={i} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
@@ -125,7 +125,7 @@ const ReportGenerator = () => {
         {/* RIGHT COLUMN: PREVIEW AREA */}
         <div className="lg:col-span-8">
            <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                 Предварительный просмотр
               </h3>
               
@@ -139,10 +139,10 @@ const ReportGenerator = () => {
                   <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8">
                     <div>
                        <img src="images/icons/logo.png" alt="logo" className="h-10 mb-4 opacity-50 grayscale" />
-                       <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Официальный отчет KPI</h4>
+                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Официальный отчет KPI</h4>
                     </div>
                     <div className="text-right">
-                       <p className="text-[10px] font-black uppercase text-slate-900 leading-none italic">ID: #RE-2026-991</p>
+                       <p className="text-[10px] font-bold uppercase text-slate-900 leading-none italic">ID: #RE-2026-991</p>
                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Дата: 17.03.2026</p>
                     </div>
                   </div>
@@ -158,7 +158,7 @@ const ReportGenerator = () => {
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <div className="flex justify-between items-end border-b border-slate-100 pb-1">
-                        <span className="text-[11px] font-black uppercase text-slate-900">1. Сводные показатели</span>
+                        <span className="text-[11px] font-bold uppercase text-slate-900">1. Сводные показатели</span>
                         <span className="text-[10px] font-bold text-blue-600 italic">Итого: 350 баллов</span>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
@@ -170,7 +170,7 @@ const ReportGenerator = () => {
 
                     <div className="space-y-4">
                       <div className="border-b border-slate-100 pb-1">
-                        <span className="text-[11px] font-black uppercase text-slate-900">2. Перечень подтвержденных активностей</span>
+                        <span className="text-[11px] font-bold uppercase text-slate-900">2. Перечень подтвержденных активностей</span>
                       </div>
                       {[1, 2, 3, 4].map(i => (
                         <div key={i} className="flex gap-4 items-start opacity-40">
@@ -188,9 +188,9 @@ const ReportGenerator = () => {
                   <div className="absolute bottom-16 left-16 right-16 flex justify-between items-end opacity-20">
                     <div className="space-y-1">
                       <div className="w-32 h-px bg-slate-400 mb-2" />
-                      <p className="text-[8px] font-black uppercase">Подпись сотрудника</p>
+                      <p className="text-[8px] font-bold uppercase">Подпись сотрудника</p>
                     </div>
-                    <div className="w-20 h-20 border-4 border-slate-100 rounded-full flex items-center justify-center text-[8px] font-black text-slate-200 uppercase text-center p-2">
+                    <div className="w-20 h-20 border-4 border-slate-100 rounded-full flex items-center justify-center text-[8px] font-bold text-slate-200 uppercase text-center p-2">
                        Печать организации
                     </div>
                   </div>
@@ -219,11 +219,11 @@ const ReportGenerator = () => {
                <Trophy size={20} />
             </div>
             <div>
-               <p className="text-xs font-black text-slate-900 uppercase tracking-tight">Совет для рейтинга</p>
+               <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Совет для рейтинга</p>
                <p className="text-xs text-slate-500 mt-1 font-medium">Отчеты в PDF формате с цифровой подписью обрабатываются системой <span className="text-blue-600 font-bold">на 40% быстрее</span>.</p>
             </div>
          </div>
-         <button className="group flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-all">
+         <button className="group flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-all">
            Инструкция по заполнению <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
          </button>
       </div>

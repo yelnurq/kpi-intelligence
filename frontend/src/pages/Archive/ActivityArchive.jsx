@@ -95,7 +95,7 @@ const ActivityArchive = () => {
               key={tab}
               onClick={() => setFilter(tab)}
               className={`
-                px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all
+                px-4 py-2 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all
                 ${filter === tab ? 'bg-slate-900 text-white shadow-lg' : 'text-gray-400 hover:text-slate-600'}
               `}
             >
@@ -114,8 +114,8 @@ const ActivityArchive = () => {
           { label: 'Отклонено', val: '2', color: 'text-red-500' },
         ].map((s, i) => (
           <div key={i} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
-            <p className={`text-2xl font-black ${s.color}`}>{s.val}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
           </div>
         ))}
       </div>
@@ -142,11 +142,11 @@ const ActivityArchive = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">ID / Название</th>
-                <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Категория</th>
-                <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Статус</th>
-                <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Баллы</th>
-                <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Действия</th>
+                <th className="px-8 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">ID / Название</th>
+                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Категория</th>
+                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Статус</th>
+                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Баллы</th>
+                <th className="px-8 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -172,13 +172,13 @@ const ActivityArchive = () => {
                     </span>
                   </td>
                   <td className="px-6 py-6">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-tight ${statusMap[item.status].color}`}>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-tight ${statusMap[item.status].color}`}>
                       {statusMap[item.status].icon}
                       {statusMap[item.status].label}
                     </div>
                   </td>
                   <td className="px-6 py-6 text-center">
-                    <span className={`text-sm font-black ${item.status === 'approved' ? 'text-green-600' : 'text-slate-300'}`}>
+                    <span className={`text-sm font-bold ${item.status === 'approved' ? 'text-green-600' : 'text-slate-300'}`}>
                       {item.points}
                     </span>
                   </td>
@@ -205,8 +205,8 @@ const ActivityArchive = () => {
         <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
           <p className="text-xs font-bold text-gray-400">Показано 1-4 из 24 заявок</p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-xs font-black text-gray-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Назад</button>
-            <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black text-slate-900 shadow-sm hover:border-blue-500 transition-all uppercase tracking-widest">Вперед</button>
+            <button className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Назад</button>
+            <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-slate-900 shadow-sm hover:border-blue-500 transition-all uppercase tracking-widest">Вперед</button>
           </div>
         </div>
       </div>
@@ -218,12 +218,12 @@ const ActivityArchive = () => {
             <AlertCircle size={20} />
           </div>
           <div>
-            <h4 className="text-sm font-black text-red-900">Заявка требует внимания</h4>
+            <h4 className="text-sm font-bold text-red-900">Заявка требует внимания</h4>
             <p className="text-xs text-red-700/80 font-medium mt-1 leading-relaxed">
               Ваша заявка <span className="font-bold underline">#KPI-2026-0502</span> была отклонена. 
               Причина: "Недостаточно подтверждающих документов". Пожалуйста, загрузите скан приказа.
             </p>
-            <button className="mt-3 text-xs font-black text-red-900 uppercase tracking-widest hover:underline flex items-center gap-2">
+            <button className="mt-3 text-xs font-bold text-red-900 uppercase tracking-widest hover:underline flex items-center gap-2">
               Исправить сейчас <ChevronRight size={14} />
             </button>
           </div>

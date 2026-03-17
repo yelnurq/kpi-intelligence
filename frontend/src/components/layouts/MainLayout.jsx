@@ -57,7 +57,7 @@ const MainLayout = () => {
             <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           {isSidebarOpen && (
-            <span className="text-xl font-black tracking-tighter text-slate-800 animate-in fade-in duration-500">
+            <span className="text-xl font-bold tracking-tighter text-slate-800 animate-in fade-in duration-500">
               KAZ<span className="text-blue-600">UTB</span>
             </span>
           )}
@@ -99,7 +99,7 @@ const MainLayout = () => {
             </div>
             {isSidebarOpen && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 text-left">
-                <p className="text-xs font-black text-slate-900 truncate uppercase tracking-tighter">Zeynolla Elnur</p>
+                <p className="text-xs font-bold text-slate-900 truncate uppercase tracking-tighter">Zeynolla Elnur</p>
                 <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-widest">Fullstack Dev</p>
               </div>
             )}
@@ -107,7 +107,7 @@ const MainLayout = () => {
           
           <button className={`w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all group ${!isSidebarOpen && 'justify-center'}`}>
             <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
-            {isSidebarOpen && <span className="text-sm font-black uppercase tracking-widest">Выйти</span>}
+            {isSidebarOpen && <span className="text-sm font-bold uppercase tracking-widest">Выйти</span>}
           </button>
         </div>
       </aside>
@@ -138,8 +138,8 @@ const MainLayout = () => {
             </button>
             <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
                <div className="text-right hidden sm:block">
-                  <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Ваш ранг</p>
-                  <p className="text-sm font-black text-blue-600 leading-none mt-1">ТОП-5%</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Ваш ранг</p>
+                  <p className="text-sm font-bold text-blue-600 leading-none mt-1">ТОП-5%</p>
                </div>
                <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
                   <Zap size={18} fill="currentColor" />
@@ -164,7 +164,7 @@ const MainLayout = () => {
             {/* 404 Страница (опционально) */}
             <Route path="*" element={
               <div className="flex flex-col items-center justify-center h-full p-20">
-                <h2 className="text-4xl font-black italic">404</h2>
+                <h2 className="text-4xl font-bold italic">404</h2>
                 <p className="text-slate-500">Страница не найдена</p>
               </div>
             } />

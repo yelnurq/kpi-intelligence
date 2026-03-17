@@ -34,13 +34,13 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, descr
         <Icon size={22} />
       </div>
       {trend && (
-        <div className="flex items-center gap-1 text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1.5 rounded-full uppercase tracking-wider">
+        <div className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2.5 py-1.5 rounded-full uppercase tracking-wider">
           <TrendingUp size={12} /> {trend}%
         </div>
       )}
     </div>
     <div className="mt-6">
-      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">{label}</p>
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-1">{label}</p>
       <div className="flex items-baseline gap-2">
         <p className="text-3xl font-bold text-slate-900 tracking-tighter">{value}</p>
         <span className="text-xs text-slate-400 font-semibold uppercase">{subtitle || 'баллов'}</span>
@@ -69,11 +69,11 @@ const Dashboard = () => {
   
   <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
     <div className="text-right px-3">
-      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Текущий сезон</p>
-      <p className="text-xs font-black text-slate-900 mt-1">2025-2026</p>
+      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Текущий сезон</p>
+      <p className="text-xs font-bold text-slate-900 mt-1">2025-2026</p>
     </div>
     <div className="w-[1px] h-8 bg-gray-100" />
-    <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
+    <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
       <FilePlus2 size={16} /> Создать отчет
     </button>
   </div>
@@ -92,14 +92,14 @@ const Dashboard = () => {
         <div className="lg:col-span-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-center mb-10">
             <div>
-              <h3 className="font-black text-slate-900 text-lg tracking-tight uppercase tracking-widest flex items-center gap-3">
+              <h3 className="font-bold text-slate-900 text-lg tracking-tight uppercase tracking-widest flex items-center gap-3">
                 <div className="w-2 h-6 bg-blue-600 rounded-full" /> Распределение баллов
               </h3>
               <p className="text-[11px] text-gray-400 font-bold uppercase mt-1 tracking-wider">Сравнение плановых и фактических показателей</p>
             </div>
             <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-               <button className="px-3 py-1.5 text-[10px] font-black bg-white shadow-sm rounded-lg text-slate-900 uppercase">План/Факт</button>
-               <button className="px-3 py-1.5 text-[10px] font-black text-gray-400 rounded-lg uppercase hover:text-slate-600 transition-colors">Динамика</button>
+               <button className="px-3 py-1.5 text-[10px] font-bold bg-white shadow-sm rounded-lg text-slate-900 uppercase">План/Факт</button>
+               <button className="px-3 py-1.5 text-[10px] font-bold text-gray-400 rounded-lg uppercase hover:text-slate-600 transition-colors">Динамика</button>
             </div>
           </div>
           
@@ -129,7 +129,7 @@ const Dashboard = () => {
         {/* 4. SIDEBAR - DEADLINES & RECOMMENDATIONS */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
-            <h3 className="text-[10px] font-black mb-8 flex items-center gap-2 text-gray-400 uppercase tracking-[0.2em]">
+            <h3 className="text-[10px] font-bold mb-8 flex items-center gap-2 text-gray-400 uppercase tracking-[0.2em]">
               <Clock size={16} className="text-blue-600" /> Ближайшие сроки
             </h3>
             
@@ -142,10 +142,10 @@ const Dashboard = () => {
                 <div key={idx} className="group cursor-pointer">
                   <div className="flex justify-between items-end mb-2">
                     <div>
-                      <p className="text-xs font-black text-slate-800 leading-none group-hover:text-blue-600 transition-colors">{item.title}</p>
+                      <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-blue-600 transition-colors">{item.title}</p>
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-1">{item.time}</p>
                     </div>
-                    <span className="text-[9px] font-black text-slate-400 uppercase">{item.status}</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">{item.status}</span>
                   </div>
                   <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden border border-gray-100">
                     <div className={`${item.color} h-full transition-all duration-1000 shadow-[0_0_12px_rgba(37,99,235,0.2)]`} style={{ width: `${item.progress}%` }}></div>
@@ -154,19 +154,19 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <button className="w-full mt-8 group flex items-center justify-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-all">
+            <button className="w-full mt-8 group flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-all">
               Весь календарь <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
 
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[40px] text-white shadow-xl shadow-blue-200 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-20"><Lightbulb size={60} /></div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-blue-200">AI Советник</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200">AI Советник</p>
             <p className="text-sm font-bold mt-4 leading-relaxed">
               Ваша активность в категории <span className="underline decoration-blue-300 underline-offset-4">"Наука"</span> ниже ожидаемой на 40%. 
             </p>
             <p className="text-xs text-blue-100/70 mt-3 font-medium">Загрузите сертификат с конференции в Астане, чтобы закрыть план.</p>
-            <button className="mt-6 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/20 backdrop-blur-sm">
+            <button className="mt-6 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border border-white/20 backdrop-blur-sm">
               Подробнее
             </button>
           </div>
@@ -187,25 +187,25 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute text-center">
-              <span className="text-4xl font-black text-slate-900 tracking-tighter">58%</span>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Готовность</p>
+              <span className="text-4xl font-bold text-slate-900 tracking-tighter">58%</span>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Готовность</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 w-full border-t border-gray-50 pt-6">
              <div className="text-center">
-                <p className="text-sm font-black text-slate-900 leading-none">350</p>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Факт</p>
+                <p className="text-sm font-bold text-slate-900 leading-none">350</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Факт</p>
              </div>
              <div className="text-center border-l border-gray-100">
-                <p className="text-sm font-black text-slate-900 leading-none">250</p>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Остаток</p>
+                <p className="text-sm font-bold text-slate-900 leading-none">250</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Остаток</p>
              </div>
           </div>
         </div>
 
         <div className="md:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Последние подтверждения</h3>
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Последние подтверждения</h3>
             <button className="p-2 hover:bg-gray-50 rounded-xl transition-all"><MoreHorizontal size={20} className="text-gray-400" /></button>
           </div>
           <div className="space-y-4">
@@ -219,9 +219,9 @@ const Dashboard = () => {
                     <CheckCircle size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight">{task.title}</p>
+                    <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight">{task.title}</p>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] font-black text-blue-600/60 uppercase">{task.cat}</span>
+                      <span className="text-[10px] font-bold text-blue-600/60 uppercase">{task.cat}</span>
                       <div className="w-1 h-1 rounded-full bg-gray-200" />
                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{task.date}</span>
                     </div>
@@ -229,8 +229,8 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <span className="text-lg font-black text-slate-900 italic tracking-tighter">{task.points}</span>
-                    <p className="text-[9px] font-black text-slate-300 uppercase leading-none">Баллов</p>
+                    <span className="text-lg font-bold text-slate-900 italic tracking-tighter">{task.points}</span>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase leading-none">Баллов</p>
                   </div>
                   <ChevronRight size={18} className="text-gray-200 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
                 </div>

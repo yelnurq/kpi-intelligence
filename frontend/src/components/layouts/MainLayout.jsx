@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Routes, 
-  Route, 
   Link, 
   useLocation, 
-  Navigate 
+  Outlet // Импортируем Outlet вместо Routes/Route
 } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -22,13 +20,6 @@ import {
   FileText
 } from 'lucide-react';
 
-import Dashboard from '../../pages/Dashboard/Dashboard';
-import SubmissionPortal from '../../pages/SubmissionPortal/SubmissionPortal';
-import ReportGenerator from '../../pages/ReportGenerator/ReportGenerator';
-import PlanningPage from '../../pages/UserPanel/Plan/PlanningPage';
-import ActivityArchive from '../../pages/Archive/ActivityArchive';
-import FacultyRanking from '../../pages/Faculty/FacultyRank/FacultyRanking';
-
 const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation(); 
@@ -45,6 +36,7 @@ const MainLayout = () => {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
+      {/* SIDEBAR */}
       <aside className={`
         ${isSidebarOpen ? 'w-72' : 'w-20'} 
         bg-white border-r border-slate-200 flex flex-col fixed h-full transition-all duration-300 z-50
@@ -109,6 +101,7 @@ const MainLayout = () => {
 
       <main className={`flex-1 ${isSidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300`}>
         
+        {/* HEADER */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors">
@@ -141,25 +134,10 @@ const MainLayout = () => {
           </div>
         </header>
 
-        <div className="min-h-[calc(100vh-80px)] overflow-x-hidden">
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/plan" element={<PlanningPage />} />
-            <Route path="/archive" element={<ActivityArchive />} />
-            <Route path="/submit" element={<SubmissionPortal />} />
-            <Route path="/rating" element={<FacultyRanking />} />
-            <Route path="/report" element={<ReportGenerator />} />
-
-            {/* 404 Страница (опционально) */}
-            <Route path="*" element={
-              <div className="flex flex-col items-center justify-center h-full p-20">
-                <h2 className="text-4xl font-bold italic">404</h2>
-                <p className="text-slate-500">Страница не найдена</p>
-              </div>
-            } />
-          </Routes>
+        {/* CONTENT AREA */}
+        <div className="min-h-[calc(100vh-80px)] overflow-x-hidden p-6">
+          {/* Outlet отрисовывает дочерние компоненты из конфигурации роутера */}
+          <Outlet /> 
         </div>
 
         {/* FOOTER */}

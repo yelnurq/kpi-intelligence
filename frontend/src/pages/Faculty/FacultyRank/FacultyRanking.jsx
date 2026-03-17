@@ -100,7 +100,7 @@ const FacultyRanking = () => {
         </div>
 
         {/* FIRST PLACE */}
-        <div className="order-1 md:order-2 bg-slate-900 p-10 rounded-[48px] shadow-2xl shadow-blue-200 text-center space-y-6 relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div className="order-1 md:order-2 bg-slate-800 p-10 rounded-[48px] shadow-2xl shadow-blue-200 text-center space-y-6 relative overflow-hidden group hover:scale-[1.02] transition-all">
           <div className="absolute top-0 left-0 w-full h-3 bg-blue-500" />
           <div className="relative inline-block">
              <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 animate-pulse"></div>

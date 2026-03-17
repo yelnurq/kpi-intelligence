@@ -20,7 +20,6 @@ function App() {
             <Route path='/rank' element={<FacultyRanking/>}></Route>
           </Routes>
       </BrowserRouter>
-      {/* Рендерим Дашборд как children внутри лейаута */}
     </MainLayout>
   );
 }

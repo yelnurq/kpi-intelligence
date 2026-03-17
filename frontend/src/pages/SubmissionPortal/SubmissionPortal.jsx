@@ -75,7 +75,7 @@ const SubmissionPortal = () => {
   }
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
       {/* TOP HEADER */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="space-y-1">

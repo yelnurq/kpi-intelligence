@@ -81,11 +81,11 @@ const ActivityArchive = () => {
     : submissions.filter(s => s.status === filter);
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8 animate-in fade-in duration-500">
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Архив активностей</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Архив активностей</h1>
           <p className="text-sm text-gray-500 mt-2 font-medium">История ваших подач и статус начисления баллов KPI</p>
         </div>
         

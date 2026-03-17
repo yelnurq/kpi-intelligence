@@ -11,7 +11,8 @@ import {
   Search,
   Menu,
   Zap,
-  X
+  X,
+  PanelsTopLeftIcon
 } from 'lucide-react';
 
 // Импортируем созданные компоненты (предположим, они в этом же файле или импортированы)
@@ -19,6 +20,7 @@ import SubmissionPortal from '../../pages/SubmissionPortal/SubmissionPortal';
 import ActivityArchive from '../../pages/Archive/ActivityArchive';
 import FacultyRanking from '../../pages/Faculty/FacultyRank/FacultyRanking';
 import Dashboard from '../../pages/Dashboard/Dashboard';
+import PlanningPage from '../../pages/Plan/PlanningPage';
 
 const MainLayout = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,6 +28,7 @@ const MainLayout = () => {
 
   const menuItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Дашборд' },
+    { id: 'plan', icon: <PanelsTopLeftIcon size={20} />, label: 'Планирование KPI' },
     { id: 'archive', icon: <ClipboardList size={20} />, label: 'Архив заявок' },
     { id: 'submit', icon: <CheckCircle size={20} />, label: 'Подать активность' },
     { id: 'rating', icon: <BarChart3 size={20} />, label: 'Рейтинг факультетов' },
@@ -36,6 +39,7 @@ const MainLayout = () => {
     switch(activeTab) {
       case 'dashboard': return <Dashboard />;
       case 'submit': return <SubmissionPortal />;
+      case 'plan': return <PlanningPage />;
       case 'archive': return <ActivityArchive />;
       case 'rating': return <FacultyRanking />;
       default: return (
@@ -60,12 +64,16 @@ const MainLayout = () => {
       `}>
         {/* LOGO */}
         <div className="p-6 flex items-center gap-3 h-20 border-b border-slate-50">
-          <div className="min-w-[40px] h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-            <span className="font-black text-lg">K</span>
-          </div>
+        <div className="min-w-[45px] h-12 flex items-center justify-center overflow-hidden">
+            <img 
+                src="images/icons/logo.png" 
+                alt="KPI System Logo" 
+                className="h-full w-full object-contain"
+            />
+            </div>
           {isSidebarOpen && (
             <span className="text-xl font-black tracking-tighter text-slate-800 animate-in fade-in duration-500">
-              KPI<span className="text-blue-600">.</span>PRO
+              KAZ<span className="text-blue-600">UTB</span>
             </span>
           )}
         </div>

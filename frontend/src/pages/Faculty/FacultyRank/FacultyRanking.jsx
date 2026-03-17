@@ -66,7 +66,7 @@ const FacultyRanking = () => {
   ];
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
       
       {/* HEADER & TOP STATS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -74,7 +74,7 @@ const FacultyRanking = () => {
           <div className="flex items-center gap-2 text-amber-500 font-black text-[10px] uppercase tracking-[0.2em]">
             <Trophy size={14} fill="currentColor" /> Live Leaderboard
           </div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter italic">Битва Факультетов</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Битва Факультетов</h1>
           <p className="text-sm text-gray-500 font-medium italic">Обновлено сегодня в 12:00. Лидеры получают грант на развитие.</p>
         </div>
 

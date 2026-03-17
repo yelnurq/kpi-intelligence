@@ -55,11 +55,11 @@ const PlanningPage = () => {
   }, [selectedIds]);
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
       {/* Заголовок страницы */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Планирование KPI</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Планирование KPI</h1>
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
             <Calendar size={14} />
             <span>Учебный год:</span>

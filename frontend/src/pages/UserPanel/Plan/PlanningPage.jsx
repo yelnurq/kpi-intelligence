@@ -195,19 +195,23 @@ const renderIndicatorCard = (item) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-6">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-            <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveTab(cat)}
-                  className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${
-                    activeTab === cat ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            <div className="flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto custom-scrollbar scroll-smooth pb-2">
+  <div className="flex flex-nowrap gap-1">
+    {categories.map(cat => (
+      <button
+        key={cat}
+        onClick={() => setActiveTab(cat)}
+        className={`px-5 py-2.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap flex-shrink-0 ${
+          activeTab === cat 
+            ? 'bg-white shadow-sm text-blue-600' 
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+        }`}
+      >
+        {cat.toUpperCase()}
+      </button>
+    ))}
+  </div>
+</div>
             <div className="relative w-full md:w-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
@@ -222,7 +226,6 @@ const renderIndicatorCard = (item) => {
 
           <div className="grid grid-cols-1 gap-4">
   {activeTab === 'Все' ? (
-    // Группировка для вкладки "Все"
     Object.entries(
       filteredIndicators.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];

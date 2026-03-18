@@ -12,4 +12,26 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+@layer utilities {
+  /* Тонкая полоса скролла */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 4px; /* Делаем его очень тонким */
+  }
 
+  /* Фон дорожки скролла (прозрачный или под цвет панели) */
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Сама "ручка" скролла */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* Светло-серый (slate-200) */
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+
+  /* Цвет при наведении */
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1; /* Чуть темнее при наведении (slate-300) */
+  }
+}

@@ -14,17 +14,23 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel; // Импортируем именно Фасад
 class KpiController extends Controller
 {
-    public function exportExcel(Request $request) 
+    public function export(Request $request)
     {
-        $user = $this->getAuthenticatedUser($request);
+    $user = $this->getAuthenticatedUser($request);
+    $year = $request->query('year');
+    
+    // Обязательно собираем выбранные индикаторы из базы
+    $indicatorIds = $request->input('indicator_ids', []); // или получаем из БД
+    $selectedItems = \App\Models\KpiIndicator::whereIn('id', $indicatorIds)->get(); // Это вернет Collection
 
-        $data = [
-            'user' =>$user,
-            'year' => '2025 / 2026'
-        ];
-        
-        return Excel::download(new KPIExport($data), 'Individual_Plan.xlsx');
-    }
+    $data = [
+        'user' => $user,
+        'year' => $year,
+        'selectedItems' => $selectedItems // Теперь это коллекция
+    ];
+
+    return Excel::download(new KPIExport($data), 'kpi_report.xlsx');
+}
     private function getAuthenticatedUser(Request $request)
     {
         $bearerToken = $request->bearerToken();

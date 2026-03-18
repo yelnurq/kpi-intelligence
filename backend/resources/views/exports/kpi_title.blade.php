@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-</head>
-<body style="font-family: 'Times New Roman', serif; font-size: 12px;">
-    <table style="border-collapse: collapse; width: 100%;">
+    <table style="border-collapse: collapse; width: 100%;font-family: 'Times New Roman', serif; font-size: 12px;">
         {{-- Строка 1: Пустая --}}
         <tr><td colspan="16" style="height: 15px;"></td></tr>
 
@@ -114,6 +108,6 @@
         <tr>
             <td colspan="16" style="text-align: center; font-weight: bold; font-family: 'Times New Roman';">Астана, 2026</td>
         </tr>
+
+        
     </table>
-</body>
-</html>

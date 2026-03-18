@@ -7,35 +7,43 @@ const KPIPrintReport = ({ selectedItems, totalPoints, selectedYear, onClose }) =
 const exportToExcel = async (e) => {
     try {
         const token = localStorage.getItem("token");
+        
+        // Получаем только массив ID из объектов selectedItems
+        const indicatorIds = selectedItems.map(item => item.id);
+
         const response = await fetch("http://localhost:8000/api/export", {
+            method: 'POST', // Используем POST для передачи данных
             headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            }
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            },
+            body: JSON.stringify({
+                indicator_ids: indicatorIds,
+                year: selectedYear
+            })
         });
 
         if (!response.ok) {
-            // Если сервер вернул 500, мы увидим это в консоли
             const errorText = await response.text();
             console.error("Server Error:", errorText);
+            alert("Ошибка сервера. Проверьте логи Laravel.");
             return;
         }
 
-        // Ключевой момент для скачивания файла
+        // Скачивание файла (код остается прежним)
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'Individual_Plan.xlsx'); // Имя файла
+        link.setAttribute('download', `Individual_Plan_${selectedYear.replace('/', '_')}.xlsx`);
         document.body.appendChild(link);
         link.click();
-        
-        // Удаляем временные объекты
         link.parentNode.removeChild(link);
         window.URL.revokeObjectURL(url);
 
     } catch (err) {
-        console.log("Export failed:", err);
+        console.error("Export failed:", err);
     }
 };
   return (

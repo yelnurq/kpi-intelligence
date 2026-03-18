@@ -20,19 +20,19 @@
         {{-- Строка 4: Высокая шапка с Университетом --}}
         <tr style="height: 110px;">
     {{-- Университет слева (6 колонок: A, B, C, D, E, F) --}}
-    <td colspan="7" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
+    <td colspan="6" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
         «Қ. Құлажанов атындағы Қазақ технология және бизнес университеті» <br>Акционерлік қоғамы
     </td>
 
     {{-- Ячейка под лого (3 колонки: G, H, I) --}}
-    <td colspan="4" style="height:110px;text-align: center; vertical-align: middle;">
+    <td colspan="3" style="height:110px;text-align: center; vertical-align: middle;">
         {{-- В Excel-экспорте тег <img> часто игнорируется или дублируется, 
              поэтому здесь оставляем пустое место, куда "наложится" drawing из PHP --}}
     </td>
 
     {{-- Университет справа (7 колонок: J, K, L, M, N, O, P) --}}
-    <td colspan="5" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
-        Акционерное общество <br> «Казахский университет технологии и бизнес им. К.Кулажанова»
+    <td colspan="7" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
+        Акционерное общество<br> «Казахский университет технологии и бизнес им. К.Кулажанова»
     </td>
 </tr>
 
@@ -64,7 +64,7 @@
         <tr>
             <td colspan="10"></td>
             <td colspan="3" style=""></td>
-            <td colspan="3" style="font-weight: bold; text-align: right; vertical-align: bottom; font-family: 'Times New Roman';">______________ Серимбетов Б.А.</td>
+            <td colspan="3" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">______________ Серимбетов Б.А.</td>
         </tr>
         <tr>
             <td colspan="10"></td>
@@ -90,30 +90,30 @@
 
         {{-- Данные преподавателя --}}
         <tr style="height: 30px;">
-            <td colspan="8" style="vertical-align: middle; font-family: 'Times New Roman';">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
+            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
             <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->name ?? 'Рыстыгулова Венера Ботабаевна' }}</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="8" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
+            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
             <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">кандидат ф.-м. наук</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="8" style="vertical-align: middle; font-family: 'Times New Roman';">Кафедра</td>
+            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Кафедра</td>
             <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Ақпараттық технологиялар</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="8" style="vertical-align: middle; font-family: 'Times New Roman';">Лауазымы/ Должность</td>
+            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Лауазымы/ Должность</td>
             <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Профессор</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="8" style="vertical-align: middle; font-family: 'Times New Roman';">Оқытушының қолы/ Подпись преподавателя</td>
-            <td colspan="8" style=" vertical-align: middle;"></td>
+            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Оқытушының қолы/ Подпись преподавателя</td>
+            <td colspan="8" style=" vertical-align: middle;">_______________________</td>
         </tr>
 
         {{-- Футер --}}
         <tr><td colspan="16" style="height: 60px;"></td></tr>
         <tr>
-            <td colspan="16" style="text-align: center; font-weight: bold; font-family: 'Times New Roman';">Астана, 2025</td>
+            <td colspan="16" style="text-align: center; font-weight: bold; font-family: 'Times New Roman';">Астана, 2026</td>
         </tr>
     </table>
 </body>

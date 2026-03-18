@@ -26,7 +26,7 @@ class KPIExport implements FromView, WithDrawings, WithColumnWidths, WithEvents
         // Увеличим ширину до 10-11, чтобы тексту было просторнее
         $widths = [];
         foreach (range('A', 'P') as $col) {
-            $widths[$col] = 10; 
+            $widths[$col] = 8; 
         }
         return $widths;
     }
@@ -36,7 +36,7 @@ class KPIExport implements FromView, WithDrawings, WithColumnWidths, WithEvents
     $drawing = new Drawing();
     $drawing->setName('Logo');
     $drawing->setPath(public_path('images/icons/logo.png'));
-    $drawing->setHeight(80); // Немного уменьшим высоту для лучшего зазора
+    $drawing->setHeight(75); // Немного уменьшим высоту для лучшего зазора
     
     // Привязываем к началу объединенной ячейки (в вашем HTML это 7-я колонка, т.е. 'G')
     $drawing->setCoordinates('G4'); 

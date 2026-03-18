@@ -18,9 +18,13 @@ class KPIExport implements FromView, WithDrawings, WithColumnWidths, WithEvents
         $this->data = $data;
     }
 
-    public function view(): View {
-        return view('exports.kpi_report', ['user' => $this->data]);
-    }
+    public function view(): View 
+{
+    return view('exports.kpi_report', [
+        'user' => $this->data['user'], 
+        'year' => $this->data['year']
+    ]);
+}
 
     public function columnWidths(): array {
         // Увеличим ширину до 10-11, чтобы тексту было просторнее

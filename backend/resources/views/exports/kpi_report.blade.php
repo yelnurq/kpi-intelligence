@@ -63,12 +63,11 @@
         </tr>
         <tr>
             <td colspan="10"></td>
-            <td colspan="3" style=""></td>
-            <td colspan="3" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">______________ Серимбетов Б.А.</td>
+            <td colspan="6" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">______________ Серимбетов Б.А.</td>
         </tr>
         <tr>
             <td colspan="10"></td>
-            <td colspan="6" style="text-align: right; font-family: 'Times New Roman';">«____» ____________ 2026 ж./г.</td>
+            <td colspan="6" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">«____» ____________ 2026 ж./г.</td>
         </tr>
 
         {{-- Центральный заголовок --}}
@@ -91,7 +90,7 @@
         {{-- Данные преподавателя --}}
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
-            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->name ?? 'Рыстыгулова Венера Ботабаевна' }}</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->name}}</td>
         </tr>
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>

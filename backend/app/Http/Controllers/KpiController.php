@@ -15,16 +15,16 @@ use Maatwebsite\Excel\Facades\Excel; // Импортируем именно Фа
 class KpiController extends Controller
 {
     public function exportExcel(Request $request) 
-{
-        $user = User::find(1);
+    {
+        $user = $this->getAuthenticatedUser($request);
 
-    $data = [
-        'user' =>$user,
-        'year' => '2025 / 2026'
-    ];
-    
-    return Excel::download(new KPIExport($data), 'Individual_Plan.xlsx');
-}
+        $data = [
+            'user' =>$user,
+            'year' => '2025 / 2026'
+        ];
+        
+        return Excel::download(new KPIExport($data), 'Individual_Plan.xlsx');
+    }
     private function getAuthenticatedUser(Request $request)
     {
         $bearerToken = $request->bearerToken();

@@ -13,32 +13,30 @@ class PlanSheet implements FromView, WithTitle, WithColumnWidths, WithStyles
     protected $data;
     public function __construct($data) { $this->data = $data; }
 
-    public function title(): string { return 'Индивидуальный план'; }
+    // Название вкладки в Excel
+    public function title(): string { return '1. Учебная работа'; }
 
     public function columnWidths(): array {
         return [
-            'A' => 5,   // №
-            'B' => 45,  // Виды работ
-            'C' => 12,  // 1 период план
-            'D' => 12,  // 1 период факт
-            'E' => 12,  // 2 период план
-            'F' => 12,  // 2 период факт
-            'G' => 12,  // Итого год план
-            'H' => 12,  // Итого год факт
+            'A' => 6,   // №
+            'B' => 52,  // Виды работ
+            'C' => 14, 'D' => 14, 'E' => 14, 'F' => 14, 'G' => 14, 'H' => 14,
         ];
     }
 
     public function styles(Worksheet $sheet) {
         return [
-            // Устанавливаем перенос текста для всей таблицы
             'A:H' => ['alignment' => ['wrapText' => true, 'vertical' => 'center']],
         ];
     }
 
     public function view(): View {
+        // Фильтруем коллекцию, оставляя только первую категорию
+        $educationalWork = $this->data['selectedItems']->where('category', 'учеб.работа');
+
         return view('exports.kpi_plan_table', [
-            'selectedItems' => $this->data['selectedItems'],
-            'year' => $this->data['year']
+            'items' => $educationalWork,
+            'year'  => $this->data['year']
         ]);
     }
 }

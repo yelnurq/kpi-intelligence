@@ -6,9 +6,11 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents; // Добавлено
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
-class KPIExport implements FromView, WithDrawings, WithColumnWidths
+class KPIExport implements FromView, WithDrawings, WithColumnWidths, WithEvents
 {
     protected $data;
 
@@ -21,22 +23,40 @@ class KPIExport implements FromView, WithDrawings, WithColumnWidths
     }
 
     public function columnWidths(): array {
-        // Устанавливаем ширину колонок для A-P (примерно по 7-8 единиц Excel)
+        // Увеличим ширину до 10-11, чтобы тексту было просторнее
         $widths = [];
         foreach (range('A', 'P') as $col) {
-            $widths[$col] = 7.5; 
+            $widths[$col] = 10; 
         }
         return $widths;
     }
 
-    public function drawings() {
-        $drawing = new Drawing();
-        $drawing->setName('Logo');
-        $drawing->setDescription('Университет Лого');
-        $drawing->setPath(public_path('images/icons/logo.png')); // Путь к твоему лого
-        $drawing->setHeight(55);
-        $drawing->setCoordinates('H3'); // Как на скрине, между текстами
-        $drawing->setOffsetX(10); 
-        return $drawing;
+    public function drawings()
+{
+    $drawing = new Drawing();
+    $drawing->setName('Logo');
+    $drawing->setPath(public_path('images/icons/logo.png'));
+    $drawing->setHeight(80); // Немного уменьшим высоту для лучшего зазора
+    
+    // Привязываем к началу объединенной ячейки (в вашем HTML это 7-я колонка, т.е. 'G')
+    $drawing->setCoordinates('G4'); 
+
+    // Центрирование: 
+    // Колонки G, H, I имеют суммарную ширину. 
+    // Чтобы встало по центру, подберите OffsetX (обычно от 40 до 60)
+    $drawing->setOffsetX(60); 
+    $drawing->setOffsetY(15); // Небольшой отступ сверху
+    
+    return $drawing;
+}
+    public function registerEvents(): array {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                // Это заставляет текст переноситься на новую строку, если он не влезает
+                $event->sheet->getDelegate()->getStyle('A1:P100')
+                    ->getAlignment()->setWrapText(true);
+                
+            },
+        ];
     }
 }

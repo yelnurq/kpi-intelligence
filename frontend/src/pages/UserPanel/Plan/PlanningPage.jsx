@@ -3,6 +3,8 @@ import { Search, CheckCircle2, Globe, BookOpen, PenTool, Trash2, Calendar, FileT
 import { useNavigate } from 'react-router-dom';
 import KPIPrintReport from '../../../components/KPI/KPIPrintReport';
 
+
+
 const PlanningPage = () => {
   const navigate = useNavigate();
   const [indicators, setIndicators] = useState([]);
@@ -10,13 +12,16 @@ const PlanningPage = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [activeTab, setActiveTab] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2025-2026');
+  const [selectedYear, setSelectedYear] = useState('2025/2026');
   const [showReport, setShowReport] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const categories = ['Все', 'Наука', 'Метод.раб', 'Общ.деят'];
-  const years = ['2025-2026', '2026-2027'];
+  const categories = ['Все', 'учеб.работа', 'учебно-методическая работа', 'организационно-методическая работа',
+    'научно-исследовательская работа', 'воспитательная работа' , 'профориентационная работа', 'повышение квалификации'
+  ];
+  const years = ['2025/2026', '2026/2027'];
 
+  
   // Загрузка индикаторов и сохраненного плана
   useEffect(() => {
     const fetchData = async () => {
@@ -91,6 +96,45 @@ const PlanningPage = () => {
   const removeIndicator = (id) => {
     setSelectedIds(prev => prev.filter(i => i !== id));
   };
+
+const renderIndicatorCard = (item) => {
+  const isSelected = selectedIds.includes(item.id);
+  const catLower = (item.category || "").toLowerCase();
+  
+  return (
+    <div 
+      key={item.id}
+      onClick={() => toggleIndicator(item.id)}
+      className={`flex items-center gap-6 p-5 bg-white border rounded-xl transition-all cursor-pointer group ${
+        isSelected ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+      }`}
+    >
+      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+      }`}>
+        {catLower.includes('наук') ? <Globe size={20} /> : 
+         catLower.includes('метод') ? <BookOpen size={20} /> : 
+         <PenTool size={20} />}
+      </div>
+      <div className="flex-grow">
+        <div className="flex items-center gap-3 mb-1">
+          <h4 className="font-bold text-slate-900 leading-tight">{item.title}</h4>
+        </div>
+        <p className="text-sm text-gray-500 leading-snug">{item.desc}</p>
+      </div>
+      <div className="text-right flex flex-col items-end gap-2">
+        <div className="text-lg font-bold text-slate-900">
+          {item.points} <span className="block text-xs text-gray-400 font-normal">баллов</span>
+        </div>
+        <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
+          isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-transparent'
+        }`}>
+          <CheckCircle2 size={14} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
   const filteredIndicators = useMemo(() => {
     return indicators.filter(item => {
@@ -177,44 +221,34 @@ const PlanningPage = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {filteredIndicators.map(item => {
-              const isSelected = selectedIds.includes(item.id);
-              const catLower = (item.category || "").toLowerCase();
-              return (
-                <div 
-                  key={item.id}
-                  onClick={() => toggleIndicator(item.id)}
-                  className={`flex items-center gap-6 p-5 bg-white border rounded-xl transition-all cursor-pointer group ${
-                    isSelected ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    {catLower.includes('наук') ? <Globe size={20} /> : 
-                     catLower.includes('метод') ? <BookOpen size={20} /> : 
-                     <PenTool size={20} />}
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="font-bold text-slate-900 leading-tight">{item.title}</h4>
-                    </div>
-                    <p className="text-sm text-gray-500 leading-snug">{item.desc}</p>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <div className="text-lg font-bold text-slate-900">
-                      {item.points} <span className="text-xs text-gray-400 font-normal">баллов</span>
-                    </div>
-                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                      isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-transparent'
-                    }`}>
-                      <CheckCircle2 size={14} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+  {activeTab === 'Все' ? (
+    // Группировка для вкладки "Все"
+    Object.entries(
+      filteredIndicators.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      }, {})
+    ).map(([category, items]) => (
+      <div key={category} className="space-y-4 mb-6">
+        {/* Заголовок категории */}
+        <div className="flex items-center gap-4 py-2">
+          <div className="h-px flex-grow bg-gray-200"></div>
+          <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+            {category}
+          </span>
+          <div className="h-px flex-grow bg-gray-200"></div>
+        </div>
+
+        {/* Список элементов этой категории */}
+        {items.map(item => renderIndicatorCard(item))}
+      </div>
+    ))
+  ) : (
+    // Обычный список для конкретной вкладки
+    filteredIndicators.map(item => renderIndicatorCard(item))
+  )}
+</div>
         </div>
 
         <div className="lg:col-span-4">

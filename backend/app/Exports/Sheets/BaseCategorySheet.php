@@ -37,11 +37,19 @@ class BaseCategorySheet implements FromView, WithTitle, WithColumnWidths, WithSt
     }
 
     public function columnWidths(): array {
-        return [
-            'A' => 5, 'B' => 25, 'C' => 10, 'D' => 40,
-            'E' => 10, 'F' => 10, 'G' => 10, 'H' => 10, 'I' => 15, 'J' => 15
-        ];
-    }
+    return [
+        'A' => 35, // Виды работ (широкая)
+        'B' => 12, // Норма времени
+        'C' => 45, // НАИМЕНОВАНИЕ РАБОТ (самая широкая для Title)
+        'D' => 10, // кол-во
+        'E' => 12, // 1-й период
+        'F' => 10, // кол-во
+        'G' => 12, // 2-й период
+        'H' => 15, // отчетность
+        'I' => 15, // срок
+        'J' => 15  // дата выполнения
+    ];
+}
 
     public function styles(Worksheet $sheet) {
         $sheet->getStyle('A:J')->getAlignment()->setWrapText(true);

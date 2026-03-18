@@ -10,7 +10,6 @@ import {
   Award, Sparkles, ArrowRight
 } from 'lucide-react';
 
-// --- Данные с градиентными привязками ---
 const planVsFactData = [
   { name: 'Наука', plan: 300, fact: 150, gap: 150 },
   { name: 'Метод.раб', plan: 200, fact: 180, gap: 20 },

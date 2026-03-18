@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Link, 
   useLocation, 
-  Outlet // Импортируем Outlet вместо Routes/Route
+  Outlet, 
+  useNavigate 
 } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -22,7 +23,29 @@ import {
 
 const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [user, setUser] = useState(null);
   const location = useLocation(); 
+  const navigate = useNavigate();
+
+  // 1. Загрузка данных пользователя при монтировании
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (!savedUser || !token) {
+      // Если данных нет, отправляем на логин
+      navigate('/login');
+    } else {
+      setUser(JSON.parse(savedUser));
+    }
+  }, [navigate]);
+
+  // 2. Функция выхода из системы
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   const menuItems = [
     { id: 'dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Дашборд' },
@@ -32,6 +55,9 @@ const MainLayout = () => {
     { id: 'rating', path: '/rating', icon: <BarChart3 size={20} />, label: 'Рейтинг факультетов' },
     { id: 'report', path: '/report', icon: <FileText size={20} />, label: 'Генератор отчетов' },
   ];
+
+  // Если данные пользователя еще не загрузились, показываем пустой экран или лоадер
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
@@ -79,6 +105,7 @@ const MainLayout = () => {
           })}
         </nav>
 
+        {/* PROFILE SECTION */}
         <div className="p-4 mt-auto border-t border-slate-50 space-y-4">
           <div className={`flex items-center gap-3 p-3 rounded-2xl transition-colors ${isSidebarOpen ? 'bg-slate-50' : 'bg-transparent justify-center'}`}>
             <div className="min-w-[40px] h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 ring-2 ring-white shadow-sm">
@@ -86,19 +113,29 @@ const MainLayout = () => {
             </div>
             {isSidebarOpen && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 text-left">
-                <p className="text-xs font-bold text-slate-900 truncate uppercase tracking-tighter">Zeynolla Elnur</p>
-                <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-widest">Fullstack Dev</p>
+                {/* Динамическое имя из localStorage (Zeynolla Elnur) */}
+                <p className="text-xs font-bold text-slate-900 truncate uppercase tracking-tighter">
+                  {user.name}
+                </p>
+                {/* Динамическая позиция/роль (Fullstack Dev) */}
+                <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-widest">
+                  {user.position || 'Сотрудник IT'}
+                </p>
               </div>
             )}
           </div>
           
-          <button className={`w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all group ${!isSidebarOpen && 'justify-center'}`}>
+          <button 
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all group ${!isSidebarOpen && 'justify-center'}`}
+          >
             <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
             {isSidebarOpen && <span className="text-sm font-bold uppercase tracking-widest">Выйти</span>}
           </button>
         </div>
       </aside>
 
+      {/* MAIN CONTENT AREA */}
       <main className={`flex-1 ${isSidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300`}>
         
         {/* HEADER */}
@@ -134,9 +171,8 @@ const MainLayout = () => {
           </div>
         </header>
 
-        {/* CONTENT AREA */}
+        {/* ROUTE CONTENT */}
         <div className="min-h-[calc(100vh-80px)] overflow-x-hidden p-6">
-          {/* Outlet отрисовывает дочерние компоненты из конфигурации роутера */}
           <Outlet /> 
         </div>
 

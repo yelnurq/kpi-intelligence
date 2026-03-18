@@ -1,19 +1,54 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Состояния для полей
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Здесь будет ваша логика авторизации
-    navigate('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Сохраняем токен (структура вашего API возвращает access_token как объект с полем token)
+        localStorage.setItem('token', data.access_token.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        navigate('/dashboard');
+      } else {
+        // Выводим ошибку из валидатора или сообщения
+        setError(data.message || 'Ошибка авторизации. Проверьте данные.');
+      }
+    } catch (err) {
+      setError('Не удалось связаться с сервером. Проверьте соединение.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 font-sans">
       <div className="w-full max-w-md">
         {/* LOGO */}
         <div className="flex flex-col items-center mb-10">
@@ -23,13 +58,18 @@ const LoginPage = () => {
           <h1 className="mt-4 text-2xl font-black tracking-tighter text-slate-900">
             KAZ<span className="text-blue-400">UTB</span>
           </h1>
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-2">Система управления эффективностью</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Система управления эффективностью</p>
         </div>
 
         {/* CARD */}
         <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 text-xs font-bold rounded-2xl border border-red-100">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-6">
-            
             {/* EMAIL */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-slate-400 uppercase ml-4 tracking-widest">Email адрес</label>
@@ -39,6 +79,8 @@ const LoginPage = () => {
                 </div>
                 <input 
                   type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-300"
                   placeholder="name@kazutb.kz"
                   required
@@ -55,6 +97,8 @@ const LoginPage = () => {
                 </div>
                 <input 
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-12 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-300"
                   placeholder="••••••••"
                   required
@@ -72,10 +116,11 @@ const LoginPage = () => {
             {/* ACTION BUTTON */}
             <button 
               type="submit"
-              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-200 transition-all flex items-center justify-center gap-3 group"
+              disabled={loading}
+              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-200 disabled:opacity-50 disabled:bg-slate-400 transition-all flex items-center justify-center gap-3 group"
             >
-              Войти в систему
-              <LogIn size={18} className="group-hover:translate-x-1 transition-transform" />
+              {loading ? <Loader2 size={18} className="animate-spin" /> : 'Войти в систему'}
+              {!loading && <LogIn size={18} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
 
@@ -86,7 +131,6 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* FOOTER */}
         <p className="text-center mt-10 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] opacity-50">
           © 2026 KAZUTB — Department of IT
         </p>

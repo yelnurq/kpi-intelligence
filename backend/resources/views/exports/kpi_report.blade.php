@@ -90,24 +90,24 @@
 
         {{-- Данные преподавателя --}}
         <tr style="height: 30px;">
-            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
-            <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->name ?? 'Рыстыгулова Венера Ботабаевна' }}</td>
+            <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Аты-жөні, тегі/ Фамилия, имя, отчество</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->name ?? 'Рыстыгулова Венера Ботабаевна' }}</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
-            <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">кандидат ф.-м. наук</td>
+            <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">кандидат ф.-м. наук</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Кафедра</td>
-            <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Ақпараттық технологиялар</td>
+            <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Кафедра</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Ақпараттық технологиялар</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Лауазымы/ Должность</td>
-            <td colspan="8" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Профессор</td>
+            <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Лауазымы/ Должность</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Профессор</td>
         </tr>
         <tr style="height: 30px;">
-            <td colspan="10" style="vertical-align: middle; font-family: 'Times New Roman';">Оқытушының қолы/ Подпись преподавателя</td>
-            <td colspan="8" style=" vertical-align: middle;">_______________________</td>
+            <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Оқытушының қолы/ Подпись преподавателя</td>
+            <td colspan="7" style=" vertical-align: middle;">_______________________</td>
         </tr>
 
         {{-- Футер --}}

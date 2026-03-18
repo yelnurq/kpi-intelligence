@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class KpiIndicator extends Model
 {
-    protected $fillable = ['title', 'weight', 'unit'];
+    protected $fillable = ['category', 'title', 'points', 'desc', 'difficulty', 'year'];
 }

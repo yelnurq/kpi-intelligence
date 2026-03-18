@@ -15,6 +15,11 @@ Route::post("/register", [AuthController::class, "register"]);
 Route::middleware("token")->group(function(){
     Route::post("/logout", [AuthController::class, "logout"]);
 
+
+    Route::get('/kpi-indicators', [KpiController::class, 'getIndicators']);
+    Route::post("/save-kpi-plan", [KpiController::class, "savePlan"]);
+
+
     Route::post('/kpi/activity', [KpiController::class, 'storeActivity']);
     Route::get('/kpi/my-rating', [KpiController::class, 'myRating']);
     Route::get('/kpi/department/{id}', [KpiController::class, 'departmentRating']);

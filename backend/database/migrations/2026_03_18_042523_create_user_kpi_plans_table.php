@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('kpi_indicators', function (Blueprint $table) {
+        Schema::create('user_kpi_plans', function (Blueprint $table) {
             $table->id();
-            $table->string('category'); 
-            $table->string('title');
-            $table->integer('points');
-            $table->text('desc')->nullable();
-            $table->string('difficulty')->default('Средняя');
-            $table->string('year');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('kpi_indicator_id')->constrained()->onDelete('cascade');
+            $table->string('academic_year');
             $table->timestamps();
         });
     }
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('kpi_indicatiors');
+        Schema::dropIfExists('user_kpi_plans');
     }
 };

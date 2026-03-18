@@ -13,13 +13,12 @@ class PlanSheet implements FromView, WithTitle, WithColumnWidths, WithStyles
     protected $data;
     public function __construct($data) { $this->data = $data; }
 
-    // Название вкладки в Excel
     public function title(): string { return '1. Учебная работа'; }
 
     public function columnWidths(): array {
         return [
-            'A' => 6,   // №
-            'B' => 52,  // Виды работ
+            'A' => 6,   
+            'B' => 52,  
             'C' => 14, 'D' => 14, 'E' => 14, 'F' => 14, 'G' => 14, 'H' => 14,
         ];
     }
@@ -31,7 +30,6 @@ class PlanSheet implements FromView, WithTitle, WithColumnWidths, WithStyles
     }
 
     public function view(): View {
-        // Фильтруем коллекцию, оставляя только первую категорию
         $educationalWork = $this->data['selectedItems']->where('category', 'учеб.работа');
 
         return view('exports.kpi_plan_table', [

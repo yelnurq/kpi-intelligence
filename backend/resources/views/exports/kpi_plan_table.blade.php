@@ -1,6 +1,5 @@
 <table style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-family: 'Times New Roman';text-align:center; width: 100%; border-collapse: collapse; font-family: 'Times New Roman'; font-size: 12px;">
 <thead style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-family: 'Times New Roman'; text-align:center; font-size: 10px;">
-    {{-- Заголовок секции --}}
     <tr>
         <th colspan="8" style="font-family: 'Times New Roman';font-size:12px; text-align:center;text-align: left; font-weight: bold; font-size: 12px; border: none; padding-bottom: 5px;">
             1 ОҚУ ЖҰМЫСЫ / УЧЕБНАЯ РАБОТА

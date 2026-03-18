@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\KpiActivityController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\KpiController;
 use Illuminate\Support\Facades\Route;
@@ -18,7 +19,8 @@ Route::middleware("token")->group(function(){
 
     Route::get('/kpi-indicators', [KpiController::class, 'getIndicators']);
     Route::post("/save-kpi-plan", [KpiController::class, "savePlan"]);
-
+    Route::post("/kpi-activities", [KpiActivityController::class, "store"]);
+    Route::get('/get-user-plan-ids', [KpiController::class, 'getPlan']);
 
     Route::post('/kpi/activity', [KpiController::class, 'storeActivity']);
     Route::get('/kpi/my-rating', [KpiController::class, 'myRating']);

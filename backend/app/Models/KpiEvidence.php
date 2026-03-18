@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class KpiEvidence extends Model
 {
-    //
+    protected $guarded =[];
 }

@@ -3,12 +3,12 @@ import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from './components/layouts/MainLayout';
-import Dashboard from './pages/Dashboard/Dashboard'; 
+import Dashboard from './pages/UserPanel/Dashboard/Dashboard'; 
 import PlanningPage from './pages/UserPanel/Plan/PlanningPage';
-import SubmissionPortal from './pages/SubmissionPortal/SubmissionPortal';
+import SubmissionPortal from './pages/UserPanel/SubmissionPortal/SubmissionPortal';
 import ActivityArchive from './pages/Archive/ActivityArchive';
 import FacultyRanking from './pages/Faculty/FacultyRank/FacultyRanking';
-import ReportGenerator from './pages/ReportGenerator/ReportGenerator'; 
+import ReportGenerator from './pages/UserPanel/ReportGenerator/ReportGenerator'; 
 import LoginPage from './pages/Auth/Login/Login';
 import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
 

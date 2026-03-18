@@ -86,36 +86,45 @@ class KpiController extends Controller
         ]);
     }
 
-public function savePlan(Request $request)
+    public function savePlan(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+
+        $request->validate([
+            'indicator_ids' => 'required|array',
+            'academic_year' => 'required|string'
+        ]);
+
+        // Удаляем старые записи
+        UserKpiPlan::where('user_id', $user->id)
+            ->where('academic_year', $request->academic_year)
+            ->delete();
+
+        // Подготавливаем данные для одного запроса
+        $data = collect($request->indicator_ids)->map(function($id) use ($user, $request) {
+            return [
+                'user_id' => $user->id,
+                'kpi_indicator_id' => $id,
+                'academic_year' => $request->academic_year,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        })->toArray();
+
+        UserKpiPlan::insert($data);
+
+        return response()->json(['status' => 'success', 'message' => 'План успешно сохранен']);
+    }
+public function getPlan(Request $request)
 {
     $user = $this->getAuthenticatedUser($request);
+    
+    $ids = UserKpiPlan::where('user_id', $user->id)
+        ->where('academic_year', $request->query('year'))
+        ->pluck('kpi_indicator_id');
 
-    $request->validate([
-        'indicator_ids' => 'required|array',
-        'academic_year' => 'required|string'
-    ]);
-
-    // Удаляем старые записи
-    UserKpiPlan::where('user_id', $user->id)
-        ->where('academic_year', $request->academic_year)
-        ->delete();
-
-    // Подготавливаем данные для одного запроса
-    $data = collect($request->indicator_ids)->map(function($id) use ($user, $request) {
-        return [
-            'user_id' => $user->id,
-            'kpi_indicator_id' => $id,
-            'academic_year' => $request->academic_year,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-    })->toArray();
-
-    UserKpiPlan::insert($data);
-
-    return response()->json(['status' => 'success', 'message' => 'План успешно сохранен']);
+    return response()->json(['status' => 'success', 'data' => $ids]);
 }
-
     public function getIndicators()
     {
         $indicators = KpiIndicator::all();

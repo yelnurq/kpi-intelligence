@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('kpi_evidence', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kpi_activity_id')->constrained('kpi_activities')->onDelete('cascade');
+            $table->string('file_name')->nullable(); 
             $table->string('file_path')->nullable(); 
-            $table->string('link')->nullable(); 
+            $table->string('file_type')->nullable(); 
             $table->timestamps();
         });
     }

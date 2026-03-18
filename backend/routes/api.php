@@ -21,7 +21,7 @@ Route::middleware("token")->group(function(){
     Route::post("/save-kpi-plan", [KpiController::class, "savePlan"]);
     Route::post("/kpi-activities", [KpiActivityController::class, "store"]);
     Route::get('/get-user-plan-ids', [KpiController::class, 'getPlan']);
-
+    Route::get('/kpi-activities', [KpiActivityController::class, 'index']);
     Route::post('/kpi/activity', [KpiController::class, 'storeActivity']);
     Route::get('/kpi/my-rating', [KpiController::class, 'myRating']);
     Route::get('/kpi/department/{id}', [KpiController::class, 'departmentRating']);

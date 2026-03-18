@@ -1,103 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Search, 
-  Filter, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  ExternalLink, 
-  MoreVertical, 
-  Download, 
-  Eye,
-  FileText,
-  ChevronRight,
-  ArrowUpDown,
-  Calendar
+  Search, Clock, CheckCircle2, AlertCircle, Download, 
+  Eye, FileText, ChevronRight, Calendar, Loader2, 
+  Inbox, HelpCircle, ArrowUpRight,Zap
 } from 'lucide-react';
 
 const ActivityArchive = () => {
-  const [filter, setFilter] = useState('all'); // all, approved, pending, rejected
+  const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState([]);
+  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, rejected: 0 });
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const submissions = [
-    {
-      id: 'KPI-2026-0842',
-      title: 'Разработка CRM-системы для регионального туризма',
-      category: 'Проектная деятельность',
-      date: '12.03.2026',
-      points: '+150',
-      status: 'pending',
-      files: 2
-    },
-    {
-      id: 'KPI-2026-0711',
-      title: 'Публикация: Методы оптимизации React-приложений',
-      category: 'Наука',
-      date: '28.02.2026',
-      points: '+200',
-      status: 'approved',
-      files: 1
-    },
-    {
-      id: 'KPI-2026-0650',
-      title: 'Сертификат WorldSkills Web Technologies 2024',
-      category: 'Достижения',
-      date: '15.01.2026',
-      points: '+300',
-      status: 'approved',
-      files: 3
-    },
-    {
-      id: 'KPI-2026-0502',
-      title: 'Отчет по практике в IT-компании',
-      category: 'Метод. работа',
-      date: '20.12.2025',
-      points: '0',
-      status: 'rejected',
-      reason: 'Недостаточно подтверждающих документов',
-      files: 1
-    }
-  ];
+  useEffect(() => {
+    const fetchArchive = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch('http://localhost:8000/api/kpi-activities', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+          setSubmissions(result.data);
+          setStats(result.stats);
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArchive();
+  }, []);
 
   const statusMap = {
-    approved: { 
-      label: 'Одобрено', 
-      color: 'bg-green-50 text-green-600 border-green-100',
-      icon: <CheckCircle2 size={14} /> 
-    },
-    pending: { 
-      label: 'На проверке', 
-      color: 'bg-amber-50 text-amber-600 border-amber-100',
-      icon: <Clock size={14} /> 
-    },
-    rejected: { 
-      label: 'Отклонено', 
-      color: 'bg-red-50 text-red-600 border-red-100',
-      icon: <AlertCircle size={14} /> 
-    }
+    approved: { label: 'Одобрено', color: 'bg-green-50 text-green-600 border-green-100', icon: <CheckCircle2 size={14} /> },
+    pending: { label: 'На проверке', color: 'bg-amber-50 text-amber-600 border-amber-100', icon: <Clock size={14} /> },
+    rejected: { label: 'Отклонено', color: 'bg-red-50 text-red-600 border-red-100', icon: <AlertCircle size={14} /> }
   };
 
-  const filteredData = filter === 'all' 
-    ? submissions 
-    : submissions.filter(s => s.status === filter);
+  const filteredData = submissions.filter(item => {
+    const matchesFilter = filter === 'all' || item.status === filter;
+    const matchesSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          `KPI-${item.id}`.includes(searchTerm);
+    return matchesFilter && matchesSearch;
+  });
+
+  // Расчет потенциальных баллов (те, что еще на проверке)
+  const pendingPoints = submissions
+    .filter(s => s.status === 'pending')
+    .reduce((sum, s) => sum + (Number(s.points) || 0), 0);
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+        <div className="relative">
+            <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <Zap className="absolute inset-0 m-auto text-blue-600 animate-pulse" size={20} />
+        </div>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Синхронизация данных...</p>
+      </div>
+    );
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
-      {/* HEADER SECTION */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Архив активностей</h1>
-          <p className="text-sm text-gray-500 mt-2 font-medium">История ваших подач и статус начисления баллов KPI</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Архив активностей</h1>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <p className="text-sm text-slate-500 font-medium">Данные обновлены сегодня в {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+          </div>
         </div>
         
-        <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100">
           {['all', 'approved', 'pending', 'rejected'].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`
-                px-4 py-2 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all
-                ${filter === tab ? 'bg-slate-900 text-white shadow-lg' : 'text-gray-400 hover:text-slate-600'}
-              `}
+              className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all ${filter === tab ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {tab === 'all' ? 'Все' : statusMap[tab].label}
             </button>
@@ -105,130 +88,118 @@ const ActivityArchive = () => {
         </div>
       </div>
 
-      {/* STATS SUMMARY (Mini) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Всего подано', val: '24', color: 'text-slate-900' },
-          { label: 'Подтверждено', val: '18', color: 'text-green-600' },
-          { label: 'В ожидании', val: '4', color: 'text-amber-500' },
-          { label: 'Отклонено', val: '2', color: 'text-red-500' },
+          { label: 'Всего подано', val: stats.total, color: 'text-slate-900', icon: <Inbox size={16}/> },
+          { label: 'Подтверждено', val: stats.approved, color: 'text-green-600', icon: <CheckCircle2 size={16}/> },
+          { label: 'В обработке', val: stats.pending, color: 'text-amber-500', icon: <Clock size={16}/> },
+          { label: 'Прогноз баллов', val: `+${pendingPoints}`, color: 'text-blue-600', icon: <ArrowUpRight size={16}/> },
         ].map((s, i) => (
-          <div key={i} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
+          <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
+                <div className={`${s.color} opacity-20 group-hover:opacity-100 transition-opacity`}>{s.icon}</div>
+            </div>
+            <p className={`text-3xl font-black ${s.color}`}>{s.val}</p>
           </div>
         ))}
       </div>
 
-      {/* SEARCH & ACTIONS */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-          <input 
-            type="text" 
-            placeholder="Поиск по названию или ID..."
-            className="w-full bg-white border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-all outline-none shadow-sm"
-          />
-        </div>
-        <button className="flex items-center justify-center gap-2 bg-white border border-gray-100 px-6 py-4 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all">
-          <Calendar size={18} />
-          Период
-        </button>
+      {/* SEARCH */}
+      <div className="relative group">
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+        <input 
+          type="text" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Поиск по названию достижения или #ID..."
+          className="w-full bg-white border-2 border-slate-50 rounded-[24px] pl-14 pr-6 py-5 text-sm font-bold text-slate-700 focus:border-blue-500/10 focus:bg-white outline-none shadow-sm transition-all"
+        />
       </div>
 
-      {/* TABLE / LIST */}
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      {/* TABLE */}
+      <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">ID / Название</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Категория</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Статус</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Баллы</th>
-                <th className="px-8 py-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">Действия</th>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-10 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Достижение / Дата</th>
+                <th className="px-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Статус</th>
+                <th className="px-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Баллы</th>
+                <th className="px-10 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Документы</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredData.map((item) => (
-                <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                  <td className="px-8 py-6">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-mono font-bold text-blue-500">{item.id}</span>
-                      <span className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                          <Calendar size={10} /> {item.date}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                          <FileText size={10} /> {item.files} файла
+            <tbody className="divide-y divide-slate-50">
+              {filteredData.length > 0 ? filteredData.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/80 transition-all group">
+                  <td className="px-10 py-8">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">#KPI-{item.id}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
+                            <Calendar size={12} /> {item.date}
                         </span>
                       </div>
+                      <span className="text-sm font-bold text-slate-800 leading-snug max-w-md">{item.title}</span>
+                      
+                      {/* ПРИЧИНА ОТКЛОНЕНИЯ */}
+                      {item.status === 'rejected' && item.reason && (
+                        <div className="mt-2 flex items-start gap-2 bg-red-50/50 p-3 rounded-2xl border border-red-100/50">
+                           <AlertCircle className="text-red-500 mt-0.5" size={14} />
+                           <p className="text-[11px] text-red-700 font-bold leading-relaxed">
+                            Отказ: <span className="font-medium text-red-600/80">{item.reason}</span>
+                           </p>
+                        </div>
+                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-6">
-                    <span className="text-xs font-bold text-slate-600 bg-gray-100 px-3 py-1.5 rounded-lg">
-                      {item.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-6">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-tight ${statusMap[item.status].color}`}>
-                      {statusMap[item.status].icon}
-                      {statusMap[item.status].label}
+                  <td className="px-6 py-8 text-center">
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest ${statusMap[item.status].color}`}>
+                      {statusMap[item.status].icon} {statusMap[item.status].label}
                     </div>
                   </td>
-                  <td className="px-6 py-6 text-center">
-                    <span className={`text-sm font-bold ${item.status === 'approved' ? 'text-green-600' : 'text-slate-300'}`}>
-                      {item.points}
+                  <td className="px-6 py-8 text-center font-black text-lg">
+                    <span className={item.status === 'approved' ? 'text-green-600' : 'text-slate-200'}>
+                      +{item.points || 0}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 text-gray-400 hover:text-blue-600 transition-all shadow-sm">
-                        <Eye size={16} />
-                      </button>
-                      <button className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 text-gray-400 hover:text-slate-900 transition-all shadow-sm">
-                        <Download size={16} />
-                      </button>
-                      <button className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 text-gray-400 hover:text-slate-900 transition-all shadow-sm">
-                        <MoreVertical size={16} />
-                      </button>
+                  <td className="px-10 py-8 text-right">
+                    <div className="flex justify-end gap-2">
+                      {item.files?.length > 0 ? item.files.map((file, idx) => (
+                        <a 
+                          key={idx} 
+                          href={file.url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-10 h-10 flex items-center justify-center bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:shadow-lg transition-all"
+                          title={file.name}
+                        >
+                          <FileText size={18} />
+                        </a>
+                      )) : <span className="text-[10px] font-bold text-slate-300 italic">Empty</span>}
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                    <td colSpan="4" className="py-20 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
+                                <Search size={32} />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-slate-900 font-bold text-sm">Ничего не найдено</p>
+                                <p className="text-slate-400 text-xs">Попробуйте изменить фильтры или поисковый запрос</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        
-        {/* PAGINATION */}
-        <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-          <p className="text-xs font-bold text-gray-400">Показано 1-4 из 24 заявок</p>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Назад</button>
-            <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-slate-900 shadow-sm hover:border-blue-500 transition-all uppercase tracking-widest">Вперед</button>
-          </div>
-        </div>
       </div>
-
-      {/* REJECTION ALERT (Example) */}
-      {submissions.some(s => s.status === 'rejected') && (
-        <div className="bg-red-50 border border-red-100 p-6 rounded-[28px] flex items-start gap-4">
-          <div className="p-3 bg-white rounded-2xl text-red-500 shadow-sm flex-shrink-0">
-            <AlertCircle size={20} />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-red-900">Заявка требует внимания</h4>
-            <p className="text-xs text-red-700/80 font-medium mt-1 leading-relaxed">
-              Ваша заявка <span className="font-bold underline">#KPI-2026-0502</span> была отклонена. 
-              Причина: "Недостаточно подтверждающих документов". Пожалуйста, загрузите скан приказа.
-            </p>
-            <button className="mt-3 text-xs font-bold text-red-900 uppercase tracking-widest hover:underline flex items-center gap-2">
-              Исправить сейчас <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 };

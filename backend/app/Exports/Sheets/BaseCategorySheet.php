@@ -38,7 +38,7 @@ class BaseCategorySheet implements FromView, WithTitle, WithColumnWidths, WithSt
 
     public function columnWidths(): array {
     return [
-        'A' => 35, // Виды работ (широкая)
+        'A' => 50, // Виды работ (широкая)
         'B' => 12, // Норма времени
         'C' => 45, // НАИМЕНОВАНИЕ РАБОТ (самая широкая для Title)
         'D' => 10, // кол-во

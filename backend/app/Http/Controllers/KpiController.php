@@ -6,12 +6,12 @@ use App\Exports\KPIExport;
 use App\Models\KpiActivity;
 use App\Models\Department;
 use App\Models\KpiIndicator;
-use App\Models\Token; // Твоя модель токенов
+use App\Models\Token; 
 use App\Models\User;
 use App\Models\UserKpiPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel; // Импортируем именно Фасад
+use Maatwebsite\Excel\Facades\Excel;
 class KpiController extends Controller
 {
     public function export(Request $request)
@@ -19,14 +19,13 @@ class KpiController extends Controller
     $user = $this->getAuthenticatedUser($request);
     $year = $request->query('year');
     
-    // Обязательно собираем выбранные индикаторы из базы
-    $indicatorIds = $request->input('indicator_ids', []); // или получаем из БД
-    $selectedItems = \App\Models\KpiIndicator::whereIn('id', $indicatorIds)->get(); // Это вернет Collection
+    $indicatorIds = $request->input('indicator_ids', []);
+    $selectedItems = \App\Models\KpiIndicator::whereIn('id', $indicatorIds)->get();
 
     $data = [
         'user' => $user,
         'year' => $year,
-        'selectedItems' => $selectedItems // Теперь это коллекция
+        'selectedItems' => $selectedItems 
     ];
 
     return Excel::download(new KPIExport($data), 'kpi_report.xlsx');
@@ -113,12 +112,10 @@ class KpiController extends Controller
             'academic_year' => 'required|string'
         ]);
 
-        // Удаляем старые записи
         UserKpiPlan::where('user_id', $user->id)
             ->where('academic_year', $request->academic_year)
             ->delete();
 
-        // Подготавливаем данные для одного запроса
         $data = collect($request->indicator_ids)->map(function($id) use ($user, $request) {
             return [
                 'user_id' => $user->id,
@@ -133,16 +130,16 @@ class KpiController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'План успешно сохранен']);
     }
-public function getPlan(Request $request)
-{
-    $user = $this->getAuthenticatedUser($request);
-    
-    $ids = UserKpiPlan::where('user_id', $user->id)
-        ->where('academic_year', $request->query('year'))
-        ->pluck('kpi_indicator_id');
+    public function getPlan(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+        
+        $ids = UserKpiPlan::where('user_id', $user->id)
+            ->where('academic_year', $request->query('year'))
+            ->pluck('kpi_indicator_id');
 
-    return response()->json(['status' => 'success', 'data' => $ids]);
-}
+        return response()->json(['status' => 'success', 'data' => $ids]);
+    }
     public function getIndicators()
     {
         $indicators = KpiIndicator::all();

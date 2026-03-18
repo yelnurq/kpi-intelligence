@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
+    Route::get('/export', [KpiController::class, 'exportExcel']);
 
 Route::middleware("token")->group(function(){
     Route::post("/logout", [AuthController::class, "logout"]);

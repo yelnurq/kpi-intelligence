@@ -316,18 +316,24 @@ const SubmissionPortal = () => {
 </div>
 
   {/* 3. ПОДДЕРЖКА */}
-  <div className="bg-red rounded-[32px] border border-slate-100 p-6 flex items-center justify-between group cursor-pointer hover:border-blue-200 transition-all">
-    <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all">
-            <HelpCircle size={24} />
-        </div>
-        <div>
-            <p className="text-xs font-bold text-slate-900">Возникли вопросы?</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Связаться с техподдержкой</p>
-        </div>
-    </div>
-    <ArrowLeft size={18} className="rotate-180 text-slate-300 group-hover:text-blue-600 transition-all" />
+  <div className="bg-slate-900 rounded-[32px] border border-slate-800 p-6 flex items-center justify-between group cursor-pointer hover:bg-black hover:border-blue-500/30 transition-all shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+  {/* Легкое свечение на фоне при ховере */}
+  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+  
+  <div className="flex items-center gap-4 relative z-10">
+      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-400 group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300 border border-white/5">
+          <HelpCircle size={24} />
+      </div>
+      <div>
+          <p className="text-xs font-bold text-white tracking-tight">Возникли вопросы?</p>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Связаться с техподдержкой</p>
+      </div>
   </div>
+  
+  <div className="relative z-10">
+    <ArrowLeft size={18} className="rotate-180 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+  </div>
+</div>
         </div>
       </div>
     </main>

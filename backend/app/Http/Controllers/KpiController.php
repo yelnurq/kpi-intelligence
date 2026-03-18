@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\KPIExport;
 use App\Models\KpiActivity;
 use App\Models\Department;
 use App\Models\KpiIndicator;
@@ -10,9 +11,20 @@ use App\Models\User;
 use App\Models\UserKpiPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Maatwebsite\Excel\Facades\Excel; // Импортируем именно Фасад
 class KpiController extends Controller
 {
+    public function exportExcel(Request $request) 
+{
+        $user = User::find(1);
+
+    $data = [
+        'user' =>$user,
+        'year' => '2025 / 2026'
+    ];
+    
+    return Excel::download(new KPIExport($data), 'Individual_Plan.xlsx');
+}
     private function getAuthenticatedUser(Request $request)
     {
         $bearerToken = $request->bearerToken();

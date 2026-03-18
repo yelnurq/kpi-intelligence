@@ -72,7 +72,7 @@ const MainLayout = () => {
             <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           {isSidebarOpen && (
-            <span className="text-xl font-bold tracking-tighter text-slate-800 animate-in fade-in duration-500">
+            <span className="font-black text-xl tracking-tighter text-slate-800 animate-in fade-in duration-500">
               KAZ<span className="text-blue-600">UTB</span>
             </span>
           )}

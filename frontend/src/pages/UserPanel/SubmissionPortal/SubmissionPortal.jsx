@@ -3,7 +3,7 @@ import {
   FileUp, X, CheckCircle2, Info, ChevronDown, 
   PlusCircle, FileText, Loader2, Calendar as CalendarIcon, 
   Link as LinkIcon, AlertCircle, ArrowLeft, ShieldCheck,
-  Zap, Eye, Trash2, Clock
+  Zap, Eye, Trash2, Clock, HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -121,9 +121,9 @@ const SubmissionPortal = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative items-start">
+  <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6 sticky top-8 self-start z-10">
+              <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
             <div className="bg-slate-50/50 border-b border-slate-100 px-8 py-4 flex justify-between items-center">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <FileText size={14} /> Основная информация
@@ -232,16 +232,102 @@ const SubmissionPortal = () => {
           </button>
         </form>
 
-        <div className="lg:col-span-5 space-y-8">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[40px] p-8 text-white shadow-xl relative overflow-hidden">
-             <div className="relative z-10 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md"><ShieldCheck size={20} /></div>
-                  <h3 className="font-bold text-sm uppercase tracking-widest">Безопасность</h3>
-                </div>
-                <p className="text-blue-100 text-xs leading-relaxed font-medium">Ваши данные зашифрованы и доступны только комиссии.</p>
-             </div>
+        <div className="lg:col-span-5 space-y-6">
+  {/* 1. ДИНАМИЧЕСКИЙ ПРЕДПРОСМОТР БАЛЛОВ */}
+  <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 p-8 relative overflow-hidden group">
+    <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full blur-3xl group-hover:bg-blue-100 transition-colors"></div>
+    
+    <div className="relative z-10 space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+          <Zap size={20} fill="currentColor" />
+        </div>
+        <h3 className="font-bold text-slate-900 text-sm uppercase tracking-widest">Прогноз баллов</h3>
+      </div>
+
+      <div className="space-y-1">
+        <div className="flex items-baseline gap-1">
+          <span className="text-6xl font-black text-slate-900 tracking-tighter">
+            {formData.indicator_id 
+              ? `+${indicators.find(i => i.id == formData.indicator_id)?.points || 0}`
+              : '0'
+            }
+          </span>
+          <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">баллов</span>
+        </div>
+        <p className="text-xs text-slate-500 font-medium">Будет начислено после верификации</p>
+      </div>
+
+      {formData.indicator_id && (
+        <div className="pt-6 border-t border-slate-50">
+          <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-3 rounded-2xl">
+            <Info size={16} />
+            <span className="text-[11px] font-bold uppercase tracking-tight">Выбран: {indicators.find(i => i.id == formData.indicator_id)?.title}</span>
           </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+<div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 p-8 relative overflow-hidden group">
+  <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-blue-50 transition-colors duration-500"></div>
+  
+  <div className="relative z-10 space-y-6">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shadow-sm">
+        <ShieldCheck size={20} className="text-blue-500" />
+      </div>
+      <h3 className="font-bold text-slate-900 text-sm uppercase tracking-widest">Памятка верификации</h3>
+    </div>
+
+    <ul className="space-y-4">
+      {[
+        { text: "Файлы четко читаемы (скан или фото)", done: files.length > 0 },
+        { text: "Указана верная дата публикации/участия", done: formData.date !== "" },
+        { text: "Название совпадает с документом", done: formData.title.length > 10 },
+        { text: "Размер вложений не превышает 25 МБ", done: totalSize < sizeLimit && totalSize > 0 }
+      ].map((item, i) => (
+        <li key={i} className={`flex items-start gap-3 transition-all duration-300 ${item.done ? 'opacity-100 scale-[1.02]' : 'opacity-40'}`}>
+          <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors ${item.done ? 'bg-blue-500 border-blue-500 shadow-md shadow-blue-100' : 'border-slate-200'}`}>
+            {item.done ? (
+              <CheckCircle2 size={12} className="text-white" />
+            ) : (
+              <div className="w-1 h-1 bg-slate-300 rounded-full" />
+            )}
+          </div>
+          <span className={`text-[12px] font-bold leading-tight ${item.done ? 'text-slate-800' : 'text-slate-400'}`}>
+            {item.text}
+          </span>
+        </li>
+      ))}
+    </ul>
+
+    {/* Блок с важной информацией */}
+    <div className="p-5 bg-blue-50/50 rounded-[24px] border border-blue-100/50 space-y-2">
+      <div className="flex items-center gap-2">
+        <Info size={14} className="text-blue-500" />
+        <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Важно знать</p>
+      </div>
+      <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+        Срок проверки заявки составляет от <span className="text-slate-900 font-bold">3 до 5 рабочих дней</span> модераторами вашего департамента.
+      </p>
+    </div>
+  </div>
+</div>
+
+  {/* 3. ПОДДЕРЖКА */}
+  <div className="bg-red rounded-[32px] border border-slate-100 p-6 flex items-center justify-between group cursor-pointer hover:border-blue-200 transition-all">
+    <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all">
+            <HelpCircle size={24} />
+        </div>
+        <div>
+            <p className="text-xs font-bold text-slate-900">Возникли вопросы?</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Связаться с техподдержкой</p>
+        </div>
+    </div>
+    <ArrowLeft size={18} className="rotate-180 text-slate-300 group-hover:text-blue-600 transition-all" />
+  </div>
         </div>
       </div>
     </main>

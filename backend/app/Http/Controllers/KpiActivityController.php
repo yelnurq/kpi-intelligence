@@ -6,7 +6,8 @@ use App\Models\KpiActivity;
 use App\Models\User;
 use App\Models\Token;
 use Illuminate\Http\Request;
-
+use App\Models\UserKpiPlan;
+use Illuminate\Validation\Rule;
 class KpiActivityController extends Controller
 {
 private function getAuthenticatedUser(Request $request)
@@ -106,16 +107,31 @@ private function getAuthenticatedUser(Request $request)
             'stats' => $stats
         ]);
     }
+
+
 public function store(Request $request)
 {
     $user = $this->getAuthenticatedUser($request);
 
     $request->validate([
-        'indicator_id' => 'required|exists:kpi_indicators,id',
+        // Проверяем, что индикатор не просто существует, 
+        // а привязан именно к этому пользователю в таблице планов
+        'indicator_id' => [
+            'required',
+            Rule::exists('user_kpi_plans', 'kpi_indicator_id')->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+                // Если у тебя есть учебные года, можно добавить и текущий год:
+                // ->where('academic_year', '2025-2026'); 
+            }),
+        ],
         'quantity' => 'required|integer|min:1',
-        'files.*' => 'required|file|max:10240', // 10MB на файл
+        'files' => 'required|array|min:1', // Убедимся, что файлы переданы
+        'files.*' => 'file|max:10240',
+    ], [
+        'indicator_id.exists' => 'Вы не можете подавать отчет по индикатору, которого нет в вашем плане.'
     ]);
 
+    // Дальше твой код создания записи
     $activity = KpiActivity::create([
         'user_id' => $user->id,
         'indicator_id' => $request->indicator_id,
@@ -123,7 +139,6 @@ public function store(Request $request)
         'status' => 'pending'
     ]);
 
-    // 2. Сохраняем файлы в таблицу KpiEvidence
     if ($request->hasFile('files')) {
         foreach ($request->file('files') as $file) {
             $path = $file->store('kpi_evidence', 'public');

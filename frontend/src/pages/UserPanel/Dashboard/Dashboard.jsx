@@ -59,8 +59,28 @@ const Dashboard = () => {
     });
   }, []);
 
-  if (loading) return <div className="flex h-screen items-center justify-center font-bold text-blue-600 animate-pulse uppercase tracking-widest">Загрузка...</div>;
-  if (!user) return <div className="flex h-screen items-center justify-center font-bold text-red-500">Ошибка доступа</div>;
+ if (loading) {
+    return (
+      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-slate-50/80 backdrop-blur-sm">
+        <div className="relative">
+          {/* Внешнее кольцо */}
+          <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+          {/* Анимированное кольцо */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <div className="font-black text-slate-900 uppercase tracking-[0.2em] text-xs">
+            Загрузка системы
+          </div>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }  if (!user) return <div className="flex h-screen items-center justify-center font-bold text-red-500">Ошибка доступа</div>;
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8 space-y-8"> 

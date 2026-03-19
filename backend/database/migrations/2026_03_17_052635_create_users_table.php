@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->foreignId("department_id")->constrained()->onDelete("cascade");
-            $table->foreignId("degree_id")->constrained()->onDelete("cascade");
+            $table->foreignId("academic_degree_id")->constrained()->onDelete("cascade");
             $table->foreignId("position_id")->constrained()->onDelete("cascade");
             $table->timestamps();
         });

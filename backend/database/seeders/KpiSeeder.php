@@ -15,12 +15,5 @@ class KpiSeeder extends Seeder
     {
        
 
-        User::create([
-            'name' => 'Yelnur Z',
-            'email' => 'test@kpi.test',
-            'password' => Hash::make('test@kpi.test'),
-            'department_id' => 1,
-            'position_id' => 1,
-        ]);
     }
 }

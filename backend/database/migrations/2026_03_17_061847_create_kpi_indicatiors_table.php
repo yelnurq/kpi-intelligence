@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('kpi_indicators', function (Blueprint $table) {
             $table->id();
             $table->string('category'); 
-            $table->string('title');
+            $table->text('title');
             $table->integer('points');
             $table->text('desc')->nullable();
             $table->string('difficulty')->default('Средняя');

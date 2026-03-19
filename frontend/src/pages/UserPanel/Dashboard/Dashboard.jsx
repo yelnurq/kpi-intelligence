@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer
-} from 'recharts';
-import { 
-  Target, Zap, TrendingUp, ChevronRight, CheckCircle, 
-  Clock, Lightbulb, FilePlus2, Award, ArrowRight,
-  User, GraduationCap, Briefcase, MapPin, ShieldCheck
+  Target, Zap, TrendingUp, ChevronRight, FilePlus2, Award, 
+  User, GraduationCap, Briefcase, ShieldCheck, Clock, CheckCircle, AlertCircle
 } from 'lucide-react';
 
-// Компонент карточки статистики
+// Компонент карточки статистики (без изменений)
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, description }) => (
   <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
     <div className="flex justify-between items-start">
@@ -36,45 +31,36 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, descr
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const [activities, setActivities] = useState([]); // Состояние для таблицы
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Получаем токен из локального хранилища
     const token = localStorage.getItem('token'); 
+    const headers = { 
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    };
 
-    axios.get('http://localhost:8000/api/user', {
-      headers: {
-        // Передаем токен в заголовке
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
+    // Загружаем пользователя и его последние активности параллельно
+    Promise.all([
+      axios.get('http://localhost:8000/api/user', { headers }),
+      axios.get('http://localhost:8000/api/user/kpi-activities', { headers }).catch(() => ({ data: [] }))
+    ])
+    .then(([userRes, activitiesRes]) => {
+      if (userRes.data.status === 'success') {
+        setUser(userRes.data.data);
       }
+      setActivities(activitiesRes.data.data);
+      setLoading(false);
     })
-      .then(res => {
-        // Учитывая твою структуру ответа в контроллере
-        if (res.data.status === 'success') {
-          setUser(res.data.data);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Ошибка API:", err);
-        // Если токен невалидный (401), можно редиректнуть на логин
-        if (err.response && err.response.status === 401) {
-           // window.location.href = '/login';
-        }
-        setLoading(false);
-      });
+    .catch(err => {
+      console.error("Ошибка API:", err);
+      setLoading(false);
+    });
   }, []);
 
-  if (loading) return <div className="flex h-screen items-center justify-center font-bold text-blue-600 animate-pulse uppercase tracking-widest">Загрузка системы...</div>;
-  if (!user) return <div className="flex h-screen items-center justify-center font-bold text-red-500">Ошибка доступа к данным</div>;
-
-  // Фейковые данные для графика (пока нет API для них)
-  const planVsFactData = [
-    { name: 'Наука', plan: user.min_kpi * 0.5, fact: user.current_kpi * 0.4 },
-    { name: 'Метод.раб', plan: user.min_kpi * 0.3, fact: user.current_kpi * 0.4 },
-    { name: 'Общ.деят', plan: user.min_kpi * 0.2, fact: user.current_kpi * 0.2 },
-  ];
+  if (loading) return <div className="flex h-screen items-center justify-center font-bold text-blue-600 animate-pulse uppercase tracking-widest">Загрузка...</div>;
+  if (!user) return <div className="flex h-screen items-center justify-center font-bold text-red-500">Ошибка доступа</div>;
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8 space-y-8"> 
@@ -92,9 +78,7 @@ const Dashboard = () => {
           </div>
           
           <div className="text-center md:text-left space-y-2">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
-              {user.name}
-            </h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{user.name}</h1>
             <div className="flex flex-wrap justify-center md:justify-start gap-y-2 gap-x-4 items-center">
               <span className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-lg">
                 <Briefcase size={12} /> {user.position_title}
@@ -106,53 +90,69 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 w-full lg:w-auto border-t lg:border-t-0 pt-6 lg:pt-0">
-          
-          <button className="flex-grow lg:flex-grow-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-[11px] uppercase tracking-[0.15em] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2 group">
-            <FilePlus2 size={16} /> Создать отчет
-            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
+        <button className="flex-grow lg:flex-grow-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-[11px] uppercase tracking-[0.15em] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2 group">
+          <FilePlus2 size={16} /> Создать отчет
+          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+        </button>
       </div>
 
       {/* 2. ГРИД КАРТОЧЕК KPI */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          icon={Zap} 
-          label="Мой Текущий KPI" 
-          value={user.current_kpi} 
-          trend={user.progress} 
-          colorClass="bg-blue-600 text-white" 
-          description={`Загружено подтверждений на ${user.current_kpi} баллов`} 
-        />
-        <StatCard 
-          icon={Target} 
-          label="Целевой План" 
-          value={user.min_kpi} 
-          colorClass="bg-slate-50 text-slate-600" 
-          subtitle={`/ ${user.min_kpi}`} 
-          description={`Минимальный порог для: ${user.position_title}`} 
-        />
-     
-        <StatCard 
-          icon={Award} 
-          label="Зав. кафедрой" 
-          value={`${user.department_leader}`}
-          subtitle=" " 
-          colorClass="bg-amber-50 text-amber-600" 
-          description={`${user.department}`} 
-        />
-        <StatCard 
-          icon={Award} 
-          label="Декан" 
-          value={`${user.dean}`}
-          subtitle=" " 
-          colorClass="bg-amber-50 text-amber-600" 
-          description={`${user.faculty}`} 
-        />
+        <StatCard icon={Zap} label="Мой Текущий KPI" value={user.current_kpi} trend={user.progress} colorClass="bg-blue-600 text-white" description={`Подтверждено баллов`} />
+        <StatCard icon={Target} label="Целевой План" value={user.min_kpi} colorClass="bg-slate-50 text-slate-600" subtitle={`/ ${user.min_kpi}`} description={`Порог для вашей должности`} />
+        <StatCard icon={Award} label="Зав. кафедрой" value={user.department_leader} subtitle=" " colorClass="bg-amber-50 text-amber-600" description={user.department} />
+        <StatCard icon={Award} label="Декан" value={user.dean} subtitle=" " colorClass="bg-amber-50 text-amber-600" description={user.faculty} />
       </div>
 
-    
+      {/* 3. ТАБЛИЦА ПОСЛЕДНИХ АКТИВНОСТЕЙ */}
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Последние активности</h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg">Всего записей: {activities.length}</span>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Достижение / Категория</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Баллы</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Дата</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Статус</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {activities.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="p-6">
+                    <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{item.category}</p>
+                  </td>
+                  <td className="p-6 text-center">
+                    <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-black rounded-lg">+{item.points}</span>
+                  </td>
+                  <td className="p-6 text-center">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase">{item.date}</span>
+                  </td>
+                  <td className="p-6 text-right">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider ${
+                      item.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 
+                      item.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
+                      'bg-red-50 text-red-600'
+                    }`}>
+                      {item.status === 'approved' && <CheckCircle size={12} />}
+                      {item.status === 'pending' && <Clock size={12} />}
+                      {item.status === 'rejected' && <AlertCircle size={12} />}
+                      {item.status === 'approved' ? 'Одобрено' : item.status === 'pending' ? 'На проверке' : 'Отклонено'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   );
 };

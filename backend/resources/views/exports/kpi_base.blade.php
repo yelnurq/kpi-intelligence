@@ -41,17 +41,14 @@
             </tr>
         @endforeach
 
-        {{-- Секция ИТОГО --}}
-@php $footers = ['первый период', 'второй период', 'учебный год']; @endphp
 
-@foreach($footers as $f)
     <tr>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" rowspan="2">
-            Бірінші {{ $f }}
+            Бірінші академиялық кезең бойынша барлығы/ <br>Итого за первый академический период
         </td>
         
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
-            запланировано
+            жоспарланған/ запланировано
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
         @for($i=0; $i<3; $i++) 
@@ -60,13 +57,57 @@
     </tr>
     <tr>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
-            выполнено
+            орындалған/ выполнено
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
         @for($i=0; $i<3; $i++) 
             <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
         @endfor
     </tr>
-@endforeach
+
+<tr>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" rowspan="2">
+            Екінші академиялық кезең бойынша барлығы/ <br>Итого за второй академический период
+        </td>
+        
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            жоспарланған/ запланировано
+        </td>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
+    <tr>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            орындалған/ выполнено
+        </td>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
+<tr>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" rowspan="2">
+            Оқу жылына барлығы/ <br>Итого за учебный год
+        </td>
+        
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            жоспарланған/ запланировано
+        </td>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
+    <tr>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            орындалған/ выполнено
+        </td>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
     </tbody>
 </table>

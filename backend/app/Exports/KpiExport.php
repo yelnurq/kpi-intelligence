@@ -4,9 +4,9 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Maatwebsite\Excel\Concerns\WithEvents; // ОБЯЗАТЕЛЬНО ДОБАВИТЬ
+use Maatwebsite\Excel\Concerns\WithEvents; 
 
-class KPIExport implements WithMultipleSheets, WithEvents { // ДОБАВИТЬ ИНТЕРФЕЙС
+class KPIExport implements WithMultipleSheets, WithEvents { 
     protected $data;
 
     public function __construct($data) {

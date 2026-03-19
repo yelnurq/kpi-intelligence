@@ -36,7 +36,7 @@
         {{-- Строка 6: Факультет с линиями сверху и снизу --}}
         <tr>
             <td colspan="16" style="text-align: center; font-weight: bold;   height: 30px; vertical-align: middle; font-family: 'Times New Roman';">
-                Факультет инжиниринга и информационных технологий/ Инжиниринг және ақпараттық технологиялар факультеті
+                {{$user->department->title}}
             </td>
         </tr>
 
@@ -57,7 +57,7 @@
         </tr>
         <tr>
             <td colspan="10"></td>
-            <td colspan="6" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">______________ Серимбетов Б.А.</td>
+            <td colspan="6" style="font-weight: bold; text-align: right; font-family: 'Times New Roman';">{{'______________'. $user->department->short_name}}</td>
         </tr>
         <tr>
             <td colspan="10"></td>
@@ -88,7 +88,7 @@
         </tr>
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Ғылыми дәрежесі, атағы/ Ученая (академическая) степень, ученое звание</td>
-            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">кандидат ф.-м. наук</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->academic_degree->title}}</td>
         </tr>
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Кафедра</td>
@@ -96,7 +96,7 @@
         </tr>
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Лауазымы/ Должность</td>
-            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">Профессор</td>
+            <td colspan="7" style="font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">{{ $user->position->title}}</td>
         </tr>
         <tr style="height: 30px;">
             <td colspan="9" style="vertical-align: middle; font-family: 'Times New Roman';">Оқытушының қолы/ Подпись преподавателя</td>

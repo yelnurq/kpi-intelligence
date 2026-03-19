@@ -28,7 +28,7 @@
     <tbody>
         @foreach($items as $index => $item)
             <tr>
-                <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">{{ $item->title }}</td> {{-- 3. НАЗВАНИЕ --}}
+                <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;">{{ $item->title }}</td> {{-- 3. НАЗВАНИЕ --}}
                 <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> {{-- 1. Виды работ --}}
                 <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> {{-- 2. Норма --}}
                 <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> {{-- 4 --}}
@@ -42,18 +42,29 @@
         @endforeach
 
         {{-- Секция ИТОГО --}}
-        @php $footers = ['первый период', 'второй период', 'учебный год']; @endphp
-        @foreach($footers as $f)
-        <tr>
-            <td style="border: 1px solid black; font-weight: bold; text-align: left;" colspan="2">Итого за {{ $f }}</td>
-            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">запланировано</td>
-            @for($i=0; $i<7; $i++) <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> @endfor
-        </tr>
-        <tr>
-            <td style="border: 1px solid black; font-weight: bold; text-align: left;" colspan="2"></td>
-            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">выполнено</td>
-            @for($i=0; $i<7; $i++) <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> @endfor
-        </tr>
-        @endforeach
+@php $footers = ['первый период', 'второй период', 'учебный год']; @endphp
+
+@foreach($footers as $f)
+    <tr>
+        <td style="border: 1px solid black; font-weight: bold; text-align: left;" rowspan="2">
+            Итого за {{ $f }}
+        </td>
+        
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            запланировано
+        </td>
+        @for($i=0; $i<7; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
+    <tr>
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+            выполнено
+        </td>
+        @for($i=0; $i<7; $i++) 
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
+        @endfor
+    </tr>
+@endforeach
     </tbody>
 </table>

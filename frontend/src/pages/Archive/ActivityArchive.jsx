@@ -51,14 +51,25 @@ const ActivityArchive = () => {
     .filter(s => s.status === 'pending')
     .reduce((sum, s) => sum + (Number(s.points) || 0), 0);
 
-  if (loading) {
+ if (loading) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-slate-50/80 backdrop-blur-sm">
         <div className="relative">
-            <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-            <Zap className="absolute inset-0 m-auto text-blue-600 animate-pulse" size={20} />
+          {/* Внешнее кольцо */}
+          <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+          {/* Анимированное кольцо */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Синхронизация данных...</p>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <div className="font-black text-slate-900 uppercase tracking-[0.2em] text-xs">
+            Загрузка системы
+          </div>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce"></div>
+          </div>
+        </div>
       </div>
     );
   }

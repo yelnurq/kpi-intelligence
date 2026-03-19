@@ -3,6 +3,7 @@ import { Search, CheckCircle2, Globe, BookOpen, PenTool, Trash2, Calendar, FileT
 import { useNavigate } from 'react-router-dom';
 import KPIPrintReport from '../../../components/KPI/KPIPrintReport';
 
+import { Info, Printer, X, FileSpreadsheet } from 'lucide-react';
 
 
 const PlanningPage = () => {
@@ -15,14 +16,13 @@ const PlanningPage = () => {
   const [selectedYear, setSelectedYear] = useState('2025/2026');
   const [showReport, setShowReport] = useState(false);
   const [saving, setSaving] = useState(false);
-
+  const [exporting, setExporting] = useState(false); 
   const categories = ['Все', 'учеб.работа', 'учебно-методическая работа', 'организационно-методическая работа',
     'научно-исследовательская работа', 'воспитательная работа' , 'профориентационная работа', 'повышение квалификации'
   ];
   const years = ['2025/2026', '2026/2027'];
 
   
-  // Загрузка индикаторов и сохраненного плана
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -87,7 +87,44 @@ const PlanningPage = () => {
       setSaving(false);
     }
   };
+  const handleExport = async () => {
+    try {
+      setExporting(true); // Включаем лоадер
+      const token = localStorage.getItem("token");
+      const indicatorIds = selectedItems.map(item => item.id);
 
+      const response = await fetch("http://localhost:8000/api/export", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+        body: JSON.stringify({
+          indicator_ids: indicatorIds,
+          year: selectedYear
+        })
+      });
+
+      if (!response.ok) throw new Error("Ошибка сервера");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Individual_Plan_${selectedYear.replace('/', '_')}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Не удалось подготовить файл.");
+    } finally {
+      setExporting(false); // Выключаем лоадер
+    }
+  };
   const toggleIndicator = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
@@ -155,9 +192,23 @@ const renderIndicatorCard = (item) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <div className="font-bold text-slate-400 uppercase tracking-widest text-sm">Синхронизация плана...</div>
+      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-slate-50/80 backdrop-blur-sm">
+        <div className="relative">
+          {/* Внешнее кольцо */}
+          <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+          {/* Анимированное кольцо */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <div className="font-black text-slate-900 uppercase tracking-[0.2em] text-xs">
+            Загрузка системы
+          </div>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -180,38 +231,73 @@ const renderIndicatorCard = (item) => {
             </select>
           </div>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
-          className={`${
-            saving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-          } text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95`}
-        >
-          {saving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <FileText size={18} />}
-          {saving ? 'Сохранение...' : 'Обновить и создать отчет'}
-        </button>
+<div className="flex items-center gap-3">
+  {/* Кнопка экспорта в Excel с лоадером */}
+  <button 
+    onClick={handleExport}
+    disabled={selectedIds.length === 0 || exporting}
+    className={`
+      flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
+      shadow-lg active:scale-95 disabled:cursor-not-allowed
+      ${exporting 
+        ? 'bg-emerald-100 text-emerald-400 shadow-none' 
+        : selectedIds.length === 0 
+          ? 'bg-gray-100 text-gray-400 shadow-none' 
+          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:shadow-emerald-200'
+      }
+    `}
+  >
+    {exporting ? (
+      <div className="w-5 h-5 border-2 border-emerald-400 border-t-emerald-700 rounded-full animate-spin" />
+    ) : (
+      <FileSpreadsheet size={18} className={selectedIds.length === 0 ? "text-gray-300" : ""} />
+    )}
+    <span>{exporting ? 'Подготовка...' : 'Скачать отчет'}</span>
+  </button>
+
+  {/* Кнопка сохранения/обновления плана */}
+  <button 
+    onClick={handleSave} 
+    disabled={saving || exporting}
+    className={`
+      relative flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all duration-200
+      shadow-lg active:scale-95 disabled:cursor-wait
+      ${saving 
+        ? 'bg-blue-400 text-white shadow-none' 
+        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200'
+      }
+    `}
+  >
+    {saving ? (
+      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    ) : (
+      <FileText size={18} />
+    )}
+    <span>{saving ? 'Сохранение...' : 'Обновить и сохранить'}</span>
+  </button>
+</div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-6">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto custom-scrollbar scroll-smooth pb-2">
-  <div className="flex flex-nowrap gap-1">
-    {categories.map(cat => (
-      <button
-        key={cat}
-        onClick={() => setActiveTab(cat)}
-        className={`px-5 py-2.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap flex-shrink-0 ${
-          activeTab === cat 
-            ? 'bg-white shadow-sm text-blue-600' 
-            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-        }`}
-      >
-        {cat.toUpperCase()}
-      </button>
-    ))}
-  </div>
-</div>
+              <div className="flex flex-nowrap gap-1">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveTab(cat)}
+                    className={`px-5 py-2.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap flex-shrink-0 ${
+                      activeTab === cat 
+                        ? 'bg-white shadow-sm text-blue-600' 
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                    }`}
+                  >
+                    {cat.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="relative w-full md:w-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
@@ -293,14 +379,7 @@ const renderIndicatorCard = (item) => {
         </div>
       </div>
 
-      {showReport && (
-        <KPIPrintReport 
-          selectedItems={selectedItems} 
-          totalPoints={totalPoints} 
-          selectedYear={selectedYear}
-          onClose={() => setShowReport(false)} 
-        />
-      )}
+     
     </main>
   );
 };

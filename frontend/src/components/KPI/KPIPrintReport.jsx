@@ -81,19 +81,7 @@ const exportToExcel = async (e) => {
             </div>
           </div>
 
-          {/* Область предпросмотра */}
-          <div className="flex-1 overflow-y-auto p-10 bg-slate-100 flex justify-center no-print">
-            <div 
-              id="printable-report" 
-              className="bg-white text-black shadow-2xl p-[14mm] font-serif leading-tight"
-              style={{ width: '297mm', minHeight: '210mm' }}
-            >
-              <h2 className="text-center font-bold text-lg">ПРЕДПРОСМОТР ПЕЧАТНОЙ ФОРМЫ</h2>
-              <p className="text-center text-gray-400 text-sm mt-2">
-                Документ будет сгенерирован на сервере согласно шаблону Laravel Excel
-              </p>
-            </div>
-          </div>
+        
         </div>
       </div>
     </>

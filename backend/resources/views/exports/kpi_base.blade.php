@@ -1,7 +1,7 @@
 <table style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-family: 'Times New Roman';text-align:center; width: 100%; border-collapse: collapse; font-family: 'Times New Roman'; font-size: 12px;">
     <thead>
         <tr>
-            <th colspan="10" style="font-family: 'Times New Roman';font-size:12px; text-align:center;text-align: left; font-weight: bold; font-size: 12px; border: none; padding-bottom: 5px;">
+            <th colspan="10" style="font-family: 'Times New Roman';font-size:12px; text-align:center;text-align: left; font-weight: bold; font-size: 12px; border: 1px solid black; padding-bottom: 5px;">
                 {{ $categoryTitle }}
             </th>
         </tr>
@@ -48,7 +48,7 @@
             Бірінші академиялық кезең бойынша барлығы/ <br>Итого за первый академический период
         </td>
         
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             жоспарланған/ запланировано
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
@@ -57,7 +57,7 @@
         @endfor
     </tr>
     <tr>
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             орындалған/ выполнено
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
@@ -71,7 +71,7 @@
             Екінші академиялық кезең бойынша барлығы/ <br>Итого за второй академический период
         </td>
         
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             жоспарланған/ запланировано
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>

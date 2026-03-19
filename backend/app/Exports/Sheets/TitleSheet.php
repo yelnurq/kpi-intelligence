@@ -26,7 +26,7 @@ class TitleSheet implements FromView, WithTitle, WithDrawings
         $drawing->setHeight(75);
         $drawing->setCoordinates('G4');
         $drawing->setOffsetY(10);
-        $drawing->setOffsetX(58);
+        $drawing->setOffsetX(80);
         return $drawing;
     }
 }

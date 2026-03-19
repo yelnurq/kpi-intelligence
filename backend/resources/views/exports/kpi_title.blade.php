@@ -19,13 +19,13 @@
     </td>
 
     {{-- Ячейка под лого (3 колонки: G, H, I) --}}
-    <td colspan="3" style="height:110px;text-align: center; vertical-align: middle;">
+    <td colspan="4" style="height:110px;text-align: center; vertical-align: middle;">
         {{-- В Excel-экспорте тег <img> часто игнорируется или дублируется, 
              поэтому здесь оставляем пустое место, куда "наложится" drawing из PHP --}}
     </td>
 
     {{-- Университет справа (7 колонок: J, K, L, M, N, O, P) --}}
-    <td colspan="7" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
+    <td colspan="6" style="height:110px;white-space: normal; text-align: center; font-size: 12px; font-weight: bold; vertical-align: middle; font-family: 'Times New Roman';">
         Акционерное общество<br> «Казахский университет технологии и бизнес им. К.Кулажанова»
     </td>
 </tr>

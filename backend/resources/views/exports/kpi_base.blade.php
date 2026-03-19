@@ -79,7 +79,7 @@
         @endfor
     </tr>
     <tr>
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             орындалған/ выполнено
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
@@ -92,7 +92,7 @@
             Оқу жылына барлығы/ <br>Итого за учебный год
         </td>
         
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             жоспарланған/ запланировано
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
@@ -101,7 +101,7 @@
         @endfor
     </tr>
     <tr>
-        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" colspan="2">
             орындалған/ выполнено
         </td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>

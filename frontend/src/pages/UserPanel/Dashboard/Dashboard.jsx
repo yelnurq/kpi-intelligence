@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  Target, Zap, TrendingUp, ChevronRight,CheckCircle, 
-  Clock, Lightbulb, Calendar, FilePlus2,
-  ArrowUpRight, LayoutDashboard, MoreHorizontal,
-  Award, Sparkles, ArrowRight
+  Target, Zap, TrendingUp, ChevronRight, CheckCircle, 
+  Clock, Lightbulb, FilePlus2, Award, ArrowRight,
+  User, GraduationCap, Briefcase, MapPin, ShieldCheck
 } from 'lucide-react';
 
+// --- ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (ФЕЙК) ---
+const userData = {
+  name: "Искаков Арман Серикович",
+  role: "Ассоциированный профессор",
+  faculty: "Информационных технологий",
+  department: "Компьютерная инженерия",
+  location: "Корпус А, каб. 402",
+  id: "ID-99420",
+  experience: "12 лет стажа",
+  status: "Active Professional"
+};
+
 const planVsFactData = [
-  { name: 'Наука', plan: 300, fact: 150, gap: 150 },
-  { name: 'Метод.раб', plan: 200, fact: 180, gap: 20 },
-  { name: 'Общ.деят', plan: 100, fact: 20, gap: 80 },
-  { name: 'Восп.раб', plan: 150, fact: 130, gap: 20 },
+  { name: 'Наука', plan: 300, fact: 150 },
+  { name: 'Метод.раб', plan: 200, fact: 180 },
+  { name: 'Общ.деят', plan: 100, fact: 20 },
+  { name: 'Восп.раб', plan: 150, fact: 130 },
 ];
 
 const progressData = [
@@ -25,7 +36,6 @@ const progressData = [
 
 const COLORS = ['#2563eb', '#60a5fa', '#f1f5f9']; 
 
-// --- Вспомогательный компонент для карточек KPI ---
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, description }) => (
   <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
     <div className="flex justify-between items-start">
@@ -50,46 +60,66 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, subtitle, descr
 );
 
 const Dashboard = () => {
-  const [selectedYear, setSelectedYear] = useState('2025-2026');
-
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
-     {/* HEADER SECTION ДЛЯ DASHBOARD */}
-<div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
-  <div className="space-y-1">
-  
-    <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">
-      Твой прогресс на сегодня
-    </h1>
-    <p className="text-sm text-gray-500 font-medium max-w-md">
-      Аналитика активности, прогноз выполнения плана и «умные» рекомендации системы.
-    </p>
-  </div>
-  
-  <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-    <div className="text-right px-3">
-      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Текущий сезон</p>
-      <p className="text-xs font-bold text-slate-900 mt-1">2025-2026</p>
-    </div>
-    <div className="w-[1px] h-8 bg-gray-100" />
-    <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
-      <FilePlus2 size={16} /> Создать отчет
-    </button>
-  </div>
-</div>
-     
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8"> 
+      
+      {/* 1. ПЕРСОНАЛЬНЫЙ HEADER С ИНФОРМАЦИЕЙ О СОТРУДНИКЕ */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+          <div className="relative group">
+             <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-blue-600 to-indigo-400 flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform duration-500">
+               <User size={40} />
+             </div>
+             <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-xl border-4 border-white shadow-sm" title="Верифицированный профиль">
+               <ShieldCheck size={14} />
+             </div>
+          </div>
+          
+          <div className="text-center md:text-left space-y-2">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
+              {userData.name}
+            </h1>
+            <div className="flex flex-wrap justify-center md:justify-start gap-y-2 gap-x-4 items-center">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-lg">
+                <Briefcase size={12} /> {userData.role}
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <GraduationCap size={14} /> {userData.faculty}
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <MapPin size={12} /> {userData.location}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 w-full lg:w-auto border-t lg:border-t-0 pt-6 lg:pt-0">
+          <div className="flex-grow text-right pr-4 border-r border-gray-100">
+             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">ID сотрудника</p>
+             <p className="text-xs font-black text-slate-900 mt-1">{userData.id}</p>
+          </div>
+          <button className="flex-grow lg:flex-grow-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-[11px] uppercase tracking-[0.15em] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2 group">
+            <FilePlus2 size={16} /> <span className="hidden sm:inline">Создать отчет</span>
+            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+
+        {/* Декоративный элемент фона */}
+        <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-blue-50/50 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
       {/* 2. ГРИД КАРТОЧЕК KPI */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard icon={Zap} label="Мой Текущий KPI" value="350" trend="12" colorClass="bg-blue-600 text-white" description="На 42 балла больше, чем в прошлом месяце" />
-        <StatCard icon={Target} label="Целевой План" value="600" colorClass="bg-slate-100 text-slate-600" subtitle="/ 600" description="Минимальный порог для категории А" />
-        <StatCard icon={TrendingUp} label="Прогноз" value="480" trend="5" colorClass="bg-indigo-100 text-indigo-600" description="Ожидаемый результат к концу мая" />
-        <StatCard icon={Award} label="Рейтинг" value="#4" subtitle="место" colorClass="bg-amber-100 text-amber-600" description="Среди 120 сотрудников кафедры" />
+        <StatCard icon={Target} label="Целевой План" value="600" colorClass="bg-slate-50 text-slate-600" subtitle="/ 600" description="Минимальный порог для категории А" />
+        <StatCard icon={TrendingUp} label="Прогноз" value="480" trend="5" colorClass="bg-indigo-50 text-indigo-600" description="Ожидаемый результат к концу мая" />
+        <StatCard icon={Award} label="Рейтинг" value="#4" subtitle="место" colorClass="bg-amber-50 text-amber-600" description="Среди 120 сотрудников кафедры" />
       </div>
 
+      {/* 3. ГЛАВНЫЙ ГРАФИК И САЙДБАР */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* 3. ГЛАВНЫЙ ГРАФИК */}
-        <div className="lg:col-span-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-center mb-10">
+        <div className="lg:col-span-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
               <h3 className="font-bold text-slate-900 text-lg tracking-tight uppercase tracking-widest flex items-center gap-3">
                 <div className="w-2 h-6 bg-blue-600 rounded-full" /> Распределение баллов
@@ -125,7 +155,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 4. SIDEBAR - DEADLINES & RECOMMENDATIONS */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
             <h3 className="text-[10px] font-bold mb-8 flex items-center gap-2 text-gray-400 uppercase tracking-[0.2em]">
@@ -147,7 +176,7 @@ const Dashboard = () => {
                     <span className="text-[9px] font-bold text-slate-400 uppercase">{item.status}</span>
                   </div>
                   <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden border border-gray-100">
-                    <div className={`${item.color} h-full transition-all duration-1000 shadow-[0_0_12px_rgba(37,99,235,0.2)]`} style={{ width: `${item.progress}%` }}></div>
+                    <div className={`${item.color} h-full transition-all duration-1000`} style={{ width: `${item.progress}%` }}></div>
                   </div>
                 </div>
               ))}
@@ -158,86 +187,56 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[40px] text-white shadow-xl shadow-blue-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-20"><Lightbulb size={60} /></div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200">AI Советник</p>
-            <p className="text-sm font-bold mt-4 leading-relaxed">
-              Ваша активность в категории <span className="underline decoration-blue-300 underline-offset-4">"Наука"</span> ниже ожидаемой на 40%. 
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[40px] text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10"><Lightbulb size={60} /></div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400">AI Советник</p>
+            <p className="text-sm font-bold mt-4 leading-relaxed italic">
+              «Арман, ваша активность в "Науке" на 40% ниже ожидаемой. Загрузите сертификат с конференции, чтобы закрыть план.»
             </p>
-            <p className="text-xs text-blue-100/70 mt-3 font-medium">Загрузите сертификат с конференции в Астане, чтобы закрыть план.</p>
-            <button className="mt-6 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border border-white/20 backdrop-blur-sm">
-              Подробнее
+            <button className="mt-6 w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all border border-white/10">
+              Смотреть советы
             </button>
           </div>
         </div>
       </div>
-
-      {/* 5. BOTTOM SECTION - PROGRESS & RECENT */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center mb-6">
-            <ResponsiveContainer width={200} height={200}>
-              <PieChart>
-                <Pie data={progressData} innerRadius={75} outerRadius={90} paddingAngle={10} dataKey="value" stroke="none" cornerRadius={10}>
-                  {progressData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute text-center">
-              <span className="text-4xl font-bold text-slate-900 tracking-tighter">58%</span>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Готовность</p>
-            </div>
+      
+      {/* 4. НИЖНЯЯ СЕКЦИЯ - ПОСЛЕДНЯЯ АКТИВНОСТЬ */}
+      <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><CheckCircle size={20} /></div>
+             <h3 className="text-lg font-bold text-slate-900 tracking-tight">История последних подтверждений</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 w-full border-t border-gray-50 pt-6">
-             <div className="text-center">
-                <p className="text-sm font-bold text-slate-900 leading-none">350</p>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Факт</p>
-             </div>
-             <div className="text-center border-l border-gray-100">
-                <p className="text-sm font-bold text-slate-900 leading-none">250</p>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Остаток</p>
-             </div>
-          </div>
+          <button className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Смотреть все</button>
         </div>
-
-        <div className="md:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Последние подтверждения</h3>
-            <button className="p-2 hover:bg-gray-50 rounded-xl transition-all"><MoreHorizontal size={20} className="text-gray-400" /></button>
-          </div>
-          <div className="space-y-4">
-            {[
-              { title: 'Публикация Scopus Q2', status: 'Одобрено', date: 'Вчера, 14:20', points: '+100', cat: 'Наука' },
-              { title: 'Курс повышения квалификации', status: 'На проверке', date: '12 марта', points: '+30', cat: 'Метод.раб' }
-            ].map((task, i) => (
-              <div key={i} className="flex items-center justify-between p-5 border border-gray-50 rounded-3xl hover:bg-slate-50 transition-all cursor-pointer group hover:border-blue-100">
-                <div className="flex items-center gap-5">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${task.status === 'Одобрено' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                    <CheckCircle size={20} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight">{task.title}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] font-bold text-blue-600/60 uppercase">{task.cat}</span>
-                      <div className="w-1 h-1 rounded-full bg-gray-200" />
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{task.date}</span>
-                    </div>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { title: 'Статья Scopus Q2 (Deep Learning)', status: 'Одобрено', date: 'Вчера, 14:20', points: '+100', cat: 'Наука' },
+            { title: 'Методическое пособие (ИТ)', status: 'На проверке', date: '12 марта', points: '+30', cat: 'Метод.раб' }
+          ].map((task, i) => (
+            <div key={i} className="flex items-center justify-between p-6 border border-gray-50 rounded-3xl hover:bg-slate-50 transition-all cursor-pointer group hover:border-blue-100">
+              <div className="flex items-center gap-5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${task.status === 'Одобрено' ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-600'}`}>
+                  {task.status === 'Одобрено' ? <CheckCircle size={20} /> : <Clock size={20} />}
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-slate-900 italic tracking-tighter">{task.points}</span>
-                    <p className="text-[9px] font-bold text-slate-300 uppercase leading-none">Баллов</p>
+                <div>
+                  <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight">{task.title}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">{task.cat}</span>
+                    <div className="w-1 h-1 rounded-full bg-gray-200" />
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{task.date}</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-200 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="text-right">
+                <span className={`text-lg font-black italic tracking-tighter ${task.status === 'Одобрено' ? 'text-emerald-500' : 'text-slate-400'}`}>{task.points}</span>
+                <p className="text-[9px] font-bold text-slate-300 uppercase leading-none">Баллов</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
     </main>
   );
 };

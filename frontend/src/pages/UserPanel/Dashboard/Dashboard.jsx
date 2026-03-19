@@ -102,9 +102,6 @@ const Dashboard = () => {
               <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 <GraduationCap size={14} /> {user.academic_degree}
               </span>
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                 {user.department}
-              </span>
             </div>
           </div>
         </div>
@@ -136,13 +133,14 @@ const Dashboard = () => {
           subtitle={`/ ${user.min_kpi}`} 
           description={`Минимальный порог для: ${user.position_title}`} 
         />
+     
         <StatCard 
-          icon={TrendingUp} 
-          label="Прогресс" 
-          value={`${user.progress}%`} 
-          subtitle="выполнено"
-          colorClass="bg-indigo-50 text-indigo-600" 
-          description="Общий процент выполнения годового плана" 
+          icon={Award} 
+          label="Зав. кафедрой" 
+          value={`${user.department_leader}`}
+          subtitle=" " 
+          colorClass="bg-amber-50 text-amber-600" 
+          description={`${user.department}`} 
         />
         <StatCard 
           icon={Award} 
@@ -150,7 +148,7 @@ const Dashboard = () => {
           value={`${user.dean}`}
           subtitle=" " 
           colorClass="bg-amber-50 text-amber-600" 
-          description={`${user.department}`} 
+          description={`${user.faculty}`} 
         />
       </div>
 

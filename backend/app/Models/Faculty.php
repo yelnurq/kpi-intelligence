@@ -4,20 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Department extends Model
+class Faculty extends Model
 {
-    protected $fillable = ['title', 'leader', 'short_name', 'short_title'];
-
+    protected $fillable = ['title', 'dean', 'short_name', 'short_title'];
     public function users() {
         return $this->hasMany(User::class);
     }
-
     public function kpiActivities() {
         return $this->hasManyThrough(KpiActivity::class, User::class);
     }
-
-    public function faculty()
+    public function departments()
     {
-        return $this->belongsTo(Faculty::class);
+        return $this->hasMany(Department::class);
     }
 }

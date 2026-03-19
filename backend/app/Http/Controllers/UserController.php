@@ -18,24 +18,25 @@ class UserController extends Controller
 
         return User::find($tokenRecord->user_id);
     }
-public function me(Request $request)
-{
-    // Загружаем пользователя сразу со всеми связями
-    $user = $this->getAuthenticatedUser($request);
+    public function me(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
 
-    return response()->json([
-        "status" => "success",
-        "data" => [
-            "id"              => $user->id,
-            "name"            => $user->name,
-            "email"           => $user->email,
-            "position_title"  => $user->position?->title ?? 'Не указана',
-            "academic_degree" => $user->academic_degree?->title ?? 'Без степени',
-            "department"      => $user->department?->title ?? 'Вне кафедры',
-            "dean"            => $user->department?->short_name ?? '',
-            "min_kpi"         => $user->position?->min_kpi_target ?? 0,
-            "current_kpi"     => $user->current_kpi ?? 0, // если есть такое поле
-        ]
-    ]);
-}
+        return response()->json([
+            "status" => "success",
+            "data" => [
+                "id"              => $user->id,
+                "name"            => $user->name,
+                "email"           => $user->email,
+                "position_title"  => $user->position?->title ?? 'Не указана',
+                "academic_degree" => $user->academic_degree?->title ?? 'Без степени',
+                "dean"            => $user->faculty?->short_name ?? '',
+                "faculty"      => $user->faculty?->title ?? 'Вне факультета',
+                "department"      => $user->department?->title ?? 'Вне кафедры',
+                "department_leader" => $user->department?->short_name ?? '',
+                "min_kpi"         => $user->position?->min_kpi_target ?? 0,
+                "current_kpi"     => $user->current_kpi ?? 0, 
+            ]
+        ]);
+    }
 }

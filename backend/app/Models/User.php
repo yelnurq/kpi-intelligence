@@ -23,8 +23,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        
         'department_id',
         'academic_degree_id',
+        'faculty_id',
         'position_id',
     ];
     public function tokens()
@@ -33,6 +35,9 @@ class User extends Authenticatable
     }
     public function department() {
         return $this->belongsTo(Department::class);
+    }
+    public function faculty() {
+        return $this->belongsTo(Faculty::class);
     }
     public function academic_degree() {
         return $this->belongsTo(AcademicDegree::class);

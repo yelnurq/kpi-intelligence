@@ -8,18 +8,19 @@
         
         <tr style="font-weight: bold; text-align: center;">
             <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Жұмыс түрлері/<br>Виды работ</td> {{-- Колонка 1 --}}
-            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Норма времени</td> {{-- Колонка 2 --}}
+            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Норма времени для расчета нагрузки (часах)</td> 
             <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Жұмыс атауы/<br>Наименование работ</td> {{-- Колонка 3 --}}
-            <td colspan="4" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Еңбек сыйымдылығы (акад. сағат)</td> {{-- 4,5,6,7 --}}
-            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Есеп беру түрі</td> {{-- 8 --}}
-            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Орындалу мерзімі</td> {{-- 9 --}}
-            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Орындалу күні</td> {{-- 10 --}}
+            <td colspan="4" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Еңбек сыйымдылығы, академиялық сағаттар/ Трудоемкость, академических часов</td> {{-- 4,5,6,7 --}}
+            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Есеп беру түрі/ Вид отчетности</td>
+            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Орындау мерзімі/ Срок выполнения</td> {{-- 9 --}}
+            <td rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Орындалу күні/ Дата выполнения</td>
         </tr>
         <tr style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">
             <td style="font-family: 'Times New Roman';font-size:12px; text-align:centerfont-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;e;">количество</td>
-            <td style="font-family: 'Times New Roman';font-size:12px; text-align:centerfont-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;e;">1-й период</td>
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:centerfont-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;e;">Бірінші академиялық кезең/первый академический период</td>
             <td style="font-family: 'Times New Roman';font-size:12px; text-align:centerfont-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;e;">количество</td>
-            <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">2-й период</td>
+            <td style="font-family: 'Times New Roman';font-size:12px; text-align:centerfont-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;e;">Екінші академиялық кезең/второй академический период</td>
+
         </tr>
         <tr style="background-color: #f0f0f0; text-align: center; font-weight: bold;">
             @foreach(range(1, 10) as $num) <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">{{ $num }}</td> @endforeach

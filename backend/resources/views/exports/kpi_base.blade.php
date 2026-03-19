@@ -46,14 +46,15 @@
 
 @foreach($footers as $f)
     <tr>
-        <td style="border: 1px solid black; font-weight: bold; text-align: left;" rowspan="2">
-            Итого за {{ $f }}
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:left;border: 1px solid black; vertical-align: middle;" rowspan="2">
+            Бірінші {{ $f }}
         </td>
         
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
             запланировано
         </td>
-        @for($i=0; $i<7; $i++) 
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
             <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
         @endfor
     </tr>
@@ -61,7 +62,8 @@
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="2">
             выполнено
         </td>
-        @for($i=0; $i<7; $i++) 
+        <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;" colspan="4"></td>
+        @for($i=0; $i<3; $i++) 
             <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;"></td> 
         @endfor
     </tr>

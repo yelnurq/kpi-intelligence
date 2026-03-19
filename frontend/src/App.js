@@ -13,6 +13,7 @@ import LoginPage from './pages/Auth/Login/Login';
 import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
 import AdminPanel from './pages/AdminPanel/Dashboard/AdminPanel';
 import VerificationAudit from './pages/AdminPanel/Verification/VerificationPage';
+import StaffManagement from './pages/AdminPanel/StaffManagement/StaffManagement';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="admin/dashboard" element={<AdminPanel />} />
           <Route path="admin/verification" element={<VerificationAudit />} />
+          <Route path="admin/staff" element={<StaffManagement />} />
           <Route path="plan" element={<PlanningPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="submit" element={<SubmissionPortal />} />

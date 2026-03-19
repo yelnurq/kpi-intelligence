@@ -1,38 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FileUp, X, CheckCircle2, Info, ChevronDown, 
-  PlusCircle, FileText, Loader2, Calendar as CalendarIcon, 
-  Link as LinkIcon, AlertCircle, ArrowLeft, ShieldCheck,
-  Zap, Eye, Trash2, Clock, HelpCircle
+  FileUp, CheckCircle2, Info, ChevronDown, 
+  FileText, Loader2, Calendar as CalendarIcon, 
+  Trash2, Zap, ShieldCheck, HelpCircle, ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const SubmissionPortal = () => {
   const navigate = useNavigate();
-  const [indicators, setIndicators] = useState([]); // Список индикаторов из БД
+  const [indicators, setIndicators] = useState([]);
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
-  const [status, setStatus] = useState('idle'); // idle | uploading | success
+  const [status, setStatus] = useState('idle'); 
   const [loadingIndicators, setLoadingIndicators] = useState(true);
 
   const [formData, setFormData] = useState({
     indicator_id: '',
     title: '',
-    description: '',
-    date: '',
-    quantity: 1, // По умолчанию 1 единица активности
+    date: new Date().toISOString().split('T')[0],
+    quantity: 1,
   });
 
-  // 1. Загрузка списка индикаторов при старте
+  const API_BASE = 'http://localhost:8000/api';
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     const fetchIndicators = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch('http://localhost:8000/api/kpi-indicators', {
-          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        const response = await axios.get(`${API_BASE}/user/kpi-indicators`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        const result = await response.json();
-        if (result.status === 'success') setIndicators(result.data);
+        if (response.data.status === 'success') {
+          setIndicators(response.data.data);
+        }
       } catch (error) {
         console.error("Ошибка загрузки индикаторов:", error);
       } finally {
@@ -40,300 +41,218 @@ const SubmissionPortal = () => {
       }
     };
     fetchIndicators();
-  }, []);
-
-  const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-  const sizeLimit = 25 * 1024 * 1024;
-  const sizePercentage = Math.min((totalSize / sizeLimit) * 100, 100);
+  }, [token]);
 
   const handleFileAction = (newFiles) => {
     const validFiles = Array.from(newFiles).filter(f => f.size <= 10 * 1024 * 1024);
     setFiles(prev => [...prev, ...validFiles]);
   };
 
-  // 2. Отправка формы на Laravel
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (files.length === 0) return alert("Загрузите подтверждающие документы");
 
     setStatus('uploading');
-    const token = localStorage.getItem("token");
     const data = new FormData();
-
-    // Добавляем текстовые поля
     data.append('indicator_id', formData.indicator_id);
     data.append('title', formData.title);
     data.append('quantity', formData.quantity);
     data.append('date', formData.date);
-
-    // Добавляем файлы
     files.forEach(file => data.append('files[]', file));
 
     try {
-      const response = await fetch('http://localhost:8000/api/kpi-activities', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-        body: data
+      const response = await axios.post(`${API_BASE}/kpi-activities`, data, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
-
-      if (response.ok) {
-        setStatus('success');
-      } else {
-        const err = await response.json();
-        throw new Error(err.message || "Ошибка при загрузке");
-      }
+      if (response.data.status === 'success') setStatus('success');
     } catch (error) {
-      alert(error.message);
+      alert(error.response?.data?.message || "Ошибка при отправке");
       setStatus('idle');
     }
   };
 
+  const selectedIndicator = indicators.find(i => i.id === parseInt(formData.indicator_id));
+  const predictedPoints = selectedIndicator ? selectedIndicator.points * formData.quantity : 0;
+
   if (status === 'success') {
     return (
-      <div className="max-w-2xl mx-auto mt-20 p-1 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-[40px] shadow-2xl">
-        <div className="bg-white rounded-[38px] p-12 text-center space-y-8">
-          <div className="relative inline-block">
-             <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-25"></div>
-             <div className="relative w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
-               <CheckCircle2 size={48} strokeWidth={2.5} />
-             </div>
-          </div>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Документы приняты</h2>
-            <p className="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
-              Ваша заявка успешно отправлена. Вы получите уведомление после проверки модератором.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => navigate('/archive')} className="p-4 rounded-2xl bg-gray-50 text-slate-600 font-bold text-sm hover:bg-gray-100 transition-all">В архив заявок</button>
-            <button onClick={() => { setStatus('idle'); setFiles([]); }} className="p-4 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:shadow-lg transition-all">Новая запись</button>
-          </div>
+      <div className="max-w-md mx-auto mt-20 bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
+        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={32} />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Отправлено на проверку</h2>
+        <p className="text-slate-500 text-sm mb-8">Ваша активность успешно передана модератору.</p>
+        <div className="space-y-3">
+          <button onClick={() => navigate('/dashboard')} className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all">В личный кабинет</button>
+          <button onClick={() => { setStatus('idle'); setFiles([]); }} className="w-full py-3 bg-slate-50 text-slate-600 rounded-xl font-semibold hover:bg-slate-100 transition-all">Добавить еще</button>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Верификация достижений {new Date().getFullYear()} года</h1>
+    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8"> 
+      <div className="flex justify-between items-center mb-10">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Верификация достижений</h1>
+          <p className="text-slate-500 text-sm">Добавление подтверждающих документов в ваш KPI план</p>
         </div>
-      </header>
+      </div>
 
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative items-start">
-  <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6 sticky top-8 self-start z-10">
-              <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-            <div className="bg-slate-50/50 border-b border-slate-100 px-8 py-4 flex justify-between items-center">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <FileText size={14} /> Основная информация
-              </span>
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">Шаг 1 из 2</span>
-            </div>
-
-            <div className="p-8 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* ФОРМА */}
+        <div className="lg:col-span-2 space-y-6">
+          <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-8 space-y-7">
+              {/* Показатель */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="group space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Тип индикатора</label>
-                  <div className="relative">
-                    <select 
-                      required
-                      value={formData.indicator_id}
-                      className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500/20 focus:bg-white transition-all appearance-none outline-none cursor-pointer disabled:opacity-50"
-                      onChange={(e) => setFormData({...formData, indicator_id: e.target.value})}
-                      disabled={loadingIndicators}
-                    >
-                      <option value="">{loadingIndicators ? 'Загрузка...' : 'Выбрать индикатор...'}</option>
-                      {indicators.map(item => (
-                        <option key={item.id} value={item.id}>{item.title} ({item.points} б.)</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  </div>
-                </div>
 
-                <div className="group space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Дата реализации</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Индикатор из плана</label>
+                <div className="relative">
+                  <select 
+                    required
+                    value={formData.indicator_id}
+                    onChange={(e) => setFormData({...formData, indicator_id: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-medium focus:border-blue-500 focus:bg-white outline-none appearance-none transition-all"
+                  >
+                    <option value="">{loadingIndicators ? 'Загрузка показателей...' : 'Выберите индикатор...'}</option>
+                    {indicators.map(item => (
+                      <option key={item.id} value={item.id}>{item.title} ({item.points} б.)</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                </div>
+              </div>
+
+              {/* Дата и Количество */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Дата реализации</label>
                   <div className="relative">
-                    <CalendarIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input 
-                      type="date" 
-                      required
+                      type="date" required
                       value={formData.date}
                       onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-14 pr-5 py-4 text-sm font-bold outline-none focus:border-blue-500/20 focus:bg-white transition-all" 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white transition-all" 
                     />
                   </div>
                 </div>
+              
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Полное наименование работы</label>
-                  <input 
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="Например: Статья о применении ИИ в образовании..." 
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-6 py-5 text-sm font-medium outline-none focus:border-blue-500/20 focus:bg-white transition-all shadow-sm"
-                  />
-                </div>
+              {/* Заголовок */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Полное название работы</label>
+                <input 
+                  type="text" required
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="Например: Публикация в журнале 'Наука и жизнь'..." 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white transition-all"
+                />
               </div>
 
-              {/* Dropzone */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Подтверждающие файлы</label>
-                  <span className={`text-[10px] font-bold ${sizePercentage > 80 ? 'text-red-500' : 'text-slate-400'}`}>
-                    { (totalSize / (1024*1024)).toFixed(1) } MB / 25 MB
-                  </span>
-                </div>
-                
+              {/* Файлы */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Подтверждающие документы</label>
                 <div 
                   onDragOver={(e) => {e.preventDefault(); setDragActive(true)}}
                   onDragLeave={() => setDragActive(false)}
                   onDrop={(e) => {e.preventDefault(); setDragActive(false); handleFileAction(e.dataTransfer.files)}}
-                  className={`relative border-3 border-dashed rounded-[32px] p-10 transition-all duration-300 ${dragActive ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-slate-50/30'}`}
+                  className={`relative border-2 border-dashed rounded-2xl p-10 transition-all flex flex-col items-center gap-2 text-center ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'}`}
                 >
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <div className="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-blue-600"><FileUp size={32} /></div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Перетащите файлы или <span className="text-blue-600 cursor-pointer">обзор</span></h4>
-                      <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">PDF, JPG или PNG до 10МБ</p>
-                    </div>
-                  </div>
+                  <FileUp size={24} className="text-slate-400 mb-1" />
+                  <p className="text-sm font-semibold text-slate-900">Загрузите файлы</p>
+                  <p className="text-xs text-slate-400">Перетащите сюда или нажмите для выбора (PDF, JPG до 10MB)</p>
                   <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileAction(e.target.files)} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {files.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                    <div key={i} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><FileText size={18} /></div>
-                        <div className="overflow-hidden">
-                          <p className="text-[11px] font-bold text-slate-700 truncate">{file.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">{(file.size/1024).toFixed(0)} KB</p>
-                        </div>
+                        <FileText size={16} className="text-blue-500 shrink-0" />
+                        <span className="text-xs font-bold text-slate-700 truncate">{file.name}</span>
                       </div>
-                      <button type="button" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                      <button type="button" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="p-1 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                     </div>
                   ))}
                 </div>
               </div>
+
+              <button 
+                type="submit"
+                disabled={status === 'uploading' || !formData.indicator_id || files.length === 0}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-100 disabled:bg-slate-200 disabled:shadow-none flex items-center justify-center gap-3"
+              >
+                {status === 'uploading' ? <Loader2 className="animate-spin" size={20} /> : 'Отправить на верификацию'}
+              </button>
             </div>
-          </div>
-          
-          <button 
-            type="submit"
-            disabled={status === 'uploading' || !formData.indicator_id}
-            className="w-full bg-slate-900 hover:bg-black text-white p-6 rounded-[30px] font-bold text-sm transition-all flex items-center justify-center gap-4 disabled:bg-slate-400"
-          >
-            {status === 'uploading' ? <Loader2 className="animate-spin" size={20} /> : <>ОТПРАВИТЬ НА ВЕРИФИКАЦИЮ <PlusCircle size={20} /></>}
-          </button>
-        </form>
-
-        <div className="lg:col-span-5 space-y-6">
-  {/* 1. ДИНАМИЧЕСКИЙ ПРЕДПРОСМОТР БАЛЛОВ */}
-  <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 p-8 relative overflow-hidden group">
-    <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full blur-3xl group-hover:bg-blue-100 transition-colors"></div>
-    
-    <div className="relative z-10 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-          <Zap size={20} fill="currentColor" />
+          </form>
         </div>
-        <h3 className="font-bold text-slate-900 text-sm uppercase tracking-widest">Прогноз баллов</h3>
-      </div>
 
-      <div className="space-y-1">
-        <div className="flex items-baseline gap-1">
-          <span className="text-6xl font-black text-slate-900 tracking-tighter">
-            {formData.indicator_id 
-              ? `+${indicators.find(i => i.id == formData.indicator_id)?.points || 0}`
-              : '0'
-            }
-          </span>
-          <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">баллов</span>
-        </div>
-        <p className="text-xs text-slate-500 font-medium">Будет начислено после верификации</p>
-      </div>
+        {/* ПРАВАЯ ЧАСТЬ - ДЕТАЛИ */}
+        <div className="space-y-6">
+          {/* БАЛЛЫ */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Zap size={14} className="text-orange-400 fill-orange-400" /> Прогноз баллов
+            </h3>
+            
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-5xl font-black text-slate-900 tracking-tight">
+                {predictedPoints > 0 ? `+${predictedPoints}` : '0'}
+              </span>
+              <span className="text-sm font-bold text-slate-400">баллов</span>
+            </div>
 
-      {formData.indicator_id && (
-        <div className="pt-6 border-t border-slate-50">
-          <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-3 rounded-2xl">
-            <Info size={16} />
-            <span className="text-[11px] font-bold uppercase tracking-tight">Выбран: {indicators.find(i => i.id == formData.indicator_id)?.title}</span>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-
-<div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 p-8 relative overflow-hidden group">
-  <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-blue-50 transition-colors duration-500"></div>
-  
-  <div className="relative z-10 space-y-6">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shadow-sm">
-        <ShieldCheck size={20} className="text-blue-500" />
-      </div>
-      <h3 className="font-bold text-slate-900 text-sm uppercase tracking-widest">Памятка верификации</h3>
-    </div>
-
-    <ul className="space-y-4">
-      {[
-        { text: "Файлы четко читаемы (скан или фото)", done: files.length > 0 },
-        { text: "Указана верная дата публикации/участия", done: formData.date !== "" },
-        { text: "Название совпадает с документом", done: formData.title.length > 10 },
-        { text: "Размер вложений не превышает 25 МБ", done: totalSize < sizeLimit && totalSize > 0 }
-      ].map((item, i) => (
-        <li key={i} className={`flex items-start gap-3 transition-all duration-300 ${item.done ? 'opacity-100 scale-[1.02]' : 'opacity-40'}`}>
-          <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors ${item.done ? 'bg-blue-500 border-blue-500 shadow-md shadow-blue-100' : 'border-slate-200'}`}>
-            {item.done ? (
-              <CheckCircle2 size={12} className="text-white" />
-            ) : (
-              <div className="w-1 h-1 bg-slate-300 rounded-full" />
+            {selectedIndicator && (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[10px] text-blue-500 font-bold uppercase mb-1">Выбрано:</p>
+                <p className="text-xs text-slate-600 font-semibold leading-tight">{selectedIndicator.title}</p>
+              </div>
             )}
           </div>
-          <span className={`text-[12px] font-bold leading-tight ${item.done ? 'text-slate-800' : 'text-slate-400'}`}>
-            {item.text}
-          </span>
-        </li>
-      ))}
-    </ul>
 
-    {/* Блок с важной информацией */}
-    <div className="p-5 bg-blue-50/50 rounded-[24px] border border-blue-100/50 space-y-2">
-      <div className="flex items-center gap-2">
-        <Info size={14} className="text-blue-500" />
-        <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Важно знать</p>
-      </div>
-      <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-        Срок проверки заявки составляет от <span className="text-slate-900 font-bold">3 до 5 рабочих дней</span> модераторами вашего департамента.
-      </p>
-    </div>
-  </div>
-</div>
+          {/* ЧЕК-ЛИСТ */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <ShieldCheck size={14} className="text-emerald-500" /> Чек-лист
+            </h3>
+            <ul className="space-y-4">
+              {[
+                { label: "Показатель выбран", check: !!formData.indicator_id },
+                { label: "Дата заполнена", check: !!formData.date },
+                { label: "Документы прикреплены", check: files.length > 0 },
+                { label: "Название указано", check: formData.title.length > 3 }
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${item.check ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 bg-white'}`}>
+                    {item.check && <CheckCircle2 size={12} className="text-white" />}
+                  </div>
+                  <span className={`text-xs font-semibold ${item.check ? 'text-slate-700' : 'text-slate-300'}`}>{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-  {/* 3. ПОДДЕРЖКА */}
-  <div className="bg-slate-900 rounded-[32px] border border-slate-800 p-6 flex items-center justify-between group cursor-pointer hover:bg-black hover:border-blue-500/30 transition-all shadow-2xl shadow-slate-900/20 relative overflow-hidden">
-  {/* Легкое свечение на фоне при ховере */}
-  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-  
-  <div className="flex items-center gap-4 relative z-10">
-      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-400 group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300 border border-white/5">
-          <HelpCircle size={24} />
-      </div>
-      <div>
-          <p className="text-xs font-bold text-white tracking-tight">Возникли вопросы?</p>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Связаться с техподдержкой</p>
-      </div>
-  </div>
-  
-  <div className="relative z-10">
-    <ArrowLeft size={18} className="rotate-180 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
-  </div>
-</div>
+          {/* ПОМОЩЬ */}
+          <div className="flex items-center justify-between p-5 bg-slate-900 rounded-2xl group cursor-pointer hover:bg-blue-700 transition-all">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white/50">
+                <HelpCircle size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Нужна помощь?</p>
+                <p className="text-[10px] text-white/40 font-medium">Связаться с куратором</p>
+              </div>
+            </div>
+            <ArrowRight size={18} className="text-white/20 group-hover:text-white transition-all" />
+          </div>
         </div>
       </div>
     </main>

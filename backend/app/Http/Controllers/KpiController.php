@@ -149,4 +149,32 @@ class KpiController extends Controller
             'data' => $indicators
         ]);
     }
+    public function getMyIndicators(Request $request)
+{
+    // 1. Получаем текущего авторизованного пользователя
+    $user = $this->getAuthenticatedUser($request);
+
+    // 2. Делаем запрос к модели UserKpiPlan, вытягивая только индикаторы этого юзера
+    // Используем with('indicator'), чтобы подгрузить данные из основной таблицы kpi_indicators
+    $myPlans = \App\Models\UserKpiPlan::where('user_id', $user->id)
+        ->with('indicator')
+        ->get();
+
+    // 3. Форматируем данные, чтобы фронтенд получил чистый список объектов индикаторов
+    $indicators = $myPlans->map(function ($plan) {
+        return [
+            'id' => $plan->indicator->id,
+            'title' => $plan->indicator->title,
+            'points' => $plan->indicator->points,
+            'category' => $plan->indicator->category,
+            // можно добавить данные из плана, если нужно (например, целевое количество)
+            'target_quantity' => $plan->target_quantity ?? 0, 
+        ];
+    });
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $indicators
+    ]);
+}
 }

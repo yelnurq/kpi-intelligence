@@ -18,6 +18,7 @@ Route::middleware("token")->group(function(){
     Route::get('/user', [UserController::class, 'me']);
 
     Route::get('/kpi-indicators', [KpiController::class, 'getIndicators']);
+    Route::get('/user/kpi-indicators', [KpiController::class, 'getMyIndicators']);
     Route::post("/save-kpi-plan", [KpiController::class, "savePlan"]);
     Route::post("/kpi-activities", [KpiActivityController::class, "store"]);
     Route::get('/get-user-plan-ids', [KpiController::class, 'getPlan']);

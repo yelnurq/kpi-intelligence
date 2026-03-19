@@ -33,6 +33,7 @@ class KPIExport implements WithMultipleSheets, WithEvents { // ДОБАВИТЬ 
         }
         $sheets[] = new Sheets\PlanSheet7($this->data);
         $sheets[] = new Sheets\PlanSheet8($this->data);
+        $sheets[] = new Sheets\PlanSheet9($this->data);
 
         return $sheets;
     }

@@ -11,6 +11,8 @@ import FacultyRanking from './pages/Faculty/FacultyRank/FacultyRanking';
 import ReportGenerator from './pages/UserPanel/ReportGenerator/ReportGenerator'; 
 import LoginPage from './pages/Auth/Login/Login';
 import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
+import AdminPanel from './pages/AdminPanel/Dashboard/AdminPanel';
+import VerificationAudit from './pages/AdminPanel/Verification/VerificationPage';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="admin/dashboard" element={<AdminPanel />} />
+          <Route path="admin/verification" element={<VerificationAudit />} />
           <Route path="plan" element={<PlanningPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="submit" element={<SubmissionPortal />} />

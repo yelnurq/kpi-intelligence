@@ -21,17 +21,18 @@ class KPIExport implements WithMultipleSheets, WithEvents { // ДОБАВИТЬ 
         $sheets[] = new Sheets\PlanSheet($this->data);
 
         $categories = [
-    'учебно-методическая работа'         => '2. УЧЕБНО-МЕТОДИЧЕСКАЯ РАБОТА',
-    'организационно-методическая работа' => '3. ОРГАНИЗАЦИОННО-МЕТОДИЧЕСКАЯ РАБОТА',
-    'научно-исследовательская работа'     => '4. НАУЧНО-ИССЛЕДОВАТЕЛЬСКАЯ РАБОТА',
-    'воспитательная работа'              => '5. ВОСПИТАТЕЛЬНАЯ РАБОТА',
-    'профориентационная работа'          => '6. ПРОФОРИЕНТАЦИОННАЯ РАБОТА',
-    'повышение квалификации'             => '7. ПОВЫШЕНИЕ КВАЛИФИКАЦИИ',
-];
+            'учебно-методическая работа'         => '2. УЧЕБНО-МЕТОДИЧЕСКАЯ РАБОТА',
+            'организационно-методическая работа' => '3. ОРГАНИЗАЦИОННО-МЕТОДИЧЕСКАЯ РАБОТА',
+            'научно-исследовательская работа'     => '4. НАУЧНО-ИССЛЕДОВАТЕЛЬСКАЯ РАБОТА',
+            'воспитательная работа'              => '5. ВОСПИТАТЕЛЬНАЯ РАБОТА',
+            'профориентационная работа'          => '6. ПРОФОРИЕНТАЦИОННАЯ РАБОТА',
+        ];
 
         foreach ($categories as $key => $title) {
             $sheets[] = new Sheets\BaseCategorySheet($this->data, $title, $key);
         }
+        $sheets[] = new Sheets\PlanSheet7($this->data);
+        $sheets[] = new Sheets\PlanSheet8($this->data);
 
         return $sheets;
     }
@@ -41,11 +42,9 @@ class KPIExport implements WithMultipleSheets, WithEvents { // ДОБАВИТЬ 
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 
-                // Применяем ко всей рабочей области
                 $sheet->getStyle('A1:J500')->getAlignment()->setWrapText(true);
                 $sheet->getStyle('A1:J500')->getAlignment()->setVertical('center');
                 
-                // Авто-высота строк для контента
                 foreach (range(5, 100) as $row) {
                     $sheet->getRowDimension($row)->setRowHeight(-1);
                 }

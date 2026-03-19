@@ -27,7 +27,7 @@ private function getAuthenticatedUser(Request $request)
         $query = KpiActivity::where('user_id', $user->id)
             ->with(['indicator', 'evidence'])
             ->orderBy('created_at', 'desc')
-            ->limit(5); // Берем только последние 5 записей
+            ->limit(5); 
 
         $activities = $query->get();
 

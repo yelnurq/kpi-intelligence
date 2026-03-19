@@ -170,7 +170,7 @@ const ActivityArchive = () => {
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center font-bold text-slate-900">
-                        {item.status === 'approved' ? `+${item.total_points}` : '—'}
+                        {item.status === 'approved' ? `+${item.points}` : '—'}
                       </td>
                       <td className="px-6 py-6 text-right">
                         <div className="flex justify-end gap-2 flex-wrap max-w-[200px] ml-auto">

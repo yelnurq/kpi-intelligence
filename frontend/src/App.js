@@ -15,6 +15,9 @@ import AdminPanel from './pages/AdminPanel/Dashboard/AdminPanel';
 import VerificationAudit from './pages/AdminPanel/Verification/VerificationPage';
 import StaffManagement from './pages/AdminPanel/StaffManagement/StaffManagement';
 import AdminLayout from './components/layouts/AdminLayout';
+import TaxonomySettings from './pages/AdminPanel/TaxonomySettings/TaxonomySettings';
+import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
+import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
 
 function App() {
   return (
@@ -24,6 +27,9 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminPanel />} />
           <Route path="audit" element={<VerificationAudit />} />
+          <Route path="assets" element={<AssetManagement />} />
+          <Route path="log" element={<AuditLog />} />
+          <Route path="settings" element={<TaxonomySettings />} />
           <Route path="users" element={<StaffManagement />} />
         </Route>
         <Route path="/" element={<MainLayout />}>

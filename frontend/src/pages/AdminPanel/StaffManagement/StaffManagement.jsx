@@ -213,17 +213,12 @@ const StaffManagement = () => {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen text-left font-sans">
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
-              <Building2 size={14} />
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">University HR</span>
-          </div>
+        
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Сотрудники и ППС</h1>
           <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами и структурой</p>
         </div>

@@ -191,97 +191,130 @@ const StaffManagement = () => {
 
       {/* CONTENT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-10">
-          {groupedData.length > 0 ? groupedData.map((group) => {
-            const filteredItems = (group.items || []).filter(item => {
-              const statusMatch = activeTab === 'pending' ? item.status === 'pending' : item.status !== 'pending';
-              const teacherMatch = selectedTeacher === 'all' || item.user_name === selectedTeacher;
-              return statusMatch && teacherMatch;
-            });
+ <div className="lg:col-span-8 space-y-10">
+  {(() => {
+    // 1. Сначала фильтруем все данные
+    const visibleData = groupedData.map(group => ({
+      ...group,
+      items: (group.items || []).filter(item => {
+        const statusMatch = activeTab === 'pending' ? item.status === 'pending' : item.status !== 'pending';
+        const teacherMatch = selectedTeacher === 'all' || item.user_name === selectedTeacher;
+        return statusMatch && teacherMatch;
+      })
+    })).filter(group => group.items.length > 0); // Убираем пустые факультеты
 
-            if (filteredItems.length === 0) return null;
+    // 2. Если после фильтрации что-то осталось — рендерим список
+    if (visibleData.length > 0) {
+      return visibleData.map((group) => (
+        <section key={group.faculty} className="space-y-4 text-left">
+          <div className="flex items-center gap-4">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              {group.faculty}
+            </h2>
+            <div className="h-px w-full bg-slate-200"></div>
+            <span className="text-[10px] font-bold text-slate-400">{group.items.length}</span>
+          </div>
 
-            return (
-              <section key={group.faculty} className="space-y-4 text-left">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{group.faculty}</h2>
-                  <div className="h-px w-full bg-slate-200"></div>
-                  <span className="text-[10px] font-bold text-slate-400">{filteredItems.length}</span>
-                </div>
-
-                <div className="space-y-4">
-                  {filteredItems.map((req) => (
-                    <div key={req.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group relative overflow-hidden">
-                      <div className="flex flex-col md:flex-row justify-between gap-6 relative z-10">
-                        <div className="flex gap-4">
-                          <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
-                            <User size={24} />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-slate-900 text-sm">{req.user_name}</h3>
-                              <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">{req.category}</span>
-                            </div>
-                            <p className="text-sm font-bold text-slate-700 leading-snug">{req.title}</p>
-                            
-                            <div className="flex flex-wrap items-center gap-3 mt-3">
-                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
-                                <Clock size={12}/> {req.date}
-                              </span>
-                              <div className="flex gap-2">
-                                {(req.files || []).map((file, idx) => (
-                                  <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
-                                    <Download size={10}/> Doc #{idx + 1}
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
-                          <div className="text-right mb-3">
-                            <span className="text-2xl font-bold text-slate-900 tracking-tighter">+{req.total_points}</span>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">баллов</p>
-                          </div>
-                          
-                          {req.status === 'pending' ? (
-                            <div className="flex gap-2">
-                              <button 
-                                disabled={isSubmitting}
-                                onClick={() => { setSelectedRequest(req); setShowCommentModal(true); }}
-                                className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-                              >
-                                <XCircle size={18} />
-                              </button>
-                              <button 
-                                disabled={isSubmitting}
-                                onClick={() => handleStatusUpdate(req.id, 'approved')}
-                                className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[40px]"
-                              >
-                                {isSubmitting && processingId === req.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-                              </button>
-                            </div>
-                          ) : (
-                            <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
-                              {req.status === 'approved' ? 'Принято' : 'Отклонено'}
-                            </div>
-                          )}
+          <div className="space-y-4">
+            {group.items.map((req) => (
+              <div key={req.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group relative overflow-hidden text-left">
+                <div className="flex flex-col md:flex-row justify-between gap-6 relative z-10">
+                  <div className="flex gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                      <User size={24} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-slate-900 text-sm">{req.user_name}</h3>
+                        <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">{req.category}</span>
+                      </div>
+                      <p className="text-sm font-bold text-slate-700 leading-snug">{req.title}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
+                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
+                          <Clock size={12}/> {req.date}
+                        </span>
+                        <div className="flex gap-2">
+                          {(req.files || []).map((file, idx) => (
+                            <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
+                              <Download size={10}/> Doc #{idx + 1}
+                            </a>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
+                    <div className="text-right mb-3">
+                      <span className="text-2xl font-bold text-slate-900 tracking-tighter">+{req.total_points}</span>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">баллов</p>
+                    </div>
+                    
+                    {req.status === 'pending' ? (
+                      <div className="flex gap-2">
+                        <button 
+                          disabled={isSubmitting}
+                          onClick={() => { setSelectedRequest(req); setShowCommentModal(true); }}
+                          className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                        >
+                          <XCircle size={18} />
+                        </button>
+                        <button 
+                          disabled={isSubmitting}
+                          onClick={() => handleStatusUpdate(req.id, 'approved')}
+                          className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[40px]"
+                        >
+                          {isSubmitting && processingId === req.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                        {req.status === 'approved' ? 'Принято' : 'Отклонено'}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </section> 
-            );
-          }) : (
-            <div className="bg-white rounded-3xl p-20 text-center border border-slate-200">
-               <Search size={40} className="text-slate-200 mx-auto mb-4" />
-               <h3 className="text-lg font-bold text-slate-900">Очередь пуста</h3>
-               <p className="text-slate-400 text-sm">Все заявки обработаны</p>
+              </div>
+            ))}
+          </div>
+        </section> 
+      ));
+    }
+
+    // 3. Если данных нет (совсем или после фильтров) — показываем Empty State
+    return (
+      <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-16 text-center relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 blur-3xl transition-colors group-hover:bg-blue-50/50"></div>
+        <div className="relative z-10">
+          <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-100 group-hover:scale-110 group-hover:text-blue-600 transition-all duration-500">
+            <Inbox size={32} className="text-slate-300 group-hover:text-blue-500" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">
+              {groupedData.length === 0 ? "Очередь пуста" : "Ничего не найдено"}
+            </h3>
+            <p className="text-sm text-slate-400 font-medium max-w-[280px] mx-auto leading-relaxed">
+              {groupedData.length === 0 
+                ? "Все заявки на текущий момент обработаны." 
+                : "Попробуйте изменить параметры фильтрации или выбрать другого преподавателя."}
+            </p>
+          </div>
+          {(selectedFaculty !== 'all' || selectedTeacher !== 'all') && (
+            <div className="mt-10 flex justify-center gap-3">
+              <button 
+                onClick={() => { setSelectedFaculty('all'); setSelectedTeacher('all'); }}
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
+              >
+                Сбросить фильтры
+              </button>
             </div>
           )}
         </div>
+      </div>
+    );
+  })()}
+</div>
 
         {/* SIDEBAR */}
         <div className="lg:col-span-4 space-y-6">

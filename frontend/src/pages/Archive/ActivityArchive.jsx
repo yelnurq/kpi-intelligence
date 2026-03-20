@@ -6,6 +6,37 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+// Компонент карточки статистики
+const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, isPrimary, unit = "баллов" }) => (
+  <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group transition-all hover:shadow-md ${isPrimary ? 'ring-1 ring-blue-600/10' : ''}`}>
+    <div className={`absolute top-0 left-0 w-1 h-full ${isPrimary ? 'bg-blue-600' : 'bg-slate-200'}`} />
+    
+    <div className="flex justify-between items-start mb-4">
+      <div className="space-y-1 text-left">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">{value}</h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase">{unit}</span>
+        </div>
+      </div>
+      <div className={`p-2.5 rounded-lg ${colorClass}`}>
+        <Icon size={18} />
+      </div>
+    </div>
+
+    <div className="flex items-center justify-between mt-2 text-left">
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight leading-relaxed">
+        {description}
+      </p>
+      {trend && (
+        <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+          <ArrowUpRight size={14} /> {trend}%
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const ActivityArchive = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
@@ -87,7 +118,7 @@ const ActivityArchive = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         
         <div className="lg:col-span-2 flex-1 space-y-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 text-left">
             <div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Архив активностей</h1>
               <p className="text-sm text-slate-500 font-medium mt-1">История поданных документов и их статусы</p>
@@ -106,26 +137,49 @@ const ActivityArchive = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Всего', val: stats.total, color: 'text-slate-900', icon: <Inbox size={16}/> },
-              { label: 'Принято', val: stats.approved, color: 'text-green-600', icon: <CheckCircle2 size={16}/> },
-              { label: 'В работе', val: stats.pending, color: 'text-amber-500', icon: <Clock size={16}/> },
-              { label: 'В ожидании', val: `+${pendingPoints}`, color: 'text-blue-600', icon: <ArrowUpRight size={16}/> },
-            ].map((s, i) => (
-              <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
-                <p className={`text-2xl font-black ${s.color}`}>{s.val}</p>
-              </div>
-            ))}
+          {/* Статистика с использованием нового StatCard */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard 
+              label="Всего" 
+              value={stats.total} 
+              icon={Inbox} 
+              colorClass="bg-slate-100 text-slate-600" 
+              description="Активностей в базе"
+              unit="записей"
+            />
+            <StatCard 
+              label="Одобрено" 
+              value={stats.approved} 
+              icon={CheckCircle2} 
+              colorClass="bg-emerald-100 text-emerald-600" 
+              description="Подтвержденные KPI"
+              isPrimary={true}
+              unit="записей"
+            />
+            <StatCard 
+              label="В работе" 
+              value={stats.pending} 
+              icon={Clock} 
+              colorClass="bg-amber-100 text-amber-600" 
+              description="Ожидают модерации"
+              unit="записей"
+            />
+            <StatCard 
+              label="На проверке" 
+              value={pendingPoints} 
+              icon={ArrowUpRight} 
+              colorClass="bg-blue-100 text-blue-600" 
+              description="Потенциальные баллы"
+              unit="баллов"
+            />
           </div>
 
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
             <input 
               type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Поиск по названию..."
-              className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-4 text-sm font-medium outline-none focus:border-blue-500 shadow-sm transition-all"
+              placeholder="Поиск по названию или ID..."
+              className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-4 text-sm font-medium outline-none focus:border-blue-500 shadow-sm transition-all text-left"
             />
           </div>
 
@@ -134,16 +188,16 @@ const ActivityArchive = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Достижение</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Достижение</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Статус</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Баллы</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Документы</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Файлы</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredData.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-all">
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6 text-left">
                         <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-2">
                             <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">#KPI-{item.id}</span>
@@ -157,7 +211,7 @@ const ActivityArchive = () => {
                             <div className="flex items-start gap-2 bg-red-50 p-3 rounded-xl border border-red-100 mt-2">
                               <MessageSquare size={14} className="text-red-400 mt-0.5" />
                               <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-red-400 uppercase">Комментарий проверяющего:</span>
+                                <span className="text-[9px] font-black text-red-400 uppercase">Отказ модератора:</span>
                                 <p className="text-[11px] text-red-600 font-semibold">{item.comment}</p>
                               </div>
                             </div>
@@ -185,7 +239,7 @@ const ActivityArchive = () => {
                               <Download size={14} className="group-hover:scale-110 transition-transform" />
                             </a>
                           )) : (
-                            <span className="text-[10px] text-slate-300 italic font-medium">Нет файлов</span>
+                            <span className="text-[10px] text-slate-300 italic font-medium">Пусто</span>
                           )}
                         </div>
                       </td>
@@ -202,7 +256,7 @@ const ActivityArchive = () => {
           <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden sticky top-10">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                <Zap size={14} className="text-amber-500 fill-amber-500"/> Ожидают выполнения
+                <Zap size={14} className="text-amber-500 fill-amber-500"/> Доступно
               </h3>
               <span className="bg-white border border-slate-200 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {pendingIndicators.length}
@@ -211,7 +265,11 @@ const ActivityArchive = () => {
             
             <div className="p-2 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide">
               {pendingIndicators.map((indicator) => (
-                <div key={indicator.id} className="p-4 hover:bg-slate-50 rounded-2xl transition-all group border border-transparent hover:border-slate-100 cursor-pointer" onClick={() => navigate('/submit')}>
+                <div 
+                  key={indicator.id} 
+                  className="p-4 hover:bg-slate-50 rounded-2xl transition-all group border border-transparent hover:border-slate-100 cursor-pointer text-left" 
+                  onClick={() => navigate('/submit')}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">
                       +{indicator.weight || indicator.points} баллов
@@ -221,7 +279,7 @@ const ActivityArchive = () => {
                     </button>
                   </div>
                   <p className="text-xs font-bold text-slate-700 leading-relaxed mb-1">{indicator.title}</p>
-                  <p className="text-[10px] text-slate-400 font-medium italic">Документы еще не поданы</p>
+                  <p className="text-[10px] text-slate-400 font-medium italic">Нажмите, чтобы отправить отчет</p>
                 </div>
               ))}
             </div>

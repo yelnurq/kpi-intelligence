@@ -105,7 +105,7 @@ const SubmissionPortal = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         <div className="lg:col-span-2 space-y-6">
-          <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden transition-all">
+          <form onSubmit={handleSubmit} className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
             <div className="p-8 space-y-8">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -50,7 +50,7 @@ const FacultyRanking = () => {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-8 py-10 space-y-8 bg-[#f8fafc] min-h-screen animate-in fade-in duration-500">
+    <main className="max-w-7xl mx-auto px-6 py-12"> 
       
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-slate-200 pb-8">
@@ -80,7 +80,7 @@ const FacultyRanking = () => {
       </div>
 
       {/* TOP ANALYTICS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-6">
         {faculties.slice(0, 3).map((f, i) => (
           <div key={f.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
             <div className={`absolute top-0 left-0 w-1 h-full ${i === 0 ? 'bg-blue-600' : 'bg-slate-200'}`} />
@@ -94,7 +94,7 @@ const FacultyRanking = () => {
               {i === 0 && <Trophy className="text-blue-600" size={24} />}
             </div>
             <div className="flex items-end justify-between">
-              <div className="space-y-1">
+              <div className="space-y-4">
                 <p className="text-2xl font-bold text-slate-900 tracking-tighter leading-none">{f.score.toLocaleString()}</p>
                 <div className="flex items-center gap-1.5">
                    <Target size={12} className="text-blue-500" />
@@ -112,7 +112,7 @@ const FacultyRanking = () => {
       </div>
 
       {/* MAIN DATA TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="mt-5 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight">Сводная ведомость подразделений</h3>
           <div className="relative w-64">
@@ -207,7 +207,7 @@ const FacultyRanking = () => {
       </div>
 
       {/* FOOTER NOTIFICATION */}
-      <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100/50 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="mt-5 bg-blue-50/50 p-6 rounded-xl border border-blue-100/50 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex gap-4 text-left">
           <div className="p-2 bg-white rounded-lg border border-blue-100 shrink-0">
              <Info size={18} className="text-blue-500" />

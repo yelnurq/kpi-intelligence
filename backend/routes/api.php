@@ -13,9 +13,10 @@ Route::post("/register", [AuthController::class, "register"]);
 Route::middleware("token")->group(function(){
 
     Route::get('/admin/users', [UserController::class, 'index']);
+    Route::post('/admin/users', [UserController::class, 'store']);
     Route::delete('/admin/users/{id}', [UserController::class, 'destroy']);
     Route::get('/admin/users/stats', [UserController::class, 'stats']);   
-
+    Route::get('/admin/helpers/user-options', [UserController::class, 'getOptions']);
 
     Route::post("/logout", [AuthController::class, "logout"]);
     

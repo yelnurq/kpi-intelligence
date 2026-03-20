@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicDegree;
+use App\Models\Department;
+use App\Models\Faculty;
+use App\Models\Position;
 use App\Models\Token;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
@@ -144,4 +150,61 @@ class UserController extends Controller
                 ->get()
         ]);
     }
+
+
+public function store(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'faculty_id' => 'required|exists:faculties,id',
+            'department_id' => 'required|exists:departments,id',
+            'position_id' => 'required|exists:positions,id',
+            'academic_degree_id' => 'required|exists:academic_degrees,id',
+            'role' => 'nullable|string'
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'faculty_id' => $validated['faculty_id'],
+            'department_id' => $validated['department_id'],
+            'position_id' => $validated['position_id'],
+            'academic_degree_id' => $validated['academic_degree_id'],
+            'role' => $request->role ?? 'user',
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Сотрудник успешно создан',
+            'user' => $user
+        ], 201);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Ошибка при создании: ' . $e->getMessage()
+        ], 422);
+    }
+}
+public function getOptions()
+{
+    try {
+        // Добавляем \App\Models\ перед каждой моделью, чтобы точно избежать конфликтов
+        return response()->json([
+            'faculties' => \App\Models\Faculty::select('id', 'title as name')->orderBy('title')->get(),
+            'departments' => \App\Models\Department::select('id', 'title as name')->orderBy('title')->get(),
+            'positions' => \App\Models\Position::select('id', 'title as name')->orderBy('title')->get(),
+            'degrees' => \App\Models\AcademicDegree::select('id', 'title as name')->orderBy('title')->get(),
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Ошибка при загрузке справочников: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

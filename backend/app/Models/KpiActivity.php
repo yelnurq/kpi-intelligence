@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class KpiActivity extends Model
 {
-    protected $fillable = ['user_id', 'indicator_id', 'quantity', 'total_points', 'status'];
+    protected $fillable = ['user_id', 'indicator_id', 'quantity', 'total_points', 'status', 'comment'];
 
     public function user() {
         return $this->belongsTo(User::class);

@@ -64,7 +64,65 @@ private function getAuthenticatedUser(Request $request)
             'stats' => $stats
         ]);
     }
-    public function index(Request $request)
+public function admin(Request $request)
+{
+    try {
+        $query = \App\Models\KpiActivity::with(['user.faculty', 'indicator', 'evidence']);
+
+        if ($request->has('faculty') && $request->faculty !== 'all') {
+            $query->whereHas('user.faculty', function($q) use ($request) {
+                $q->where('title', $request->faculty); 
+            });
+        }
+
+        $activities = $query->orderBy('created_at', 'desc')->get();
+
+        $allFaculties = \App\Models\Faculty::pluck('title')->toArray();
+
+        $groupedByFaculty = $activities->groupBy(function ($activity) {
+            return $activity->user->faculty->title ?? 'Общий факультет';
+        })->map(function ($facultyActivities, $facultyName) {
+            return [
+                'faculty' => $facultyName,
+                'items' => $facultyActivities->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'user_name' => $item->user->name ?? 'Сотрудник',
+                        'title' => $item->title ?? ($item->indicator->title ?? 'Без названия'),
+                        'category' => $item->indicator->category ?? 'Общее',
+                        'date' => $item->created_at->format('d.m.Y'),
+                        'total_points' => $item->indicator->points,
+                        'status' => $item->status,
+                        'comment' => $item->comment, // Твой комментарий (причина отказа)
+                        'files' => $item->evidence ? $item->evidence->map(fn($f) => [
+                            'name' => $f->file_name,
+                            'url' => asset('storage/' . $f->file_path)
+                        ]) : [],
+                    ];
+                })->values()
+            ];
+        })->values();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $groupedByFaculty,
+            'faculties' => $allFaculties,
+            'stats' => [
+                'total' => $activities->count(),
+                'approved' => $activities->where('status', 'approved')->count(),
+                'pending' => $activities->where('status', 'pending')->count(),
+                'rejected' => $activities->where('status', 'rejected')->count(),
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Ошибка SQL: ' . $e->getMessage()
+        ], 500);
+    }
+}   
+ public function index(Request $request)
     {
         $user = $this->getAuthenticatedUser($request);
 
@@ -91,8 +149,7 @@ private function getAuthenticatedUser(Request $request)
                     'date' => $item->created_at->format('d.m.Y'),
                     // Берем баллы напрямую из связанного индикатора
                     'points' => $item->indicator ? $item->indicator->points : 0, 
-                    // Если нужно общее кол-во (баллы * количество), оставь так:
-                    'total_points' => $item->total_points, 
+                    'total_points' => $item->indicator->points ?? 0, 
                     'status' => $item->status,
                     'reason' => $item->rejection_reason,
                     'files_count' => $item->evidence->count(),
@@ -108,6 +165,30 @@ private function getAuthenticatedUser(Request $request)
         ]);
     }
 
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:approved,rejected',
+        'comment' => 'nullable|string'
+    ]);
+
+    $activity = KpiActivity::findOrFail($id);
+    
+    $activity->status = $request->status;
+    
+    if ($request->status === 'rejected') {
+        $activity->comment = $request->comment;
+    } else {
+        $activity->comment = null;
+    }
+
+    $activity->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Статус успешно обновлен'
+    ]);
+}
 
 public function store(Request $request)
 {

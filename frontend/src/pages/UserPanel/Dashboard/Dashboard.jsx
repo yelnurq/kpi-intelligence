@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Target, Zap, TrendingUp, ChevronRight, FilePlus2, Award, 
   User, GraduationCap, Briefcase, ShieldCheck, Clock, CheckCircle, 
-  AlertCircle, BarChart3, Calendar, ArrowUpRight
+  AlertCircle, BarChart3, Calendar, ArrowUpRight  
 } from 'lucide-react';
 
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, isPrimary }) => (
@@ -105,9 +105,22 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-
+{/* Пример для вставки в StatCard или рядом */}
+<div className="mt-4 space-y-2">
+  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+    <span>Прогресс цели</span>
+    <span>{Math.round((user.current_kpi / user.min_kpi) * 100)}%</span>
+  </div>
+  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+    <div 
+      className="h-full bg-blue-600 transition-all duration-1000" 
+      style={{ width: `${(user.current_kpi / user.min_kpi) * 100}%` }}
+    />
+  </div>
+</div>
       {/* 2. STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+       
         <StatCard 
           icon={Zap} 
           label="Текущий KPI" 

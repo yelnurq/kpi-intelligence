@@ -24,7 +24,7 @@ class KpiActivity extends Model
     {
         static::creating(function ($activity) {
             $indicator = KpiIndicator::find($activity->indicator_id);
-            $activity->total_points = $indicator->weight * $activity->quantity;
+            $activity->total_points = $indicator->points * $activity->quantity;
         });
     }
 }

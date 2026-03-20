@@ -91,7 +91,7 @@ public function admin(Request $request)
                         'title' => $item->title ?? ($item->indicator->title ?? 'Без названия'),
                         'category' => $item->indicator->category ?? 'Общее',
                         'date' => $item->created_at->format('d.m.Y'),
-                        'total_points' => $item->indicator->points,
+                        'total_points' => $item->total_points,
                         'status' => $item->status,
                         'comment' => $item->comment, // Твой комментарий (причина отказа)
                         'files' => $item->evidence ? $item->evidence->map(fn($f) => [
@@ -208,32 +208,36 @@ public function store(Request $request)
 {
     $user = $this->getAuthenticatedUser($request);
 
+    if (!$user) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+    }
+
     $request->validate([
-        // Проверяем, что индикатор не просто существует, 
-        // а привязан именно к этому пользователю в таблице планов
-        'indicator_id' => [
-            'required',
-            Rule::exists('user_kpi_plans', 'kpi_indicator_id')->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-                // Если у тебя есть учебные года, можно добавить и текущий год:
-                // ->where('academic_year', '2025-2026'); 
-            }),
-        ],
-        'quantity' => 'required|integer|min:1',
-        'files' => 'required|array|min:1', // Убедимся, что файлы переданы
-        'files.*' => 'file|max:10240',
-    ], [
-        'indicator_id.exists' => 'Вы не можете подавать отчет по индикатору, которого нет в вашем плане.'
+        'indicator_id' => 'required|exists:kpi_indicators,id',
+        'quantity'     => 'required|integer|min:1',
+        'title'        => 'required|string|max:255',
+        'date'         => 'required|date',
+        'files'        => 'required|array|min:1',
+        'files.*'      => 'file|max:10240',
     ]);
 
-    // Дальше твой код создания записи
-    $activity = KpiActivity::create([
-        'user_id' => $user->id,
-        'indicator_id' => $request->indicator_id,
-        'quantity' => $request->quantity,
-        'status' => 'pending'
-    ]);
+    // 1. Получаем индикатор из базы по переданному ID
+    // 1. Находим индикатор по ID
+$indicator = \App\Models\KpiIndicator::findOrFail($request->indicator_id);
 
+// 2. Берем чистый балл из индикатора (без умножения на quantity)
+
+// 3. Создаем запись
+$activity = \App\Models\KpiActivity::create([
+    'user_id'      => $user->id,
+    'indicator_id' => $request->indicator_id,
+    'title'        => $request->title,
+    'quantity'     => $request->quantity, // Количество сохраняем просто для инфо
+    'status'       => 'pending',
+    'date'         => $request->date,
+]);
+
+    // 4. Сохранение доказательств (файлов)
     if ($request->hasFile('files')) {
         foreach ($request->file('files') as $file) {
             $path = $file->store('kpi_evidence', 'public');
@@ -248,8 +252,11 @@ public function store(Request $request)
 
     return response()->json([
         'status' => 'success',
-        'message' => 'Заявка отправлена',
-        'activity_id' => $activity->id
+        'message' => 'Заявка отправлена. Ожидайте верификации.',
+        'data' => [
+            'id' => $activity->id,
+            'points_added_to_pending' => $activity->total_points
+        ]
     ]);
 }
 }

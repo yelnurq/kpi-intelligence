@@ -63,7 +63,7 @@ const FacultyRanking = () => {
               <span className="font-bold text-blue-700 text-xs">{lastUpdated}</span>
             </div>
             <span className="text-slate-300">|</span>
-            <span className="italic text-slate-400">Сезон: Весна 2026</span>
+            <span className="italic text-slate-400">Сезон: 2025/2026</span>
           </div>
         </div>
 

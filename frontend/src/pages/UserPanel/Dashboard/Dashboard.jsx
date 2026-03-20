@@ -117,13 +117,52 @@ const Dashboard = () => {
       </div>
 
       {/* 2. ГРИД КАРТОЧЕК KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Zap} label="Мой Текущий KPI" value={user.current_kpi} trend={user.progress} colorClass="bg-blue-600 text-white" description={`Подтверждено баллов`} />
-        <StatCard icon={Target} label="Целевой План" value={user.min_kpi} colorClass="bg-slate-50 text-slate-600" subtitle={`/ ${user.min_kpi}`} description={`Порог для вашей должности`} />
-        <StatCard icon={Award} label="Зав. кафедрой" value={user.department_leader} subtitle=" " colorClass="bg-amber-50 text-amber-600" description={user.department} />
-        <StatCard icon={Award} label="Декан" value={user.dean} subtitle=" " colorClass="bg-amber-50 text-amber-600" description={user.faculty} />
-      </div>
+   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"> {/* Изменил lg:grid-cols-5 для 5 колонок */}
+  <StatCard 
+    icon={Zap} 
+    label="Мой Текущий KPI" 
+    value={user.current_kpi} 
+    trend={user.progress_percent + '%'} 
+    colorClass="bg-blue-600 text-white" 
+    description="Подтверждено баллов" 
+  />
 
+  {/* НОВАЯ КАРТОЧКА: Pending KPI */}
+  <StatCard 
+    icon={Clock} // Не забудь импортировать Clock из lucide-react
+    label="На проверке" 
+    value={`+${user.pending_kpi}`} 
+    colorClass="bg-amber-50 text-amber-600 border border-amber-100" 
+    description="Ожидают подтверждения" 
+  />
+
+  <StatCard 
+    icon={Target} 
+    label="Целевой План" 
+    value={user.min_kpi} 
+    colorClass="bg-slate-50 text-slate-600" 
+    subtitle={`/ ${user.min_kpi}`} 
+    description="Порог для вашей должности" 
+  />
+  
+  <StatCard 
+    icon={Award} 
+    label="Зав. кафедрой" 
+    value={user.department_leader} 
+    subtitle=" " 
+    colorClass="bg-slate-50 text-slate-600" 
+    description={user.department} 
+  />
+  
+  <StatCard 
+    icon={Award} 
+    label="Декан" 
+    value={user.dean} 
+    subtitle=" " 
+    colorClass="bg-slate-50 text-slate-600" 
+    description={user.faculty} 
+  />
+</div>
       {/* 3. ТАБЛИЦА ПОСЛЕДНИХ АКТИВНОСТЕЙ */}
       <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex justify-between items-center">

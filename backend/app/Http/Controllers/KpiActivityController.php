@@ -151,7 +151,7 @@ public function admin(Request $request)
                     'points' => $item->indicator ? $item->indicator->points : 0, 
                     'total_points' => $item->indicator->points ?? 0, 
                     'status' => $item->status,
-                    'reason' => $item->rejection_reason,
+                    'comment' => $item->comment,
                     'files_count' => $item->evidence->count(),
                     'files' => $item->evidence->map(function ($file) {
                         return [
@@ -164,7 +164,6 @@ public function admin(Request $request)
             'stats' => $stats
         ]);
     }
-
 public function updateStatus(Request $request, $id)
 {
     $request->validate([
@@ -172,21 +171,36 @@ public function updateStatus(Request $request, $id)
         'comment' => 'nullable|string'
     ]);
 
-    $activity = KpiActivity::findOrFail($id);
+    // Загружаем активность вместе с индикатором
+    $activity = \App\Models\KpiActivity::with('indicator')->findOrFail($id);
     
     $activity->status = $request->status;
     
-    if ($request->status === 'rejected') {
-        $activity->comment = $request->comment;
-    } else {
+    if ($request->status === 'approved') {
+        // Очищаем комментарий при одобрении
         $activity->comment = null;
+        
+        // РАСЧЕТ: Берем актуальный вес из индикатора и умножаем на количество в заявке
+        // Если вес не найден в индикаторе, оставляем старый total_points или ставим 0
+        if ($activity->indicator) {
+            $activity->total_points = $activity->indicator->points;
+        }
+    } else {
+        // Если отклонено (rejected)
+        $activity->comment = $request->comment;
+        // Опционально: можно обнулять баллы при отказе, чтобы они не путались в статистике
+        // $activity->total_points = 0; 
     }
 
     $activity->save();
 
     return response()->json([
         'status' => 'success',
-        'message' => 'Статус успешно обновлен'
+        'message' => 'Статус успешно обновлен',
+        'data' => [
+            'new_status' => $activity->status,
+            'final_points' => $activity->total_points
+        ]
     ]);
 }
 

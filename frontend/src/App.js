@@ -28,7 +28,7 @@ function App() {
           <Route path="dashboard" element={<AdminPanel />} />
           <Route path="audit" element={<VerificationAudit />} />
           <Route path="assets" element={<AssetManagement />} />
-          <Route path="log" element={<AuditLog />} />
+          <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />
           <Route path="users" element={<StaffManagement />} />
         </Route>

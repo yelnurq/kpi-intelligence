@@ -180,11 +180,6 @@ public function updateStatus(Request $request, $id)
         // Очищаем комментарий при одобрении
         $activity->comment = null;
         
-        // РАСЧЕТ: Берем актуальный вес из индикатора и умножаем на количество в заявке
-        // Если вес не найден в индикаторе, оставляем старый total_points или ставим 0
-        if ($activity->indicator) {
-            $activity->total_points = $activity->indicator->points;
-        }
     } else {
         // Если отклонено (rejected)
         $activity->comment = $request->comment;

@@ -122,7 +122,7 @@ const Dashboard = () => {
     icon={Zap} 
     label="Мой Текущий KPI" 
     value={user.current_kpi} 
-    trend={user.progress_percent + '%'} 
+    trend={user.progress_percent} 
     colorClass="bg-blue-600 text-white" 
     description="Подтверждено баллов" 
   />

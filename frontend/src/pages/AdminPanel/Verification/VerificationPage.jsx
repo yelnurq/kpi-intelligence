@@ -3,7 +3,7 @@ import {
   CheckCircle, XCircle, Clock, Search, 
   User, FileText, ArrowRight, Shield, 
   Download, Loader2, X, ChevronRight,
-  Filter, CheckCircle2, Inbox, Activity, AlertCircle,ArrowUpRight
+  Filter, CheckCircle2, Inbox, Activity, AlertCircle,ArrowUpRight, ShieldCheck
 } from 'lucide-react';
 
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, isPrimary, unit = "записей" }) => (
@@ -314,47 +314,80 @@ const VerificationAudit = () => {
           )}
         </div>
 
-        {/* SIDEBAR STATS */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-xl sticky top-10 text-left overflow-hidden">
-            <div className="relative z-10">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-6">Эффективность</h4>
-              
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <span className="text-[10px] font-bold uppercase text-slate-400">Прогресс аудита</span>
-                    <span className="text-lg font-bold text-white">
-                      {stats.total > 0 ? Math.round(((stats.total - stats.pending) / stats.total) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-blue-500 h-full transition-all duration-1000" 
-                      style={{ width: `${stats.total > 0 ? ((stats.total - stats.pending) / stats.total) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
+     {/* SIDEBAR STATS */}
+<div className="lg:col-span-4 space-y-6">
+  <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0,04)] sticky top-10 text-left overflow-hidden group">
+    
+    {/* Декоративный элемент на фоне (мягкое пятно) */}
+    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl transition-colors group-hover:bg-blue-100/50"></div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase">Одобрено</p>
-                        <p className="text-xl font-bold text-emerald-400">{stats.approved}</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase">Отклонено</p>
-                        <p className="text-xl font-bold text-red-400">{stats.rejected}</p>
-                    </div>
-                </div>
-
-                <button className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                  Скачать полный отчет <ArrowRight size={14}/>
-                </button>
-              </div>
+    <div className="relative z-10">
+      {/* Заголовок с точкой активности */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+        </span>
+        <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Эффективность</h4>
+      </div>
+      
+      <div className="space-y-8">
+        {/* Блок прогресса */}
+        <div>
+          <div className="flex justify-between items-end mb-3">
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block">Прогресс аудита</span>
+              <span className="text-2xl font-black text-slate-900 tracking-tighter">
+                {stats.total > 0 ? Math.round(((stats.total - stats.pending) / stats.total) * 100) : 0}%
+              </span>
             </div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+            <div className="text-right">
+              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">Live</span>
+            </div>
+          </div>
+          
+          {/* Кастомный прогресс-бар */}
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden p-[1px]">
+            <div 
+              className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-blue-600 to-indigo-500 shadow-[0_0_8px_rgba(37,99,235,0.3)]" 
+              style={{ width: `${stats.total > 0 ? ((stats.total - stats.pending) / stats.total) * 100 : 0}%` }}
+            />
           </div>
         </div>
+
+        {/* Сетка мини-статистики с разделителями */}
+        <div className="grid grid-cols-2 gap-0 border-y border-slate-50 py-6">
+            <div className="space-y-1 pr-4 border-r border-slate-50">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Одобрено</p>
+                <p className="text-2xl font-bold text-emerald-500 tabular-nums">{stats.approved}</p>
+            </div>
+            <div className="space-y-1 pl-6">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Отклонено</p>
+                <p className="text-2xl font-bold text-rose-500 tabular-nums">{stats.rejected}</p>
+            </div>
+        </div>
+
+        {/* Кнопка в новом стиле (неоморфизм + минимализм) */}
+        <button className="group/btn w-full py-4 bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50 text-slate-900 rounded-2xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-3 shadow-sm hover:shadow-blue-100">
+          Скачать отчет 
+          <ArrowRight size={14} className="text-blue-600 transition-transform group-hover/btn:translate-x-1"/>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Дополнительная маленькая карточка-подсказка снизу (для интереса) */}
+  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-[24px] text-white shadow-lg shadow-blue-200">
+    <div className="flex items-center gap-4">
+        <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md">
+            <ShieldCheck size={20} className="text-white"/>
+        </div>
+        <div className="text-left text-[11px] font-bold leading-tight tracking-tight opacity-90 uppercase">
+            Безопасность данных <br/> подтверждена SSL
+        </div>
+    </div>
+  </div>
+</div>
       </div>
 
       {/* MODAL */}

@@ -135,8 +135,58 @@ class UserController extends Controller
     }
 }
     /**
-     * Удаление пользователя
-     */
+ * Обновление данных пользователя
+ */
+public function update(Request $request, $id)
+{
+    try {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Пользователь не найден'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'faculty_id' => 'required|exists:faculties,id',
+            'department_id' => 'required|exists:departments,id',
+            'position_id' => 'required|exists:positions,id',
+            'academic_degree_id' => 'required|exists:academic_degrees,id',
+            'role' => 'nullable|string'
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'faculty_id' => $validated['faculty_id'],
+            'department_id' => $validated['department_id'],
+            'position_id' => $validated['position_id'],
+            'academic_degree_id' => $validated['academic_degree_id'],
+            'role' => $request->role ?? $user->role,
+        ];
+
+        // Обновляем пароль только если он введен
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Данные сотрудника обновлены',
+            'user' => $user
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Ошибка при обновлении: ' . $e->getMessage()
+        ], 422);
+    }
+}
     public function destroy($id)
     {
         $user = User::find($id);
@@ -205,7 +255,6 @@ public function store(Request $request)
 public function getOptions()
 {
     try {
-        // Добавляем \App\Models\ перед каждой моделью, чтобы точно избежать конфликтов
         return response()->json([
             'faculties' => \App\Models\Faculty::select('id', 'title as name')->orderBy('title')->get(),
             'departments' => \App\Models\Department::select('id', 'title as name')->orderBy('title')->get(),

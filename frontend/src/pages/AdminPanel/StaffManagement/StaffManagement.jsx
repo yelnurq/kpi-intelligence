@@ -1,9 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search, UserPlus, Mail, Building2, Filter, 
-  Download, ChevronRight, Loader2, Trash2, 
-  Edit2, X, ShieldCheck, Key, GraduationCap, MapPin
+  ChevronRight, Loader2, Trash2, Edit2, X, 
+  ShieldCheck, MapPin, Users,
+  UserCheck, UserMinus
 } from 'lucide-react';
+
+// Компонент карточки статистики
+const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "чел." }) => (
+  <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md ${isPrimary ? 'ring-1 ring-blue-600/10' : ''}`}>
+    <div className={`absolute top-0 left-0 w-1 h-full ${isPrimary ? 'bg-blue-600' : 'bg-slate-200'}`} />
+    <div className="flex justify-between items-start mb-4">
+      <div className="space-y-1 text-left">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">{value}</h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase">{unit}</span>
+        </div>
+      </div>
+      <div className={`p-2.5 rounded-lg ${colorClass}`}>
+        <Icon size={18} />
+      </div>
+    </div>
+    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-left">{description}</p>
+  </div>
+);
 
 const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
@@ -11,35 +32,26 @@ const StaffManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState('all');
   const [faculties, setFaculties] = useState([]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [options, setOptions] = useState({ faculties: [], departments: [], positions: [], degrees: [] });
+  const [editingId, setEditingId] = useState(null);
   
-  // ОБНОВЛЕНО: Добавлены department_id и academic_degree_id
+  const [options, setOptions] = useState({ faculties: [], departments: [], positions: [], degrees: [] });
   const [formData, setFormData] = useState({
-    name: '', 
-    email: '', 
-    password: '', 
-    password_confirmation: '',
-    faculty_id: '', 
-    department_id: '', 
-    position_id: '', 
-    academic_degree_id: '',
+    name: '', email: '', password: '', password_confirmation: '',
+    faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
     role: 'user'
   });
 
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
+  // Загрузка списка пользователей
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/admin/users`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json' 
-        }
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const result = await res.json();
       if (result.status === 'success') {
@@ -48,34 +60,111 @@ const StaffManagement = () => {
         setFaculties(uniqueNames);
       }
     } catch (error) {
-      console.error("Ошибка при загрузке сотрудников:", error);
+      console.error("Ошибка загрузки:", error);
     } finally {
       setLoading(false);
     }
-  }, [token, API_BASE]);
+  }, [token]);
 
-  const fetchOptions = async () => {
+ 
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  const resetForm = () => {
+    setFormData({
+      name: '', email: '', password: '', password_confirmation: '',
+      faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
+      role: 'user'
+    });
+    setEditingId(null);
+  };
+
+
+  // 1. Улучшаем загрузку справочников (кешируем их в состоянии)
+  const fetchOptions = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/admin/helpers/user-options`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const data = await res.json();
       setOptions(data);
+      return data;
     } catch (error) {
-      console.error("Ошибка загрузки справочников:", error);
+      console.error("Ошибка справочников:", error);
+    }
+  }, [token]);
+
+  // 2. Мгновенное открытие для создания
+  const handleOpenCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true); // Сначала открываем
+    fetchOptions();      // Загружаем опции в фоне
+  };
+
+  // 3. Мгновенное открытие для редактирования
+  const handleEditClick = (user) => {
+    setEditingId(user.id);
+    
+    // Сначала открываем окно с имеющимися данными
+    setIsModalOpen(true);
+
+    // Заполняем текстовые поля сразу
+    const initialFormData = {
+      name: user.name,
+      email: user.email,
+      password: '', 
+      password_confirmation: '',
+      role: user.role || 'user',
+      // ID пока пустые, если опции еще не загружены
+      faculty_id: options.faculties.find(f => f.name === user.faculty)?.id || '',
+      department_id: options.departments.find(d => d.name === user.department)?.id || '',
+      position_id: options.positions.find(p => p.name === user.position)?.id || '',
+      academic_degree_id: options.degrees.find(d => d.name === user.academic_degree)?.id || '',
+    };
+    setFormData(initialFormData);
+
+    // Обновляем справочники и пересчитываем ID в фоне
+    fetchOptions().then(freshOptions => {
+      if (freshOptions) {
+        setFormData(prev => ({
+          ...prev,
+          faculty_id: freshOptions.faculties.find(f => f.name === user.faculty)?.id || prev.faculty_id,
+          department_id: freshOptions.departments.find(d => d.name === user.department)?.id || prev.department_id,
+          position_id: freshOptions.positions.find(p => p.name === user.position)?.id || prev.position_id,
+          academic_degree_id: freshOptions.degrees.find(d => d.name === user.academic_degree)?.id || prev.academic_degree_id,
+        }));
+      }
+    });
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Удалить этого сотрудника? Все связанные данные могут быть потеряны.")) return;
+    try {
+      const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      });
+      if (res.ok) fetchUsers();
+      else alert("Ошибка при удалении");
+    } catch (error) {
+      console.error("Ошибка:", error);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const handleCreateUser = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password !== formData.password_confirmation) {
+      alert("Пароли не совпадают!");
+      return;
+    }
+
     setIsSubmitting(true);
+    const method = editingId ? 'PUT' : 'POST';
+    const url = editingId ? `${API_BASE}/admin/users/${editingId}` : `${API_BASE}/admin/users`;
+
     try {
-      const res = await fetch(`${API_BASE}/admin/users`, {
-        method: 'POST',
+      const res = await fetch(url, {
+        method: method,
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -85,19 +174,16 @@ const StaffManagement = () => {
       });
       
       const result = await res.json();
+      
       if (res.ok) {
         setIsModalOpen(false);
+        resetForm();
         fetchUsers();
-        setFormData({
-          name: '', email: '', password: '', password_confirmation: '',
-          faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-          role: 'user'
-        });
       } else {
-        alert(result.message || "Ошибка при заполнении формы");
+        alert(result.message || "Ошибка операции");
       }
     } catch (error) {
-      console.error("Ошибка запроса:", error);
+      alert("Ошибка соединения с сервером");
     } finally {
       setIsSubmitting(false);
     }
@@ -110,56 +196,74 @@ const StaffManagement = () => {
     return matchesSearch && matchesFaculty;
   });
 
+  const stats = {
+    total: users.length,
+    active: users.filter(u => u.activities_count > 0).length,
+    new: users.filter(u => u.activities_count === 0).length,
+    admins: users.filter(u => u.role === 'admin').length
+  };
+
   if (loading && users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Синхронизация штата...</span>
+      <div className="fixed inset-0 flex flex-col justify-center items-center bg-white">
+        <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Загрузка данных...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen text-left font-sans">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Building2 size={16} className="text-blue-600" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Управление персоналом</span>
+            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+              <Building2 size={14} />
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">University HR</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Сотрудники и ППС</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Сотрудники и ППС</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами и структурой</p>
         </div>
 
         <button 
-          onClick={() => { fetchOptions(); setIsModalOpen(true); }}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-200 group"
+          onClick={handleOpenCreateModal}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200"
         >
-          <UserPlus size={18} className="group-hover:scale-110 transition-transform" />
+          <UserPlus size={18} />
           Добавить сотрудника
         </button>
       </div>
 
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Всего" value={stats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Общий штат" />
+        <StatCard label="Активные" value={stats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="С заявками KPI" isPrimary={true} />
+        <StatCard label="Новые" value={stats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Без активности" />
+        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="Управляющий состав" />
+      </div>
+
       {/* FILTERS */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="md:col-span-8 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+      <div className="flex flex-wrap items-center gap-4 mb-8">
+        <div className="relative group flex-1 min-w-[300px]">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input 
             type="text" 
             placeholder="Поиск по ФИО или Email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-[22px] text-sm font-bold focus:outline-none focus:ring-4 ring-blue-50 transition-all shadow-sm"
+            className="w-full pl-12 pr-6 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
           />
         </div>
 
-        <div className="md:col-span-4 relative">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <div className="relative group w-full md:w-[300px]">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <select 
             value={selectedFaculty}
             onChange={(e) => setSelectedFaculty(e.target.value)}
-            className="w-full pl-12 pr-10 py-4 bg-white border border-slate-200 rounded-[22px] text-[11px] font-black uppercase tracking-wider appearance-none focus:outline-none focus:ring-4 ring-blue-50 transition-all cursor-pointer shadow-sm"
+            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none cursor-pointer"
           >
             <option value="all">Все подразделения</option>
             {faculties.map(f => <option key={f} value={f}>{f}</option>)}
@@ -168,195 +272,124 @@ const StaffManagement = () => {
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white border border-slate-200 rounded-[35px] overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Сотрудник</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Подразделение</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Статус KPI</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Действия</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-inner font-black text-sm">
-                        {user.name.charAt(0)}
+      {/* LIST */}
+      <div className="space-y-4">
+        {filteredUsers.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all font-bold text-xl shrink-0">
+                      {user.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-slate-900 text-base">{user.name}</h4>
+                        {user.role === 'admin' && <ShieldCheck size={14} className="text-blue-600" />}
                       </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900 leading-none">{user.name}</h4>
-                        <div className="flex items-center gap-2 mt-1.5 text-slate-400">
-                          <Mail size={12} />
-                          <span className="text-xs font-medium">{user.email}</span>
-                        </div>
+                      <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-xs mt-0.5">
+                        <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
+                        <span className="flex items-center gap-1.5"><MapPin size={12} /> {user.faculty}</span>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="space-y-1">
-                      <p className="text-xs font-black text-slate-700 uppercase tracking-tight">{user.faculty}</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between md:justify-end gap-8 w-full md:w-auto">
+                    <div className="text-left md:text-right">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position}</p>
+                      <p className="text-xs font-bold text-slate-700">{user.academic_degree || 'Без степени'}</p>
                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                      user.activities_count > 0 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                        : 'bg-slate-50 text-slate-400 border-slate-100'
+                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase border ${
+                      user.activities_count > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
                     }`}>
                       {user.activities_count > 0 ? `Активен (${user.activities_count})` : 'Нет заявок'}
                     </span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><Edit2 size={18}/></button>
-                      <button className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={18}/></button>
+                    <div className="flex items-center gap-2 border-l border-slate-100 pl-6">
+                      <button onClick={() => handleEditClick(user)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit2 size={18}/></button>
+                      <button onClick={() => handleDeleteUser(user.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={18}/></button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-20 text-center border border-slate-200">
+             <Search size={40} className="text-slate-200 mx-auto mb-4" />
+             <h3 className="text-lg font-bold text-slate-900">Никто не найден</h3>
+          </div>
+        )}
       </div>
 
-      {/* MODAL ADD USER */}
+      {/* MODAL */}
       {isModalOpen && (
-        <div style={{marginTop:0}} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-3xl rounded-[45px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
             <div className="p-10">
-              <div className="flex justify-between items-center mb-10">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter">Регистрация</h3>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Добавление нового сотрудника в штат</p>
+                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{editingId ? 'Редактирование' : 'Новый сотрудник'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Система управления кадрами</p>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-                  <X size={24} />
-                </button>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"><X size={24} /></button>
               </div>
 
-              <form onSubmit={handleCreateUser} className="space-y-6">
-                {/* Личные данные */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Полное имя</label>
-                    <input 
-                      type="text" required placeholder="Имя Фамилия"
-                      className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-4 ring-blue-50 transition-all"
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                    />
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">ФИО</label>
+                    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Электронная почта</label>
-                    <input 
-                      type="email" required placeholder="email@kazutb.kz"
-                      className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-4 ring-blue-50 transition-all"
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Email</label>
+                    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   </div>
-                </div>
-
-                {/* Организационные данные: Факультет и Кафедра */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Факультет</label>
-                    <div className="relative">
-                       <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                       <select 
-                        required className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none appearance-none"
-                        value={formData.faculty_id}
-                        onChange={e => setFormData({...formData, faculty_id: e.target.value})}
-                      >
-                        <option value="">Выберите факультет</option>
-                        {options.faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Кафедра</label>
-                    <div className="relative">
-                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                       <select 
-                        required className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none appearance-none"
-                        value={formData.department_id}
-                        onChange={e => setFormData({...formData, department_id: e.target.value})}
-                      >
-                        <option value="">Выберите кафедру</option>
-                        {options.departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Квалификационные данные: Должность и Степень */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Должность</label>
-                    <select 
-                      required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
-                      value={formData.position_id}
-                      onChange={e => setFormData({...formData, position_id: e.target.value})}
-                    >
-                      <option value="">Выберите должность</option>
-                      {options.positions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
+                      <option value="">Выберите факультет</option>
+                      {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Ученая степень</label>
-                    <div className="relative">
-                       <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                       <select 
-                        required className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none appearance-none"
-                        value={formData.academic_degree_id}
-                        onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}
-                      >
-                        <option value="">Выберите степень</option>
-                        {options.degrees.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
-                      </select>
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
+                      <option value="">Выберите кафедру</option>
+                      {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
+                      <option value="">Выберите должность</option>
+                      {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Степень</label>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
+                      <option value="">Выберите степень</option>
+                      {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
+                    </select>
                   </div>
                 </div>
 
-                {/* Безопасность */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-slate-50 pt-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Пароль</label>
-                    <div className="relative">
-                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                      <input 
-                        type="password" required placeholder="••••••••"
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
-                        value={formData.password}
-                        onChange={e => setFormData({...formData, password: e.target.value})}
-                      />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль (опц.)' : 'Пароль'}</label>
+                    <input type="password" required={!editingId} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Подтверждение</label>
-                    <input 
-                      type="password" required placeholder="••••••••"
-                      className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
-                      value={formData.password_confirmation}
-                      onChange={e => setFormData({...formData, password_confirmation: e.target.value})}
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
+                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} />
                   </div>
                 </div>
 
-                <div className="pt-4">
-                  <button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-[25px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 disabled:opacity-50 flex items-center justify-center gap-3"
-                  >
-                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
-                    Завершить регистрацию
+                <div className="flex items-center gap-3 mt-10 pt-6">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Отмена</button>
+                  <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2">
+                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : editingId ? 'Обновить данные' : 'Зарегистрировать'}
                   </button>
                 </div>
               </form>
@@ -364,7 +397,7 @@ const StaffManagement = () => {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

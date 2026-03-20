@@ -14,21 +14,24 @@ import AnalyticsPage from './pages/AdminPanel/Analytics/AnalyticsPage';
 import AdminPanel from './pages/AdminPanel/Dashboard/AdminPanel';
 import VerificationAudit from './pages/AdminPanel/Verification/VerificationPage';
 import StaffManagement from './pages/AdminPanel/StaffManagement/StaffManagement';
+import AdminLayout from './components/layouts/AdminLayout';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="admin/dashboard" element={<AdminPanel />} />
+          <Route path="audit" element={<VerificationAudit />} />
+          <Route path="admin/staff" element={<StaffManagement />} />
+        </Route>
         <Route path="/" element={<MainLayout />}>
           
           <Route index element={<Navigate to="/dashboard" replace />} />
           
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="admin/dashboard" element={<AdminPanel />} />
-          <Route path="admin/verification" element={<VerificationAudit />} />
-          <Route path="admin/staff" element={<StaffManagement />} />
           <Route path="plan" element={<PlanningPage />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="submit" element={<SubmissionPortal />} />
           <Route path="archive" element={<ActivityArchive />} />

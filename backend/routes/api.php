@@ -11,6 +11,12 @@ Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("token")->group(function(){
+
+    Route::get('/admin/users', [UserController::class, 'index']);
+    Route::delete('/admin/users/{id}', [UserController::class, 'destroy']);
+    Route::get('/admin/users/stats', [UserController::class, 'stats']);   
+
+
     Route::post("/logout", [AuthController::class, "logout"]);
     
     Route::post('/export', [KpiController::class, 'export']);

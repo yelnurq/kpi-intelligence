@@ -3,7 +3,7 @@ import {
   CheckCircle, XCircle, Clock, Search, 
   User, FileText, ArrowRight, Shield, 
   Download, Loader2, X, ChevronRight,
-  Filter, CheckCircle2, Inbox, Activity, AlertCircle,ArrowUpRight, ShieldCheck
+  Filter, CheckCircle2, Inbox, Activity, AlertCircle, ArrowUpRight, ShieldCheck
 } from 'lucide-react';
 
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, isPrimary, unit = "записей" }) => (
@@ -36,9 +36,12 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, is
   </div>
 );
 
-const VerificationAudit = () => {
+const StaffManagement = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Лоадер для действий
+  const [processingId, setProcessingId] = useState(null); // ID текущей обрабатываемой строки
+  
   const [groupedData, setGroupedData] = useState([]);
   const [facultiesList, setFacultiesList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState('all');
@@ -76,7 +79,6 @@ const VerificationAudit = () => {
   }, [selectedFaculty, token, API_BASE]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
-
   useEffect(() => { setSelectedTeacher('all'); }, [selectedFaculty]);
 
   const teachersList = useMemo(() => {
@@ -88,6 +90,8 @@ const VerificationAudit = () => {
   }, [groupedData]);
 
   const handleStatusUpdate = async (id, status, comment = null) => {
+    setIsSubmitting(true);
+    setProcessingId(id);
     try {
       const res = await fetch(`${API_BASE}/kpi-activities/${id}/status`, {
         method: 'POST',
@@ -102,10 +106,13 @@ const VerificationAudit = () => {
       if (res.ok) {
         setShowCommentModal(false);
         setRejectionReason('');
-        fetchRequests(); 
+        await fetchRequests(); 
       }
     } catch (error) {
       console.error("Ошибка при обновлении статуса:", error);
+    } finally {
+      setIsSubmitting(false);
+      setProcessingId(null);
     }
   };
 
@@ -113,25 +120,20 @@ const VerificationAudit = () => {
     return (
       <div className="fixed inset-0 flex flex-col justify-center items-center bg-white">
         <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Синхронизация данных...</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Синхронизация системы...</span>
       </div>
     );
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans">
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
-                <Shield size={14} />
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Admin Audit Mode</span>
-          </div>
+          
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Верификация KPI</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Панель проверки и подтверждения достижений</p>
+          <p className="text-sm text-slate-500 font-medium mt-1">Система проверки и подтверждения достижений</p>
         </div>
 
         <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
@@ -152,45 +154,20 @@ const VerificationAudit = () => {
 
       {/* STATS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard 
-          label="Всего заявок" 
-          value={stats.total} 
-          icon={Inbox} 
-          colorClass="bg-slate-100 text-slate-600" 
-          description="Общий объем данных"
-        />
-        <StatCard 
-          label="Ожидают" 
-          value={stats.pending} 
-          icon={Clock} 
-          colorClass="bg-amber-100 text-amber-600" 
-          description="Требуют внимания"
-          isPrimary={activeTab === 'pending'}
-        />
-        <StatCard 
-          label="Одобрено" 
-          value={stats.approved} 
-          icon={CheckCircle2} 
-          colorClass="bg-emerald-100 text-emerald-600" 
-          description="Успешно проверено"
-        />
-        <StatCard 
-          label="Отклонено" 
-          value={stats.rejected} 
-          icon={AlertCircle} 
-          colorClass="bg-red-100 text-red-600" 
-          description="Не прошли аудит"
-        />
+        <StatCard label="Всего заявок" value={stats.total} icon={Inbox} colorClass="bg-slate-100 text-slate-600" description="Общий объем данных" />
+        <StatCard label="Ожидают" value={stats.pending} icon={Clock} colorClass="bg-amber-100 text-amber-600" description="Требуют внимания" isPrimary={activeTab === 'pending'} />
+        <StatCard label="Одобрено" value={stats.approved} icon={CheckCircle2} colorClass="bg-emerald-100 text-emerald-600" description="Успешно проверено" />
+        <StatCard label="Отклонено" value={stats.rejected} icon={AlertCircle} colorClass="bg-red-100 text-red-600" description="Не прошли аудит" />
       </div>
 
       {/* FILTERS */}
       <div className="flex flex-wrap items-center gap-4 mb-8">
-        <div className="relative group flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-[240px]">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <select 
             value={selectedFaculty}
             onChange={(e) => setSelectedFaculty(e.target.value)}
-            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none transition-all shadow-sm cursor-pointer"
+            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none shadow-sm cursor-pointer"
           >
             <option value="all">Все факультеты</option>
             {facultiesList.map(f => <option key={f} value={f}>{f}</option>)}
@@ -198,12 +175,12 @@ const VerificationAudit = () => {
           <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 rotate-90" size={14} />
         </div>
 
-        <div className="relative group flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-[240px]">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <select 
             value={selectedTeacher}
             onChange={(e) => setSelectedTeacher(e.target.value)}
-            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none transition-all shadow-sm cursor-pointer"
+            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none shadow-sm cursor-pointer"
           >
             <option value="all">Все преподаватели</option>
             {teachersList.map(t => <option key={t} value={t}>{t}</option>)}
@@ -216,8 +193,7 @@ const VerificationAudit = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
           {groupedData.length > 0 ? groupedData.map((group) => {
-            const items = group?.items || []; 
-            const filteredItems = items.filter(item => {
+            const filteredItems = (group.items || []).filter(item => {
               const statusMatch = activeTab === 'pending' ? item.status === 'pending' : item.status !== 'pending';
               const teacherMatch = selectedTeacher === 'all' || item.user_name === selectedTeacher;
               return statusMatch && teacherMatch;
@@ -228,9 +204,7 @@ const VerificationAudit = () => {
             return (
               <section key={group.faculty} className="space-y-4 text-left">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                    {group.faculty}
-                  </h2>
+                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{group.faculty}</h2>
                   <div className="h-px w-full bg-slate-200"></div>
                   <span className="text-[10px] font-bold text-slate-400">{filteredItems.length}</span>
                 </div>
@@ -246,9 +220,7 @@ const VerificationAudit = () => {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <h3 className="font-bold text-slate-900 text-sm">{req.user_name}</h3>
-                              <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">
-                                {req.category}
-                              </span>
+                              <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">{req.category}</span>
                             </div>
                             <p className="text-sm font-bold text-slate-700 leading-snug">{req.title}</p>
                             
@@ -258,10 +230,7 @@ const VerificationAudit = () => {
                               </span>
                               <div className="flex gap-2">
                                 {(req.files || []).map((file, idx) => (
-                                  <a 
-                                    key={idx} href={file.url} target="_blank" rel="noreferrer"
-                                    className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase"
-                                  >
+                                  <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
                                     <Download size={10}/> Doc #{idx + 1}
                                   </a>
                                 ))}
@@ -279,22 +248,22 @@ const VerificationAudit = () => {
                           {req.status === 'pending' ? (
                             <div className="flex gap-2">
                               <button 
+                                disabled={isSubmitting}
                                 onClick={() => { setSelectedRequest(req); setShowCommentModal(true); }}
-                                className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                                className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
                               >
                                 <XCircle size={18} />
                               </button>
                               <button 
+                                disabled={isSubmitting}
                                 onClick={() => handleStatusUpdate(req.id, 'approved')}
-                                className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all"
+                                className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[40px]"
                               >
-                                <CheckCircle size={18} />
+                                {isSubmitting && processingId === req.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
                               </button>
                             </div>
                           ) : (
-                            <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${
-                              req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'
-                            }`}>
+                            <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
                               {req.status === 'approved' ? 'Принято' : 'Отклонено'}
                             </div>
                           )}
@@ -314,125 +283,182 @@ const VerificationAudit = () => {
           )}
         </div>
 
-     {/* SIDEBAR STATS */}
-<div className="lg:col-span-4 space-y-6">
-  <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0,04)] sticky top-10 text-left overflow-hidden group">
-    
-    {/* Декоративный элемент на фоне (мягкое пятно) */}
-    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl transition-colors group-hover:bg-blue-100/50"></div>
-
-    <div className="relative z-10">
-      {/* Заголовок с точкой активности */}
-      <div className="flex items-center gap-2 mb-6">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-        </span>
-        <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Эффективность</h4>
-      </div>
-      
-      <div className="space-y-8">
-        {/* Блок прогресса */}
-        <div>
-          <div className="flex justify-between items-end mb-3">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase text-slate-500 block">Прогресс аудита</span>
-              <span className="text-2xl font-black text-slate-900 tracking-tighter">
-                {stats.total > 0 ? Math.round(((stats.total - stats.pending) / stats.total) * 100) : 0}%
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">Live</span>
+        {/* SIDEBAR */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.04)] sticky top-10 text-left overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl transition-colors group-hover:bg-blue-100/50"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+                <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Эффективность</h4>
+              </div>
+              <div className="space-y-8">
+                <div>
+                  <div className="flex justify-between items-end mb-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">Прогресс аудита</span>
+                      <span className="text-2xl font-black text-slate-900 tracking-tighter">
+                        {stats.total > 0 ? Math.round(((stats.total - stats.pending) / stats.total) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="text-right"><span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">Live</span></div>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden p-[1px]">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-blue-600 to-indigo-500 shadow-[0_0_8px_rgba(37,99,235,0.3)]" style={{ width: `${stats.total > 0 ? ((stats.total - stats.pending) / stats.total) * 100 : 0}%` }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-0 border-y border-slate-50 py-6">
+                    <div className="space-y-1 pr-4 border-r border-slate-50">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Одобрено</p>
+                        <p className="text-2xl font-bold text-emerald-500 tabular-nums">{stats.approved}</p>
+                    </div>
+                    <div className="space-y-1 pl-6">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Отклонено</p>
+                        <p className="text-2xl font-bold text-rose-500 tabular-nums">{stats.rejected}</p>
+                    </div>
+                </div>
+                <button className="group/btn w-full py-4 bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50 text-slate-900 rounded-2xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-3 shadow-sm hover:shadow-blue-100">
+                  Скачать отчет <ArrowRight size={14} className="text-blue-600 transition-transform group-hover/btn:translate-x-1"/>
+                </button>
+              </div>
             </div>
           </div>
-          
-          {/* Кастомный прогресс-бар */}
-          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden p-[1px]">
-            <div 
-              className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-blue-600 to-indigo-500 shadow-[0_0_8px_rgba(37,99,235,0.3)]" 
-              style={{ width: `${stats.total > 0 ? ((stats.total - stats.pending) / stats.total) * 100 : 0}%` }}
-            />
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-[24px] text-white shadow-lg shadow-blue-200">
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md"><ShieldCheck size={20} className="text-white"/></div>
+                <div className="text-left text-[11px] font-bold leading-tight tracking-tight opacity-90 uppercase">Безопасность данных <br/> подтверждена SSL</div>
+            </div>
           </div>
         </div>
-
-        {/* Сетка мини-статистики с разделителями */}
-        <div className="grid grid-cols-2 gap-0 border-y border-slate-50 py-6">
-            <div className="space-y-1 pr-4 border-r border-slate-50">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Одобрено</p>
-                <p className="text-2xl font-bold text-emerald-500 tabular-nums">{stats.approved}</p>
-            </div>
-            <div className="space-y-1 pl-6">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Отклонено</p>
-                <p className="text-2xl font-bold text-rose-500 tabular-nums">{stats.rejected}</p>
-            </div>
-        </div>
-
-        {/* Кнопка в новом стиле (неоморфизм + минимализм) */}
-        <button className="group/btn w-full py-4 bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50 text-slate-900 rounded-2xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-3 shadow-sm hover:shadow-blue-100">
-          Скачать отчет 
-          <ArrowRight size={14} className="text-blue-600 transition-transform group-hover/btn:translate-x-1"/>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {/* Дополнительная маленькая карточка-подсказка снизу (для интереса) */}
-  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-[24px] text-white shadow-lg shadow-blue-200">
-    <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md">
-            <ShieldCheck size={20} className="text-white"/>
-        </div>
-        <div className="text-left text-[11px] font-bold leading-tight tracking-tight opacity-90 uppercase">
-            Безопасность данных <br/> подтверждена SSL
-        </div>
-    </div>
-  </div>
-</div>
       </div>
 
       {/* MODAL */}
-      {showCommentModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden text-left">
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Причина отказа</h3>
-                <button onClick={() => setShowCommentModal(false)} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
-              </div>
-              
-              <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
-                <p className="text-xs font-bold text-slate-700">{selectedRequest?.user_name}</p>
-                <p className="text-[10px] text-slate-400 mt-1 italic">{selectedRequest?.title}</p>
-              </div>
+    {showCommentModal && (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-all">
+    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl relative overflow-hidden text-left border border-slate-200">
+      
+      {/* Акцентная полоса как у StatCard */}
+      <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />
 
-              <textarea 
-                className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition-all resize-none"
-                placeholder="Укажите, что нужно исправить..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-              />
-
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <button 
-                  onClick={() => setShowCommentModal(false)} 
-                  className="py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-                >
-                  Отмена
-                </button>
-                <button 
-                  onClick={() => handleStatusUpdate(selectedRequest.id, 'rejected', rejectionReason)}
-                  disabled={!rejectionReason.trim()}
-                  className="py-3 bg-red-500 disabled:bg-slate-100 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
-                >
-                  Подтвердить
-                </button>
-              </div>
-            </div>
+      <div className="p-8">
+        {/* Шапка модалки */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Действие требуется</p>
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">Причина отказа</h3>
           </div>
+          <button 
+            onClick={() => {
+                setShowCommentModal(false);
+                setRejectionReason('');
+            }} 
+            className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-colors"
+          >
+            <X size={20}/>
+          </button>
         </div>
-      )}
+
+        {/* Контекстный блок заявки */}
+        {selectedRequest && (
+          <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100 relative group">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="p-1.5 bg-white rounded-md shadow-sm text-slate-400">
+                <User size={14} />
+              </div>
+              <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">
+                {selectedRequest.user_name}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium leading-relaxed pl-8 line-clamp-1 italic">
+              «{selectedRequest.title}»
+            </p>
+          </div>
+        )}
+
+        {/* БЫСТРЫЕ ШАБЛОНЫ */}
+        <div className="mb-6">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Быстрые шаблоны</p>
+            <div className="flex flex-wrap gap-2">
+                {[
+                    'Недостаточно документов', 
+                    'Неверная категория', 
+                    'Низкое качество файла',
+                    'Дубликат записи'
+                ].map((template) => (
+                    <button
+                        key={template}
+                        onClick={() => setRejectionReason(template)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all uppercase tracking-tight
+                            ${rejectionReason === template 
+                                ? 'bg-red-50 border-red-200 text-red-600 shadow-sm' 
+                                : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'
+                            }`}
+                    >
+                        {template}
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        {/* Поле ввода */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center ml-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Ваш комментарий
+            </label>
+            <span className={`text-[9px] font-bold uppercase ${rejectionReason.length > 0 ? 'text-blue-500' : 'text-slate-300'}`}>
+                {rejectionReason.length} символов
+            </span>
+          </div>
+          <textarea 
+            autoFocus
+            className="w-full h-28 p-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-500 transition-all resize-none placeholder:text-slate-300"
+            placeholder="Опишите детально, почему заявка отклонена..."
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+          />
+        </div>
+
+        {/* Кнопки действий */}
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <button 
+            onClick={() => {
+              setShowCommentModal(false);
+              setRejectionReason('');
+            }} 
+            disabled={isSubmitting}
+            className="py-4 bg-white border border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] rounded-xl hover:bg-slate-50 hover:text-slate-600 transition-all disabled:opacity-50"
+          >
+            Отмена
+          </button>
+          
+          <button 
+            onClick={() => handleStatusUpdate(selectedRequest.id, 'rejected', rejectionReason)}
+            disabled={!rejectionReason.trim() || isSubmitting}
+            className={`py-4 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 
+              ${!rejectionReason.trim() || isSubmitting 
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
+                : 'bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]'
+              }`}
+          >
+            {isSubmitting ? (
+              <Loader2 size={16} className="animate-spin text-white" />
+            ) : (
+              <>
+                Подтвердить <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 };
 
-export default VerificationAudit;
+export default StaffManagement;

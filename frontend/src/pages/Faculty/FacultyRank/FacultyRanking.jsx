@@ -98,7 +98,8 @@ const FacultyRanking = () => {
                 <p className="text-2xl font-bold text-slate-900 tracking-tighter leading-none">{f.score.toLocaleString()}</p>
                 <div className="flex items-center gap-1.5">
                    <Target size={12} className="text-blue-500" />
-                   <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Средний: {(f.score / f.students).toFixed(1)}</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Средний: {f.students > 0 ? (f.score / f.students).toFixed(1) : '0.0'}
+                   </p>
                 </div>
               </div>
               <div className={`flex items-center gap-1 text-[11px] font-bold ${f.trend === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -131,7 +132,7 @@ const FacultyRanking = () => {
                 <th className="px-6 py-4 font-bold">#</th>
                 <th className="px-6 py-4 font-bold">Факультет</th>
                 {/* Новая объединенная колонка */}
-                <th className="px-6 py-4 font-bold text-center">Штат / Актив</th>
+                <th className="px-6 py-4 font-bold text-center">Актив / Штат</th>
                 <th className="px-6 py-4 font-bold text-center text-blue-600 bg-blue-50/30">Средний KPI</th>
                 <th className="px-6 py-4 font-bold">Эффективность</th>
                 <th className="px-6 py-4 font-bold text-right">Баллы KPI</th>

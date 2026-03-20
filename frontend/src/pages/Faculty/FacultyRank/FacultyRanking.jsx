@@ -1,192 +1,227 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Trophy, 
-  TrendingUp, 
-  TrendingDown, 
+  BarChart3, 
   Users, 
-  Award, 
-  Medal,
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Calendar,
+  Search,
+  FileSpreadsheet,
   ChevronRight,
-  Zap,
-  Target
+  Info,
+  Loader2,
+  Trophy,
+  Target // Импортируем иконку для среднего показателя
 } from 'lucide-react';
 
 const FacultyRanking = () => {
-  const faculties = [
-    { 
-      id: 1, 
-      name: 'Факультет Информационных Технологий', 
-      short: 'ФИТ', 
-      score: 12450, 
-      trend: 'up', 
-      students: 450, 
-      efficiency: 92,
-      color: 'bg-blue-500'
-    },
-    { 
-      id: 2, 
-      name: 'Инженерно-Технический Факультет', 
-      short: 'ИТФ', 
-      score: 10800, 
-      trend: 'up', 
-      students: 380, 
-      efficiency: 88,
-      color: 'bg-indigo-500'
-    },
-    { 
-      id: 3, 
-      name: 'Факультет Экономики и Права', 
-      short: 'ФЭиП', 
-      score: 9200, 
-      trend: 'down', 
-      students: 520, 
-      efficiency: 74,
-      color: 'bg-emerald-500'
-    },
-    { 
-      id: 4, 
-      name: 'Гуманитарный Факультет', 
-      short: 'ГФ', 
-      score: 7500, 
-      trend: 'stable', 
-      students: 310, 
-      efficiency: 65,
-      color: 'bg-amber-500'
-    },
-    { 
-      id: 5, 
-      name: 'Естественно-Научный Факультет', 
-      short: 'ЕНФ', 
-      score: 6900, 
-      trend: 'up', 
-      students: 240, 
-      efficiency: 78,
-      color: 'bg-rose-500'
-    },
-  ];
+  const [faculties, setFaculties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalFund, setTotalFund] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:8000/api/faculty-ranking', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const result = await response.json();
+        setFaculties(result.data.faculties);
+        setTotalFund(result.data.total_fund);
+        setLastUpdated(result.data.last_updated);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRanking();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh]">
+        <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Синхронизация данных...</p>
+      </div>
+    );
+  }
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">       
+    <main className="max-w-7xl mx-auto px-8 py-10 space-y-8 bg-[#f8fafc] min-h-screen animate-in fade-in duration-500">
       
-      {/* HEADER & TOP STATS */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-slate-200 pb-8">
         <div className="space-y-2">
- 
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Битва Факультетов</h1>
-          <p className="text-sm text-gray-500 font-medium italic">Обновлено сегодня в 12:00. Лидеры получают грант на развитие.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 text-left">Рейтинг эффективности факультетов</h1>
+          <div className="flex items-center gap-3 text-sm text-slate-500 font-medium text-left">
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+              <Calendar size={14} className="text-slate-400" />
+              <span className="text-xs uppercase tracking-wider text-slate-400">Обновлено:</span>
+              <span className="font-bold text-blue-700 text-xs">{lastUpdated}</span>
+            </div>
+            <span className="text-slate-300">|</span>
+            <span className="italic text-slate-400">Сезон: Весна 2026</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900 rounded-[24px] p-6 text-white flex items-center gap-6 shadow-2xl">
-           <div className="flex flex-col">
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Общий фонд баллов</span>
-             <span className="text-2xl font-bold italic">46,850 KPI</span>
-           </div>
-           <div className="h-10 w-[1px] bg-slate-800" />
-           <Target className="text-blue-400" size={28} />
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all tracking-wider uppercase border bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50">
+            <FileSpreadsheet size={16} />
+            <span>Экспорт XLSX</span>
+          </button>
+          <button className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-xs transition-all tracking-wider uppercase bg-slate-900 text-white hover:bg-slate-800 shadow-sm">
+            <BarChart3 size={16} />
+            <span>Методология KPI</span>
+          </button>
         </div>
       </div>
 
-      {/* PODIUM SECTION (TOP 3) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-        {/* SECOND PLACE */}
-        <div className="order-2 md:order-1 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4 relative overflow-hidden group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-2 bg-slate-300" />
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-400 font-bold text-xl italic">2</div>
-          <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{faculties[1].short}</h3>
-          <p className="text-2xl font-bold text-slate-700">{faculties[1].score.toLocaleString()}</p>
-          <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-green-500 uppercase">
-            <TrendingUp size={14} /> +12.4%
-          </div>
-        </div>
-
-        {/* FIRST PLACE */}
-        <div className="order-1 md:order-2 bg-slate-800 p-10 rounded-[48px] shadow-2xl shadow-blue-200 text-center space-y-6 relative overflow-hidden group hover:scale-[1.02] transition-all">
-          <div className="absolute top-0 left-0 w-full h-3 bg-blue-500" />
-          <div className="relative inline-block">
-             <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 animate-pulse"></div>
-             <div className="w-20 h-20 bg-blue-500 text-white rounded-[24px] flex items-center justify-center mx-auto shadow-xl transform -rotate-6 group-hover:rotate-0 transition-transform">
-                <Medal size={40} />
-             </div>
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-white text-2xl uppercase tracking-tighter">{faculties[0].short}</h3>
-            <p className="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Абсолютный лидер</p>
-          </div>
-          <p className="text-4xl font-bold text-white italic">{faculties[0].score.toLocaleString()}</p>
-          <div className="bg-blue-500/10 rounded-2xl py-2 px-4 inline-flex items-center gap-2 text-blue-400 text-xs font-bold">
-             <Users size={14} /> {faculties[0].students} активных студентов
-          </div>
-        </div>
-
-        <div className="order-3 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4 relative overflow-hidden group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-2 bg-amber-600/30" />
-          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-600 font-bold text-xl italic">3</div>
-          <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{faculties[2].short}</h3>
-          <p className="text-2xl font-bold text-slate-700">{faculties[2].score.toLocaleString()}</p>
-          <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-red-500 uppercase">
-            <TrendingDown size={14} /> -4.1%
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-           <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Полная таблица результатов</h3>
-           <button className="text-[10px] font-bold text-blue-600 uppercase tracking-widest hover:underline">Экспорт PDF</button>
-        </div>
-
-        <div className="divide-y divide-gray-50">
-          {faculties.map((f, i) => (
-            <div key={f.id} className="group flex flex-col md:flex-row md:items-center justify-between p-8 hover:bg-slate-50 transition-all">
-              <div className="flex items-center gap-6 md:w-1/3">
-                <span className="text-2xl font-bold text-slate-200 italic w-8 group-hover:text-slate-400 transition-colors">0{i+1}</span>
-                <div>
-                   <h4 className="font-bold text-slate-900 text-sm tracking-tight">{f.name}</h4>
-                   <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">{f.students} участников</span>
-                      <div className="w-1 h-1 rounded-full bg-gray-300" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Эффективность: {f.efficiency}%</span>
-                   </div>
+      {/* TOP ANALYTICS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {faculties.slice(0, 3).map((f, i) => (
+          <div key={f.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+            <div className={`absolute top-0 left-0 w-1 h-full ${i === 0 ? 'bg-blue-600' : 'bg-slate-200'}`} />
+            <div className="flex justify-between items-start mb-4">
+              <div className="space-y-1 text-left">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                  {i === 0 ? 'Текущий лидер' : `${i + 1} место в рейтинге`}
+                </p>
+                <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight">{f.short}</h3>
+              </div>
+              {i === 0 && <Trophy className="text-blue-600" size={24} />}
+            </div>
+            <div className="flex items-end justify-between">
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-slate-900 tracking-tighter leading-none">{f.score.toLocaleString()}</p>
+                <div className="flex items-center gap-1.5">
+                   <Target size={12} className="text-blue-500" />
+                   <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Средний: {(f.score / f.students).toFixed(1)}</p>
                 </div>
               </div>
-              <div className="hidden md:block flex-1 max-w-xs mx-12">
-                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Заполняемость KPI</span>
-                    <span className="text-[9px] font-bold text-slate-900 uppercase">{f.efficiency}%</span>
-                 </div>
-                 <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className={`${f.color} h-full transition-all duration-1000 delay-300`} 
-                      style={{ width: `${f.efficiency}%` }}
-                    />
-                 </div>
-              </div>
-
-              <div className="flex items-center justify-between md:justify-end gap-10 mt-6 md:mt-0">
-                 <div className="text-right">
-                    <p className="text-xl font-bold text-slate-900 italic tracking-tight">{f.score.toLocaleString()}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Очков накоплено</p>
-                 </div>
-                 <button className="p-4 bg-gray-50 rounded-2xl text-slate-400 hover:bg-slate-900 hover:text-white transition-all group">
-                    <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                 </button>
+              <div className={`flex items-center gap-1 text-[11px] font-bold ${f.trend === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>
+                {f.trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                {f.change}
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      {/* MAIN DATA TABLE */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight">Сводная ведомость подразделений</h3>
+          <div className="relative w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Поиск по названию..."
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-blue-400 transition-all"
+            />
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-slate-50/30 text-[10px] uppercase tracking-[0.15em] text-slate-400 border-b border-slate-100">
+                <th className="px-6 py-4 font-bold">#</th>
+                <th className="px-6 py-4 font-bold">Факультет</th>
+                {/* Новая объединенная колонка */}
+                <th className="px-6 py-4 font-bold text-center">Штат / Актив</th>
+                <th className="px-6 py-4 font-bold text-center text-blue-600 bg-blue-50/30">Средний KPI</th>
+                <th className="px-6 py-4 font-bold">Эффективность</th>
+                <th className="px-6 py-4 font-bold text-right">Баллы KPI</th>
+                <th className="px-6 py-4 font-bold"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+  {faculties.map((f, i) => (
+    <tr key={f.id} className="hover:bg-slate-50/50 transition-colors group">
+      <td className="px-6 py-4">
+        <span className="text-xs font-bold text-slate-300 group-hover:text-blue-600">
+          {i + 1 < 10 ? `0${i + 1}` : i + 1}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-col text-left">
+          <span className="text-sm font-bold text-slate-800 leading-tight">{f.name}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{f.short}</span>
+        </div>
+      </td>
+      
+      {/* ДЕТАЛИЗАЦИЯ СОТРУДНИКОВ */}
+      <td className="px-6 py-4 text-center">
+        <div className="flex flex-col items-center justify-center">
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-bold text-slate-900">{f.active_staff ?? 0}</span>
+            <span className="text-[10px] text-slate-300 font-bold">/</span>
+            <span className="text-[10px] font-bold text-slate-400">{f.total_staff ?? 0}</span>
+          </div>
+          {/* Мини-индикатор вовлеченности в % */}
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+            {f.total_staff > 0 
+              ? Math.round((f.active_staff / f.total_staff) * 100) 
+              : 0}% участие
+          </span>
+        </div>
+      </td>
+
+      <td className="px-6 py-4 text-center bg-blue-50/10">
+        <span className="text-sm font-bold text-blue-700 tracking-tighter">
+          {f.students > 0 ? (f.score / f.students).toFixed(1) : '0.0'}
+        </span>
+      </td>
+
+      {/* Остальные колонки без изменений */}
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3 w-40">
+          <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-700 ${i === 0 ? 'bg-blue-600' : 'bg-slate-400'}`}
+              style={{ width: `${f.efficiency}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-slate-700">{f.efficiency}%</span>
+        </div>
+      </td>
+      <td className="px-6 py-4 text-right">
+        <span className="text-sm font-bold text-slate-900">
+          {f.score.toLocaleString()}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-right">
+        <button className="p-2 text-slate-300 hover:text-slate-900 transition-colors rounded-lg hover:bg-white border border-transparent hover:border-slate-200">
+          <ChevronRight size={16} />
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+          </table>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[40px] p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-10 opacity-10">
-            <Zap size={150} />
-         </div>
-         <div className="space-y-4 relative z-10">
-            <h2 className="text-3xl font-bold tracking-tight leading-none italic">Выведи свой факультет <br/> в лидеры сезона!</h2>
-            <p className="text-blue-100 text-sm font-medium max-w-md">Каждая поданная активность добавляет очки в копилку твоего факультета. Чем больше студентов участвует — тем выше шанс на победу.</p>
-         </div>
-         <button className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-50 transition-all shadow-xl whitespace-nowrap relative z-10">
-            Подать активность
-         </button>
+      {/* FOOTER NOTIFICATION */}
+      <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex gap-4 text-left">
+          <div className="p-2 bg-white rounded-lg border border-blue-100 shrink-0">
+             <Info size={18} className="text-blue-500" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-blue-900">Средневзвешенный показатель</p>
+            <p className="text-[11px] text-blue-700 leading-relaxed max-w-2xl">
+              <span className="font-bold">Средний KPI</span> рассчитывается как частное от суммы всех баллов факультета к числу активных участников. 
+              Это позволяет объективно оценить вовлеченность каждого сотрудника и студента, независимо от общего размера подразделения.
+            </p>
+          </div>
+        </div>
+        <button className="whitespace-nowrap px-6 py-2.5 bg-white border border-blue-200 text-blue-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-100 transition-all">
+          Методика расчета
+        </button>
       </div>
 
     </main>

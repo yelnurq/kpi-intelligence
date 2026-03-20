@@ -6,11 +6,14 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FacultyController;
 
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("token")->group(function(){
+
+    Route::get('/faculty-ranking', [FacultyController::class, 'index']);
 
     Route::get('/admin/users', [UserController::class, 'index']);
     Route::post('/admin/users', [UserController::class, 'store']);

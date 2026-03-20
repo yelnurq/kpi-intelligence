@@ -25,60 +25,72 @@ class UserController extends Controller
 
         return User::find($tokenRecord->user_id);
     }
-    public function me(Request $request)
-    {
-        // 1. Используем твой кастомный метод для получения юзера
-        $userBase = $this->getAuthenticatedUser($request);
+  public function me(Request $request)
+{
+    $userBase = $this->getAuthenticatedUser($request);
 
-        if (!$userBase) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
-        }
-
-        // 2. Загружаем связи (Eager Loading), чтобы не делать 5 лишних запросов к базе
-        $user = \App\Models\User::with([
-            'position', 
-            'academic_degree', 
-            'faculty', 
-            'department'
-        ])->find($userBase->id);
-
-        // 3. Считаем подтвержденные баллы
-        $currentKpi = \App\Models\KpiActivity::where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->sum('total_points');
-
-        // 4. Считаем баллы в ожидании (те, что админ еще не проверил)
-        $pendingKpi = \App\Models\KpiActivity::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->sum('total_points');
-
-        return response()->json([
-            "status" => "success",
-            "data" => [
-                "id"              => $user->id,
-                "name"            => $user->name,
-                "email"           => $user->email,
-                "position_title"  => $user->position?->title ?? 'Не указана',
-                "academic_degree" => $user->academic_degree?->title ?? 'Без степени',
-                "dean"            => $user->faculty?->short_name ?? '',
-                "faculty"         => $user->faculty?->title ?? 'Вне факультета',
-                "department"      => $user->department?->title ?? 'Вне кафедры',
-                "department_leader" => $user->department?->short_name ?? '',
-                "min_kpi"         => (int)($user->position?->min_kpi_target ?? 0),
-                
-                // Основной балл
-                "current_kpi"     => (int)$currentKpi, 
-                
-                // Баллы "в пути" (на проверке)
-                "pending_kpi"     => (int)$pendingKpi,
-                
-                // Процент выполнения плана (если min_kpi > 0)
-                "progress_percent" => ($user->position?->min_kpi_target > 0) 
-                    ? round(($currentKpi / $user->position->min_kpi_target) * 100, 1) 
-                    : 0
-            ]
-        ]);
+    if (!$userBase) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
     }
+
+    $user = \App\Models\User::with([
+        'position', 
+        'academic_degree', 
+        'faculty', 
+        'department'
+    ])->find($userBase->id);
+
+    // 1. Считаем KPI
+    $currentKpi = \App\Models\KpiActivity::where('user_id', $user->id)
+        ->where('status', 'approved')
+        ->sum('total_points');
+
+    $pendingKpi = \App\Models\KpiActivity::where('user_id', $user->id)
+        ->where('status', 'pending')
+        ->sum('total_points');
+
+    // 2. Генерируем данные для графика (за последние 6 месяцев)
+    // Используем Carbon для работы с датами
+    $chartData = collect(range(5, 0))->map(function ($i) use ($user) {
+        $date = now()->subMonths($i);
+        
+        $monthlyPoints = \App\Models\KpiActivity::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereMonth('created_at', $date->month)
+            ->whereYear('created_at', $date->year)
+            ->sum('total_points');
+
+        return [
+            // Формат месяца для фронта (напр. "Янв")
+            'month' => $date->translatedFormat('M'), 
+            'kpi'   => (int)$monthlyPoints
+        ];
+    });
+
+    return response()->json([
+        "status" => "success",
+        "data" => [
+            "id"              => $user->id,
+            "name"            => $user->name,
+            "position_title"  => $user->position?->title ?? 'Не указана',
+            "academic_degree" => $user->academic_degree?->title ?? 'Без степени',
+            "current_kpi"     => (int)$currentKpi, 
+            "pending_kpi"     => (int)$pendingKpi,
+            "min_kpi"         => (int)($user->position?->min_kpi_target ?? 0),
+            "faculty"         => $user->faculty?->title ?? 'Вне факультета',
+            "department"      => $user->department?->title ?? 'Вне кафедры',
+            "dean"         => $user->faculty?->short_name ?? 'Вне факультета',
+            "leader"      => $user->department?->short_name ?? 'Вне кафедры',
+            
+            // Данные для Recharts
+            "chart_data"      => $chartData,
+            
+            "progress_percent" => ($user->position?->min_kpi_target > 0) 
+                ? round(($currentKpi / $user->position->min_kpi_target) * 100, 1) 
+                : 0
+        ]
+    ]);
+}
     public function index()
 {
     try {

@@ -62,48 +62,72 @@ const MainLayout = () => {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* SIDEBAR */}
       <aside className={`
-        ${isSidebarOpen ? 'w-72' : 'w-20'} 
-        bg-white border-r border-slate-200 flex flex-col fixed h-full transition-all duration-300 z-50
-      `}>
-        <div className="p-6 flex items-center gap-3 h-20 border-b border-slate-50">
-          <div className="min-w-[45px] h-12 flex items-center justify-center overflow-hidden">
-            <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
-          </div>
-          {isSidebarOpen && (
-            <span className="font-black text-xl tracking-tighter text-slate-800 animate-in fade-in duration-500">
-              KAZ<span className="text-blue-600">UTB</span>
-            </span>
-          )}
-        </div>
+  ${isSidebarOpen ? 'w-72' : 'w-20'} 
+  bg-white border-r border-slate-200 flex flex-col fixed h-full transition-all duration-300 z-50
+`}>
+  {/* LOGO AREA - Исправлено здесь */}
+  <div className={`
+    flex items-center border-b border-slate-50 h-20 transition-all duration-300
+    ${isSidebarOpen ? 'px-6 gap-3' : 'px-0 justify-center'}
+  `}>
+    <div className={`
+      flex items-center justify-center transition-all duration-300
+      ${isSidebarOpen ? 'w-11 h-11' : 'w-11 h-11'} 
+    `}>
+      <img 
+        src="images/icons/logo.png" 
+        alt="Logo" 
+        className="h-full w-full object-contain drop-shadow-sm" 
+      />
+    </div>
+    
+    {isSidebarOpen && (
+      <span className="font-black text-xl tracking-tighter text-slate-800 animate-in fade-in slide-in-from-left-4 duration-500 whitespace-nowrap">
+        KAZ<span className="text-blue-600">UTB</span>
+      </span>
+    )}
+  </div>
 
-        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.id}
-                to={item.path}
-                className={`
-                  w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative
-                  ${isActive 
-                    ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
-                `}
-              >
-                <span className={`${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
-                  {item.icon}
-                </span>
-                {isSidebarOpen && <span className="font-bold text-sm tracking-tight">{item.label}</span>}
-                
-                {isActive && !isSidebarOpen && (
-                  <div className="absolute right-2 w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+<nav className="flex-1 p-3 space-y-2 mt-4 overflow-y-auto overflow-x-hidden">
+  {menuItems.map((item) => {
+    const isActive = location.pathname === item.path;
+    return (
+      <Link
+        key={item.id}
+        to={item.path}
+        className={`
+          w-full flex items-center rounded-2xl transition-all duration-300 group relative
+          ${isSidebarOpen ? 'px-4 py-3.5 gap-4' : 'justify-center py-3.5'}
+          ${isActive 
+            ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+        `}
+      >
+        {/* ИКОНКА */}
+        <span className={`
+          flex items-center justify-center transition-transform duration-300
+          ${isActive ? 'scale-110' : 'group-hover:scale-110'}
+          ${!isSidebarOpen ? 'min-w-[20px]' : ''}
+        `}>
+          {item.icon}
+        </span>
+
+        {/* ТЕКСТ (Появляется плавно) */}
+        {isSidebarOpen && (
+          <span className="font-bold text-sm tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+            {item.label}
+          </span>
+        )}
+        
+        {/* ИНДИКАТОР АКТИВНОСТИ (Когда сайдбар закрыт) */}
+        {isActive && !isSidebarOpen && (
+          <div className="absolute left-0 w-1 h-6 bg-blue-600 rounded-r-full animate-in fade-in duration-500" />
+        )}
+      </Link>
+    );
+  })}
+</nav>
 
         {/* PROFILE SECTION */}
         <div className="p-4 mt-auto border-t border-slate-50 space-y-4">

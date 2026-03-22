@@ -239,7 +239,7 @@ return (
       <div className="lg:col-span-8 space-y-6">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           {/* Tabs & Search... */}
-          <div className="flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
+          <div className="custom-scrollbar flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
    <div className="flex flex-nowrap gap-1">
                 {categories.map(cat => (
                   <button
@@ -254,8 +254,8 @@ return (
                     {cat.toUpperCase()}
                   </button>
                 ))}
-              </div>          </div>
-          {/* Search Input... */}
+              </div>
+                        </div>
         </div>
 
         {/* СЕКЦИЯ КОНТЕНТА С ЛОКАЛЬНОЙ ЗАГРУЗКОЙ */}

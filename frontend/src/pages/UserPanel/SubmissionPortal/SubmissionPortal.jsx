@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileUp, CheckCircle2, FileText, Loader2, Calendar as CalendarIcon, 
-  Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight, Download
+  Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight, Download,
+  ArrowUpRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -61,7 +62,20 @@ const SubmissionPortal = () => {
     };
     fetchIndicators();
   }, [token]);
+useEffect(() => {
+  if (status === 'success') {
+    // Отключаем скролл
+    document.body.style.overflow = 'hidden';
+  } else {
+    // Возвращаем скролл
+    document.body.style.overflow = 'unset';
+  }
 
+  // Очистка при размонтировании компонента
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, [status]);
   const handleFileAction = (newFiles) => {
     const validFiles = Array.from(newFiles).filter(f => f.size <= 10 * 1024 * 1024);
     setFiles(prev => [...prev, ...validFiles]);
@@ -93,18 +107,48 @@ const SubmissionPortal = () => {
   const indicatorWeight = selectedIndicator?.weight || selectedIndicator?.points || 0;
   const predictedPoints = indicatorWeight * formData.quantity;
 
-  if (status === 'success') {
+   if (status === 'success') {
     return (
-      <div className="fixed inset-0 flex flex-col justify-center items-center bg-[#f8fafc] z-50">
-        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-10 text-center shadow-xl animate-in fade-in zoom-in duration-300">
-          <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 size={40} />
+      <div className="fixed inset-0 flex flex-col justify-center items-center bg-[#f8fafc]/90 backdrop-blur-sm z-50 px-6">
+        <div className="max-w-[440px] w-full bg-white border border-slate-200 rounded-[2.5rem] p-12 text-center shadow-2xl shadow-slate-200/50 animate-in fade-in zoom-in duration-500">
+          
+          <div className="relative mx-auto mb-8">
+            <div className="relative w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-200">
+              <CheckCircle2 size={40} strokeWidth={2.5} />
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Отправлено на проверку</h2>
-          <p className="text-slate-500 text-sm mb-8 font-medium">Ваше достижение успешно добавлено в архив и ожидает модерации.</p>
-          <div className="space-y-3">
-            <button onClick={() => navigate('/archive')} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Перейти в архив</button>
-            <button onClick={() => { setStatus('idle'); setFiles([]); setFormData({...formData, title: ''}); }} className="w-full py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all">Добавить еще одно</button>
+
+          <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Готово к проверке!</h2>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed px-4">
+            Достижение успешно отправлено. После одобрения модератором вам будет начислено:
+          </p>
+
+          {/* Плашка с баллами в стиле Архива */}
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-10 flex items-center justify-center gap-3">
+            <Zap size={20} className="text-amber-500 fill-amber-500" />
+            <span className="text-3xl font-black text-slate-900">+{predictedPoints}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">баллов</span>
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => navigate('/archive')} 
+              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+            >
+              Перейти в архив
+              <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </button>
+            
+            <button 
+              onClick={() => { 
+                setStatus('idle'); 
+                setFiles([]); 
+                setFormData(prev => ({...prev, title: '', indicator_id: ''})); 
+              }} 
+              className="w-full py-4 bg-white text-slate-500 hover:text-blue-600 font-bold text-sm transition-all"
+            >
+              Добавить еще одну активность
+            </button>
           </div>
         </div>
       </div>

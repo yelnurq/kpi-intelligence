@@ -200,13 +200,6 @@ const MainLayout = () => {
           <Outlet /> 
         </div>
 
-        {/* FOOTER */}
-        <footer className="p-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 opacity-50">
-           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">© 2026 KAZUTB — KPI SYSTEM</p>
-           <div className="flex gap-6">
-              <a href="#" className="text-[10px] font-bold text-slate-400 uppercase hover:text-blue-600 transition-colors">Поддержка</a>
-           </div>
-        </footer>
       </main>
     </div>
   );

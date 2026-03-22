@@ -190,99 +190,57 @@ const renderIndicatorCard = (item) => {
     selectedItems.reduce((acc, curr) => acc + (Number(curr.points) || 0), 0), 
   [selectedItems]);
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-slate-50/80 backdrop-blur-sm">
-        <div className="relative">
-          {/* Внешнее кольцо */}
-          <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
-          {/* Анимированное кольцо */}
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <div className="font-black text-slate-900 uppercase tracking-[0.2em] text-xs">
-            Загрузка системы
-          </div>
-          <div className="flex gap-1">
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce"></div>
-          </div>
+ 
+return (
+  <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    {/* Header остается без изменений */}
+    <div className="flex justify-between items-end mb-8">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Планирование KPI</h1>
+        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+          <Calendar size={14} />
+          <span>Учебный год:</span>
+          <select 
+            value={selectedYear} 
+            onChange={(e) => setSelectedYear(e.target.value)} 
+            className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0"
+          >
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
         </div>
       </div>
-    );
-  }
+      
+      {/* Кнопки экспорта и сохранения */}
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={handleExport}
+          disabled={selectedIds.length === 0 || exporting}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 shadow-lg active:scale-95 disabled:opacity-50
+            ${exporting ? 'bg-emerald-100 text-emerald-400' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white'}`}
+        >
+          {exporting ? <div className="w-5 h-5 border-2 border-emerald-400 border-t-emerald-700 rounded-full animate-spin" /> : <FileSpreadsheet size={18} />}
+          <span>{exporting ? 'Подготовка...' : 'Скачать отчет'}</span>
+        </button>
 
-  return (
-    <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Планирование KPI</h1>
-          <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-            <Calendar size={14} />
-            <span>Учебный год:</span>
-            <select 
-              value={selectedYear} 
-              onChange={(e) => setSelectedYear(e.target.value)} 
-              className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0"
-            >
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-        </div>
-<div className="flex items-center gap-3">
-  {/* Кнопка экспорта в Excel с лоадером */}
-  <button 
-    onClick={handleExport}
-    disabled={selectedIds.length === 0 || exporting}
-    className={`
-      flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
-      shadow-lg active:scale-95 disabled:cursor-not-allowed
-      ${exporting 
-        ? 'bg-emerald-100 text-emerald-400 shadow-none' 
-        : selectedIds.length === 0 
-          ? 'bg-gray-100 text-gray-400 shadow-none' 
-          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:shadow-emerald-200'
-      }
-    `}
-  >
-    {exporting ? (
-      <div className="w-5 h-5 border-2 border-emerald-400 border-t-emerald-700 rounded-full animate-spin" />
-    ) : (
-      <FileSpreadsheet size={18} className={selectedIds.length === 0 ? "text-gray-300" : ""} />
-    )}
-    <span>{exporting ? 'Подготовка...' : 'Скачать отчет'}</span>
-  </button>
-
-  {/* Кнопка сохранения/обновления плана */}
-  <button 
-    onClick={handleSave} 
-    disabled={saving || exporting}
-    className={`
-      relative flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all duration-200
-      shadow-lg active:scale-95 disabled:cursor-wait
-      ${saving 
-        ? 'bg-blue-400 text-white shadow-none' 
-        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200'
-      }
-    `}
-  >
-    {saving ? (
-      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-    ) : (
-      <FileText size={18} />
-    )}
-    <span>{saving ? 'Сохранение...' : 'Обновить и сохранить'}</span>
-  </button>
-</div>
+        <button 
+          onClick={handleSave} 
+          disabled={saving || exporting}
+          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all duration-200 shadow-lg active:scale-95
+            ${saving ? 'bg-blue-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+        >
+          {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FileText size={18} />}
+          <span>{saving ? 'Сохранение...' : 'Обновить и сохранить'}</span>
+        </button>
       </div>
+    </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-            <div className="flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto custom-scrollbar scroll-smooth pb-2">
-              <div className="flex flex-nowrap gap-1">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Левая колонка с индикаторами */}
+      <div className="lg:col-span-8 space-y-6">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          {/* Tabs & Search... */}
+          <div className="flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
+   <div className="flex flex-nowrap gap-1">
                 {categories.map(cat => (
                   <button
                     key={cat}
@@ -296,75 +254,67 @@ const renderIndicatorCard = (item) => {
                     {cat.toUpperCase()}
                   </button>
                 ))}
+              </div>          </div>
+          {/* Search Input... */}
+        </div>
+
+        {/* СЕКЦИЯ КОНТЕНТА С ЛОКАЛЬНОЙ ЗАГРУЗКОЙ */}
+        <div className={`grid grid-cols-1 gap-4 transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+          {loading ? (
+            // Локальный индикатор загрузки вместо пустого экрана
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+               <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+               <p className="text-gray-500 font-medium">Загрузка индикаторов...</p>
+            </div>
+          ) : activeTab === 'Все' ? (
+            Object.entries(
+              filteredIndicators.reduce((acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
+                acc[item.category].push(item);
+                return acc;
+              }, {})
+            ).map(([category, items]) => (
+              <div key={category} className="space-y-4 mb-6">
+                <div className="flex items-center gap-4 py-2">
+                  <div className="h-px flex-grow bg-gray-200"></div>
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">{category}</span>
+                  <div className="h-px flex-grow bg-gray-200"></div>
+                </div>
+                {items.map(item => renderIndicatorCard(item))}
               </div>
-            </div>
-            <div className="relative w-full md:w-64">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Найти индикатор..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-  {activeTab === 'Все' ? (
-    Object.entries(
-      filteredIndicators.reduce((acc, item) => {
-        if (!acc[item.category]) acc[item.category] = [];
-        acc[item.category].push(item);
-        return acc;
-      }, {})
-    ).map(([category, items]) => (
-      <div key={category} className="space-y-4 mb-6">
-        {/* Заголовок категории */}
-        <div className="flex items-center gap-4 py-2">
-          <div className="h-px flex-grow bg-gray-200"></div>
-          <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-            {category}
-          </span>
-          <div className="h-px flex-grow bg-gray-200"></div>
+            ))
+          ) : (
+            filteredIndicators.map(item => renderIndicatorCard(item))
+          )}
         </div>
-
-        {/* Список элементов этой категории */}
-        {items.map(item => renderIndicatorCard(item))}
       </div>
-    ))
-  ) : (
-    // Обычный список для конкретной вкладки
-    filteredIndicators.map(item => renderIndicatorCard(item))
-  )}
-</div>
-        </div>
 
-        <div className="lg:col-span-4">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm sticky top-8">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-              <h3 className="font-bold text-slate-900">Ваш выбор</h3>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              {selectedItems.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4 italic">Ничего не выбрано</p>
-              ) : (
-                selectedItems.map(item => (
-                  <div key={item.id} className="flex justify-between items-center group">
-                    <div className="flex flex-col max-w-[80%]">
-                      <span className="text-sm font-medium text-slate-700 truncate">{item.title}</span>
-                      <span className="text-[10px] text-blue-500 font-bold">{item.points} баллов</span>
-                    </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); removeIndicator(item.id); }}
-                      className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+      {/* Правая колонка "Ваш выбор" (Sidebar) */}
+      <div className="lg:col-span-4">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm sticky top-8">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="font-bold text-slate-900">Ваш выбор</h3>
+          </div>
+          <div className="p-6 space-y-4">
+            {/* Здесь загрузку можно не показывать, так как selectedItems зависят от локального стейта */}
+            {selectedItems.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4 italic">Ничего не выбрано</p>
+            ) : (
+              selectedItems.map(item => (
+                <div key={item.id} className="flex justify-between items-center group">
+                  <div className="flex flex-col max-w-[80%]">
+                    <span className="text-sm font-medium text-slate-700 truncate">{item.title}</span>
+                    <span className="text-[10px] text-blue-500 font-bold">{item.points} баллов</span>
                   </div>
-                ))
-              )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removeIndicator(item.id); }}
+                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))
+            )}
               <div className="pt-4 border-t border-gray-100">
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-sm font-bold text-gray-500">Итого:</span>

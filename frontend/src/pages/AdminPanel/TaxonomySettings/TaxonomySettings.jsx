@@ -167,6 +167,11 @@ const TaxonomySettings = () => {
               {activeSection === 'positions' && <Briefcase size={14} className="text-slate-300"/>}
               {activeSection === 'degrees' && <GraduationCap size={14} className="text-slate-300"/>}
               <span className="text-sm font-bold text-slate-900">{item.name}</span>
+              {item.short_name && (
+        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+          {item.short_name}
+        </span>
+      )}
             </div>
           </td>
           <td className="px-6 py-4 text-right">

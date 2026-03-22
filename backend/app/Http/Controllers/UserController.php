@@ -279,8 +279,8 @@ public function getOptions()
 
         return response()->json([
             'kpi_metrics' => $kpi_metrics,
-            'faculties' => \App\Models\Faculty::select('id', 'title as name')->orderBy('title')->get(),
-            'departments' => \App\Models\Department::select('id', 'title as name')->orderBy('title')->get(),
+            'faculties' => \App\Models\Faculty::select('id', 'title as name', 'short_name')->orderBy('title')->get(),
+            'departments' => \App\Models\Department::select('id', 'title as name', 'short_name')->orderBy('title')->get(),
             'positions' => \App\Models\Position::select('id', 'title as name')->orderBy('title')->get(),
             'degrees' => \App\Models\AcademicDegree::select('id', 'title as name')->orderBy('title')->get(),
         ], 200);

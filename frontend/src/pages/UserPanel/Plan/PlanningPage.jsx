@@ -192,7 +192,7 @@ const renderIndicatorCard = (item) => {
 
  
 return (
-  <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
     {/* Header остается без изменений */}
     <div className="flex justify-between items-end mb-8">
       <div>

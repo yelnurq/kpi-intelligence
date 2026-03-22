@@ -76,7 +76,7 @@ const FacultyRanking = () => {
           <div className="flex items-center gap-3 text-sm text-slate-500 font-medium text-left">
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
               <Calendar size={14} className="text-slate-400" />
-              <span className="text-xs uppercase tracking-wider text-slate-400">Обновлено:</span>
+              <span className="text-[11px] uppercase tracking-wider text-slate-400">Обновлено:</span>
               <span className="font-bold text-blue-700 text-xs">{loading ? '...' : lastUpdated}</span>
             </div>
             <span className="text-slate-300">|</span>

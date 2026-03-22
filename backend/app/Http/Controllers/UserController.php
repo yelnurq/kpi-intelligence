@@ -255,17 +255,40 @@ public function store(Request $request)
 public function getOptions()
 {
     try {
+        $categoryOrder = [
+            'учеб.работа', 
+            'учебно-методическая работа', 
+            'организационно-методическая работа', 
+            'научно-исследовательская работа', 
+            'воспитательная работа', 
+            'повышение квалификации'
+        ];
+
+        // Строим конструкцию CASE WHEN для универсальной сортировки
+        $cases = [];
+        foreach ($categoryOrder as $index => $category) {
+            $cases[] = "WHEN category = '{$category}' THEN " . ($index + 1);
+        }
+        $orderRaw = "CASE " . implode(' ', $cases) . " ELSE 999 END";
+
+        $kpi_metrics = \App\Models\KpiIndicator::select('id', 'title as name', 'category')
+            ->orderByRaw($orderRaw) // Универсальная сортировка для SQLite и MySQL
+            ->orderBy('title', 'asc')
+            ->get()
+            ->groupBy('category');
+
         return response()->json([
-            'kpi_metrics' => \App\Models\KpiIndicator::select('id', 'title as name')->orderBy('title')->get(),
+            'kpi_metrics' => $kpi_metrics,
             'faculties' => \App\Models\Faculty::select('id', 'title as name')->orderBy('title')->get(),
             'departments' => \App\Models\Department::select('id', 'title as name')->orderBy('title')->get(),
             'positions' => \App\Models\Position::select('id', 'title as name')->orderBy('title')->get(),
             'degrees' => \App\Models\AcademicDegree::select('id', 'title as name')->orderBy('title')->get(),
         ], 200);
+
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка при загрузке справочников: ' . $e->getMessage()
+            'message' => 'Ошибка: ' . $e->getMessage()
         ], 500);
     }
 }

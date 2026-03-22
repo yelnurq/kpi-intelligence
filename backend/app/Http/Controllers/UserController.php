@@ -256,6 +256,7 @@ public function getOptions()
 {
     try {
         return response()->json([
+            'kpi_metrics' => \App\Models\KpiIndicator::select('id', 'title as name')->orderBy('title')->get(),
             'faculties' => \App\Models\Faculty::select('id', 'title as name')->orderBy('title')->get(),
             'departments' => \App\Models\Department::select('id', 'title as name')->orderBy('title')->get(),
             'positions' => \App\Models\Position::select('id', 'title as name')->orderBy('title')->get(),

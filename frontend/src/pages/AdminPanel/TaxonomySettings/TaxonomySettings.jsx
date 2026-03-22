@@ -11,7 +11,7 @@ const TaxonomySettings = () => {
   
   const [data, setData] = useState({
     faculties: [],
-    departments: [], // Кафедры
+    departments: [], 
     positions: [],
     degrees: [],
     kpi_metrics: [] 
@@ -22,12 +22,13 @@ const TaxonomySettings = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
-        const response = await axios.get('http://localhost:8000/api/admin/helpers/user-options', {
+        const response = await axios.get('http://localhost:8000/api/admin/helpers/options', {
             headers: { Authorization : `Bearer ${token}` }
         }); 
         
         setData(prev => ({
           ...prev,
+          kpi_metrics: response.data.kpi_metrics || [],
           faculties: response.data.faculties || [],
           positions: response.data.positions || [],
           degrees: response.data.degrees || [],

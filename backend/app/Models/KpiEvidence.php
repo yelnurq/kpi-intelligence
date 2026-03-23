@@ -17,8 +17,11 @@ class KpiEvidence extends Model
         return $this->belongsTo(KpiActivity::class, 'kpi_activity_id');
     }
 
-    public function getFileUrlAttribute()
-    {
-        return $this->file_path ? Storage::disk('public')->url($this->file_path) : null;
-    }
+   public function getFileUrlAttribute()
+{
+    if (!$this->file_path) return null;
+
+    // Этот вариант автоматически подхватит текущий домен и порт (localhost:8000)
+    return asset(Storage::url($this->file_path));
+}
 }

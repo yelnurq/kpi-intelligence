@@ -134,14 +134,6 @@ const MainLayout = () => {
               )}
             </div>
 
-            <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors"><Bell size={22} /></button>
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-100 text-right">
-                <div className="hidden sm:block">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Ваш ранг</p>
-                  <p className="text-sm font-bold text-blue-600 leading-none mt-1">ТОП-5%</p>
-                </div>
-                <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg"><Zap size={18} fill="currentColor" /></div>
-            </div>
           </div>
         </header>
 

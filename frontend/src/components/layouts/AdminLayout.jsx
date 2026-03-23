@@ -160,20 +160,7 @@ const AdminLayout = () => {
                <Search size={14} className="text-slate-400" />
                <input type="text" placeholder="Поиск по системе..." className="bg-transparent border-none text-[11px] font-bold focus:outline-none w-48 placeholder:text-slate-400" />
             </div>
-            
-            <button className="relative p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm" />
-            </button>
-
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-               <div className="text-right hidden sm:block">
-                  <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Статус</p>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase leading-none mt-1.5 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span> Online
-                  </p>
-               </div>
-            </div>
+          
           </div>
         </header>
 

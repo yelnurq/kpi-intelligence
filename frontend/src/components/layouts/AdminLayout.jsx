@@ -52,8 +52,7 @@ const AdminLayout = () => {
   const adminMenuItems = [
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
-    { id: 'indicators', path: '/admin/indicators', icon: <Database size={20} />, label: 'Справочник KPI' },
-    { id: 'analytics', path: '/admin/analytics', icon: <BarChart3 size={20} />, label: 'Общая аналитика' },
+    { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий' },
     { id: 'logs', path: '/admin/logs', icon: <FileSearch size={20} />, label: 'Логи системы' },
     { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки' },
   ];

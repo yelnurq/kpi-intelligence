@@ -13,6 +13,10 @@ Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("token")->group(function(){
 
+    Route::get('/assets', [KpiEvidenceController::class, 'index']);
+    Route::post('/assets/upload', [KpiEvidenceController::class, 'store']);
+    Route::delete('/assets/{id}', [KpiEvidenceController::class, 'destroy']); // Поддерживает 1,2,3
+
     Route::get('/faculty-ranking', [FacultyController::class, 'index']);
 
     Route::get('/admin/users', [UserController::class, 'index']);

@@ -151,7 +151,6 @@ const AssetManagement = () => {
         </div>
       </div>
 
-      {/* ПАНЕЛЬ ДЕЙСТВИЙ */}
       <AnimatePresence>
         {selectedIds.length > 0 && (
           <motion.div 

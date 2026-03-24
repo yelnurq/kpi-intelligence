@@ -19,12 +19,37 @@ import TaxonomySettings from './pages/AdminPanel/TaxonomySettings/TaxonomySettin
 import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
 import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
 
+
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (adminOnly && Number(user.is_admin) !== 1) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<AdminLayout />}>
+
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminPanel />} />
           <Route path="audit" element={<VerificationAudit />} />
           <Route path="assets" element={<AssetManagement />} />
@@ -32,10 +57,16 @@ function App() {
           <Route path="settings" element={<TaxonomySettings />} />
           <Route path="users" element={<StaffManagement />} />
         </Route>
-        <Route path="/" element={<MainLayout />}>
-          
+
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/dashboard" replace />} />
-          
           <Route path="plan" element={<PlanningPage />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsPage />} />
@@ -43,9 +74,9 @@ function App() {
           <Route path="archive" element={<ActivityArchive />} />
           <Route path="rating" element={<FacultyRanking />} />
           <Route path="report" element={<ReportGenerator />} />
-
-          <Route path="*" element={<div className="p-10 text-center font-bold">Страница не найдена</div>} />
         </Route>
+
+        <Route path="*" element={<div className="p-10 text-center font-bold">Страница не найдена</div>} />
       </Routes>
     </BrowserRouter>
   );

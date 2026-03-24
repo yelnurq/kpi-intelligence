@@ -13,7 +13,7 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -31,13 +31,16 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Сохраняем токен (структура вашего API возвращает access_token как объект с полем token)
         localStorage.setItem('token', data.access_token.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        navigate('/dashboard');
+        if (Number(data.user.is_admin) === 1) {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+        
       } else {
-        // Выводим ошибку из валидатора или сообщения
         setError(data.message || 'Ошибка авторизации. Проверьте данные.');
       }
     } catch (err) {

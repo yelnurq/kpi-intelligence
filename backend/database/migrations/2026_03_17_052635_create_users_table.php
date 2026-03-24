@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('is_admin')->default(0);
             $table->foreignId("academic_degree_id")->constrained()->onDelete("cascade");
             $table->foreignId("faculty_id")->constrained()->onDelete("cascade");
             $table->foreignId("department_id")->constrained()->onDelete("cascade");

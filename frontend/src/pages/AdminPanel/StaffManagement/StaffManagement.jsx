@@ -83,7 +83,7 @@ const StaffManagement = () => {
   // 1. Улучшаем загрузку справочников (кешируем их в состоянии)
   const fetchOptions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/admin/helpers/user-options`, {
+      const res = await fetch(`${API_BASE}/admin/helpers/options`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const data = await res.json();

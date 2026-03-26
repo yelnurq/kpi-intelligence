@@ -50,10 +50,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* 1. При заходе на /admin редиректим на /admin/audit */}
           <Route index element={<Navigate to="audit" replace />} />
 
-          {/* 2. Определяем путь audit, который отрисует компонент */}
           <Route path="audit" element={<VerificationAudit />} />
           
           <Route path="assets" element={<AssetManagement />} />

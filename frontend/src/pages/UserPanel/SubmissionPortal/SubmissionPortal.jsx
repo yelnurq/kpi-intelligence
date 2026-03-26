@@ -7,7 +7,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-// Используем тот же компонент StatCard для единообразия
 const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "баллов" }) => (
   <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden transition-all ${isPrimary ? 'ring-1 ring-blue-600/10' : ''}`}>
     <div className={`absolute top-0 left-0 w-1 h-full ${isPrimary ? 'bg-blue-600' : 'bg-slate-200'}`} />
@@ -64,14 +63,11 @@ const SubmissionPortal = () => {
   }, [token]);
 useEffect(() => {
   if (status === 'success') {
-    // Отключаем скролл
     document.body.style.overflow = 'hidden';
   } else {
-    // Возвращаем скролл
     document.body.style.overflow = 'unset';
   }
 
-  // Очистка при размонтировании компонента
   return () => {
     document.body.style.overflow = 'unset';
   };
@@ -123,7 +119,6 @@ useEffect(() => {
             Достижение успешно отправлено. После одобрения модератором вам будет начислено:
           </p>
 
-          {/* Плашка с баллами в стиле Архива */}
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-10 flex items-center justify-center gap-3">
             <Zap size={20} className="text-amber-500 fill-amber-500" />
             <span className="text-3xl font-black text-slate-900">+{predictedPoints}</span>
@@ -159,7 +154,6 @@ useEffect(() => {
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans">
       <div className="flex flex-col lg:flex-row gap-8">
         
-        {/* ЛЕВАЯ КОЛОНКА: ФОРМА */}
         <div className="lg:col-span-2 flex-1 space-y-8">
           <div className="text-left">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Верификация достижения</h1>
@@ -169,7 +163,6 @@ useEffect(() => {
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-8 space-y-8">
               
-              {/* Ряд 1: Индикатор и Количество */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-3 text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Выберите индикатор</label>
@@ -199,7 +192,6 @@ useEffect(() => {
                 </div>
               </div>
 
-              {/* Ряд 2: Название и Дата */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="md:col-span-3 space-y-3 text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Название выполненной работы</label>
@@ -225,7 +217,6 @@ useEffect(() => {
                 </div>
               </div>
 
-              {/* Ряд 3: Загрузка файлов */}
               <div className="space-y-4 text-left">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Подтверждающие документы</label>
                 <div 
@@ -270,7 +261,6 @@ useEffect(() => {
           </form>
         </div>
 
-        {/* ПРАВАЯ КОЛОНКА: СТАТИСТИКА И ЧЕК-ЛИСТ */}
         <div className="lg:w-80 space-y-6">
           <StatCard 
             label="Прогноз" 

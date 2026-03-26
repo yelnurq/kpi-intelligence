@@ -19,7 +19,9 @@ import {
   X,
   Database,
   FileSearch,
-  School2Icon
+  School2Icon,
+  Edit,
+  CopyCheckIcon
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -36,8 +38,6 @@ const AdminLayout = () => {
       navigate('/login');
     } else {
       const parsedUser = JSON.parse(savedUser);
-      // Если нужно жестко ограничить доступ:
-      // if (parsedUser.role !== 'admin') navigate('/dashboard');
       setUser(parsedUser);
     }
   }, [navigate]);
@@ -49,6 +49,7 @@ const AdminLayout = () => {
   };
 
   const adminMenuItems = [
+    { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов' },
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий' },

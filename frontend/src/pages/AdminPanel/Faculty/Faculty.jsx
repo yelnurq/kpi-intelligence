@@ -34,7 +34,7 @@ const TopCardSkeleton = () => (
   </div>
 );
 
-const FacultyRanking = () => {
+const FacultyRank = () => {
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalFund, setTotalFund] = useState(0);
@@ -67,7 +67,7 @@ const FacultyRanking = () => {
   );
 
   return (
-    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-slate-200 pb-8">
@@ -250,4 +250,4 @@ const FacultyRanking = () => {
   );
 };
 
-export default FacultyRanking;
+export default FacultyRank;

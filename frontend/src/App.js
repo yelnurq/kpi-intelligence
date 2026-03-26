@@ -18,6 +18,7 @@ import AdminLayout from './components/layouts/AdminLayout';
 import TaxonomySettings from './pages/AdminPanel/TaxonomySettings/TaxonomySettings';
 import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
 import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
+import FacultyRank from './pages/AdminPanel/Faculty/Faculty';
 
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -58,7 +59,7 @@ function App() {
           <Route path="assets" element={<AssetManagement />} />
           <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />
-          <Route path="faculties" element={<FacultyRanking />} />
+          <Route path="faculties" element={<FacultyRank />} />
           <Route path="users" element={<StaffManagement />} />
         </Route>
 

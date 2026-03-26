@@ -18,7 +18,8 @@ import {
   Menu,
   X,
   Database,
-  FileSearch
+  FileSearch,
+  School2Icon
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -51,6 +52,7 @@ const AdminLayout = () => {
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий' },
+    { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг' },
     { id: 'logs', path: '/admin/logs', icon: <FileSearch size={20} />, label: 'Логи системы' },
     { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки' },
   ];

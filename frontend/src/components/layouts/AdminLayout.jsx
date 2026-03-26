@@ -31,7 +31,6 @@ const AdminLayout = () => {
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
 
-    // Проверка не только наличия данных, но и роли (isAdmin)
     if (!savedUser || !token) {
       navigate('/login');
     } else {
@@ -48,7 +47,6 @@ const AdminLayout = () => {
     navigate('/login');
   };
 
-  // МЕНЮ ДЛЯ АДМИНИСТРАТОРА
   const adminMenuItems = [
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
@@ -76,7 +74,6 @@ const AdminLayout = () => {
               <span className="font-black text-lg tracking-tighter text-white leading-none">
                 KAZUTB <span className="text-blue-500">ADMIN</span>
               </span>
-              <span className="text-[8px] font-bold text-blue-400 uppercase tracking-[0.3em] mt-1">Management System</span>
             </div>
           )}
         </div>

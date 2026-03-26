@@ -105,8 +105,6 @@ const Dashboard = () => {
     .then(([userRes, activitiesRes]) => {
       if (userRes.data.status === 'success') {
         setUser(userRes.data.data);
-        // Опционально: обновляем localStorage актуальными данными от сервера
-        localStorage.setItem('user', JSON.stringify(userRes.data.data));
       }
       setActivities(activitiesRes.data.data || []);
       setLoading(false);

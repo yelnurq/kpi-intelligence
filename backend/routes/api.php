@@ -14,9 +14,11 @@ Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("token")->group(function(){
+    Route::get('/dean/user-plan/{userId}', [KPIPlanController::class, 'getUserPlanDetails']);
+    Route::post('/dean/update-status', [KPIPlanController::class, 'updatePlanStatus']);
     Route::get('/get-plan-status', [KPIPlanController::class, 'getPlanStatus']);
     Route::post('/submit-plan', [KPIPlanController::class, 'submitPlan']);
-    
+    Route::get('/dean/submissions', [KPIPlanController::class, 'getDeanSubmissions']);
     Route::get('/assets', [KpiEvidenceController::class, 'index']);
     Route::post('/assets/upload', [KpiEvidenceController::class, 'store']);
     Route::delete('/assets/{id}', [KpiEvidenceController::class, 'destroy']); 

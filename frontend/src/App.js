@@ -19,6 +19,7 @@ import TaxonomySettings from './pages/AdminPanel/TaxonomySettings/TaxonomySettin
 import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
 import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
 import FacultyRank from './pages/AdminPanel/Faculty/Faculty';
+import DeanDashboard from './pages/AdminPanel/DeanDashboard/DeanDashboard';
 
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -55,6 +56,7 @@ function App() {
           <Route path="audit" element={<VerificationAudit />} />
           
           <Route path="assets" element={<AssetManagement />} />
+          <Route path="dean" element={<DeanDashboard />} />
           <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />
           <Route path="faculties" element={<FacultyRank />} />

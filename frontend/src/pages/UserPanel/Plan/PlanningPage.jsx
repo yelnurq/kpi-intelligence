@@ -2,11 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, CheckCircle2, Globe, BookOpen, PenTool, 
   Trash2, Calendar, FileText, Info, Printer, 
-  X, FileSpreadsheet, AlertTriangle 
+  X, FileSpreadsheet, AlertTriangle, Clock, Check, XCircle 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// Компонент модального окна
 const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, totalPoints }) => {
   if (!isOpen) return null;
 
@@ -17,10 +16,10 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, totalPoints }) => {
           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={32} />
           </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Подтверждение плана</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Отправить на утверждение?</h3>
           <p className="text-gray-500 mb-6 leading-relaxed">
-            Вы уверены, что хотите зафиксировать этот список индикаторов? <br/> 
-            Ваш итоговый балл: <span className="font-bold text-blue-600">{totalPoints}</span>.
+            Вы уверены, что хотите зафиксировать план на <span className="font-bold text-blue-600">{totalPoints} баллов</span>? <br/>
+            После отправки редактирование будет приостановлено до проверки деканом.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -36,7 +35,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, totalPoints }) => {
               disabled={loading}
               className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Да, сохранить"}
+              {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Да, отправить"}
             </button>
           </div>
         </div>
@@ -56,11 +55,17 @@ const PlanningPage = () => {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Новое состояние для статуса подачи плана
+  const [submission, setSubmission] = useState({ status: 'draft', comment: null });
 
   const categories = ['Все', 'учеб.работа', 'учебно-методическая работа', 'организационно-методическая работа',
     'научно-исследовательская работа', 'воспитательная работа' , 'профориентационная работа', 'повышение квалификации'
   ];
   const years = ['2025/2026', '2026/2027'];
+
+  // Блокируем интерфейс, если план отправлен или утвержден
+  const isReadOnly = submission.status === 'submitted' || submission.status === 'approved';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,15 +80,23 @@ const PlanningPage = () => {
           'Accept': 'application/json'
         };
 
-        const resIndicators = await fetch('http://localhost:8000/api/kpi-indicators', { headers });
-        if (resIndicators.status === 401) { navigate('/login'); return; }
-        const dataIndicators = await resIndicators.json();
+        // Загружаем индикаторы и текущий статус плана
+        const [resIndicators, resStatus] = await Promise.all([
+          fetch('http://localhost:8000/api/kpi-indicators', { headers }),
+          fetch(`http://localhost:8000/api/get-plan-status?year=${selectedYear}`, { headers })
+        ]);
 
-        const resPlan = await fetch(`http://localhost:8000/api/get-user-plan-ids?year=${selectedYear}`, { headers });
-        const dataPlan = await resPlan.json();
+        const dataIndicators = await resIndicators.json();
+        const dataStatus = await resStatus.json();
 
         if (dataIndicators.status === 'success') setIndicators(dataIndicators.data);
-        if (dataPlan.status === 'success') setSelectedIds(dataPlan.data || []);
+        if (dataStatus.status === 'success') {
+          setSelectedIds(dataStatus.selected_ids || []);
+          setSubmission({
+            status: dataStatus.plan_status || 'draft',
+            comment: dataStatus.comment
+          });
+        }
 
       } catch (error) {
         console.error("Ошибка загрузки:", error);
@@ -95,12 +108,12 @@ const PlanningPage = () => {
     fetchData();
   }, [navigate, selectedYear]);
 
-  const handleSave = async () => {
+  const handleFinalSubmit = async () => {
     try {
       setSaving(true);
       const token = localStorage.getItem("token");
       
-      const response = await fetch('http://localhost:8000/api/save-kpi-plan', {
+      const response = await fetch('http://localhost:8000/api/submit-plan', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -114,63 +127,58 @@ const PlanningPage = () => {
       });
 
       if (response.ok) {
+        setSubmission(prev => ({ ...prev, status: 'submitted' }));
         setIsModalOpen(false);
-        // Можно заменить на красивый тост, если используешь react-hot-toast
-        alert("План успешно обновлен!");
+        alert("План успешно отправлен на утверждение!");
       }
     } catch (error) {
-      alert("Ошибка сохранения: " + error.message);
+      alert("Ошибка: " + error.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleExport = async () => {
+ const toggleIndicator = async (id) => {
+    if (isReadOnly) return;
+
+    // 1. Сначала обновляем UI (мгновенно)
+    const newIds = selectedIds.includes(id)
+        ? selectedIds.filter(i => i !== id)
+        : [...selectedIds, id];
+    
+    setSelectedIds(newIds);
+
+    // 2. Сразу шлем в базу
     try {
-      setExporting(true);
-      const token = localStorage.getItem("token");
-      const indicatorIds = selectedItems.map(item => item.id);
-
-      const response = await fetch("http://localhost:8000/api/export", {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
-        body: JSON.stringify({
-          indicator_ids: indicatorIds,
-          year: selectedYear
-        })
-      });
-
-      if (!response.ok) throw new Error("Ошибка сервера");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Individual_Plan_${selectedYear.replace('/', '_')}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-    } catch (err) {
-      console.error("Export failed:", err);
-      alert("Не удалось подготовить файл.");
-    } finally {
-      setExporting(false);
+        const token = localStorage.getItem("token");
+        await fetch('http://localhost:8000/api/save-kpi-plan', { // Твой новый метод
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                indicator_ids: newIds,
+                academic_year: selectedYear
+            })
+        });
+    } catch (error) {
+        console.error("Ошибка сохранения плана:", error);
     }
-  };
-
-  const toggleIndicator = (id) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
+};
   const removeIndicator = (id) => {
+    if (isReadOnly) return;
     setSelectedIds(prev => prev.filter(i => i !== id));
   };
+
+  const selectedItems = useMemo(() => 
+    indicators.filter(item => selectedIds.includes(item.id)), 
+  [indicators, selectedIds]);
+
+  const totalPoints = useMemo(() => 
+    selectedItems.reduce((acc, curr) => acc + (Number(curr.points) || 0), 0), 
+  [selectedItems]);
 
   const filteredIndicators = useMemo(() => {
     return indicators.filter(item => {
@@ -181,14 +189,6 @@ const PlanningPage = () => {
     });
   }, [indicators, activeTab, searchQuery, selectedYear]);
 
-  const selectedItems = useMemo(() => 
-    indicators.filter(item => selectedIds.includes(item.id)), 
-  [indicators, selectedIds]);
-
-  const totalPoints = useMemo(() => 
-    selectedItems.reduce((acc, curr) => acc + (Number(curr.points) || 0), 0), 
-  [selectedItems]);
-
   const renderIndicatorCard = (item) => {
     const isSelected = selectedIds.includes(item.id);
     const catLower = (item.category || "").toLowerCase();
@@ -197,7 +197,9 @@ const PlanningPage = () => {
       <div 
         key={item.id}
         onClick={() => toggleIndicator(item.id)}
-        className={`flex items-center gap-6 p-5 bg-white border rounded-xl transition-all cursor-pointer group ${
+        className={`flex items-center gap-6 p-5 bg-white border rounded-xl transition-all group ${
+          isReadOnly ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+        } ${
           isSelected ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
         }`}
       >
@@ -209,9 +211,7 @@ const PlanningPage = () => {
            <PenTool size={20} />}
         </div>
         <div className="flex-grow text-left">
-          <div className="flex items-center gap-3 mb-1">
-            <h4 className="font-bold text-slate-900 leading-tight">{item.title}</h4>
-          </div>
+          <h4 className="font-bold text-slate-900 leading-tight">{item.title}</h4>
           <p className="text-sm text-gray-500 leading-snug">{item.desc}</p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
@@ -234,10 +234,59 @@ const PlanningPage = () => {
       <ConfirmModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onConfirm={handleSave} 
+        onConfirm={handleFinalSubmit} 
         loading={saving}
         totalPoints={totalPoints}
       />
+
+      {/* СТАТУС-БАР ПЛАНА */}
+      <div className={`mb-8 p-4 rounded-2xl border flex items-center justify-between transition-all ${
+        submission.status === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+        submission.status === 'submitted' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+        submission.status === 'rejected' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-white border-gray-100 shadow-sm'
+      }`}>
+        <div className="flex items-center gap-4">
+          <div className={`p-2 rounded-lg ${
+            submission.status === 'approved' ? 'bg-emerald-500 text-white' :
+            submission.status === 'submitted' ? 'bg-amber-500 text-white' : 
+            submission.status === 'rejected' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-400'
+          }`}>
+            {submission.status === 'approved' ? <CheckCircle2 size={24} /> : 
+             submission.status === 'submitted' ? <Clock size={24} /> : 
+             submission.status === 'rejected' ? <XCircle size={24} /> : <FileText size={24} />}
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider opacity-60">Статус плана</p>
+            <h3 className="font-black">
+              {submission.status === 'approved' ? 'УТВЕРЖДЕН' : 
+               submission.status === 'submitted' ? 'НА ПРОВЕРКЕ' : 
+               submission.status === 'rejected' ? 'ОТКЛОНЕН' : 'ЧЕРНОВИК'}
+            </h3>
+          </div>
+        </div>
+        
+        {submission.comment && (
+          <div className="flex-grow mx-10 text-sm italic bg-white/50 p-2 rounded border border-red-100">
+            Замечание: {submission.comment}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          {!isReadOnly && (
+            <button 
+              onClick={() => setIsModalOpen(true)} 
+              disabled={selectedIds.length === 0 || saving}
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
+            >
+              <FileText size={18} />
+              Отправить декану
+            </button>
+          )}
+          <button className="p-2.5 text-gray-400 hover:text-gray-600 bg-white border border-gray-100 rounded-xl">
+            <Printer size={20} />
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
         <div>
@@ -248,38 +297,17 @@ const PlanningPage = () => {
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(e.target.value)} 
-              className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0"
+              disabled={isReadOnly}
+              className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0 disabled:opacity-50"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button 
-            onClick={handleExport}
-            disabled={selectedIds.length === 0 || exporting}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 shadow-lg active:scale-95 disabled:opacity-50
-              ${exporting ? 'bg-emerald-100 text-emerald-400' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white'}`}
-          >
-            {exporting ? <div className="w-5 h-5 border-2 border-emerald-400 border-t-emerald-700 rounded-full animate-spin" /> : <FileSpreadsheet size={18} />}
-            <span>{exporting ? 'Подготовка...' : 'Скачать отчет'}</span>
-          </button>
-
-          <button 
-            onClick={() => setIsModalOpen(true)} 
-            disabled={saving || exporting || selectedIds.length === 0}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all duration-200 shadow-lg active:scale-95
-              ${saving ? 'bg-blue-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-          >
-            <FileText size={18} />
-            <span>{saving ? 'Сохранение...' : 'Обновить и сохранить'}</span>
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+        <div className={`lg:col-span-8 space-y-6 ${isReadOnly ? 'pointer-events-none' : ''}`}>
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             <div className="custom-scrollbar flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
               <div className="flex flex-nowrap gap-1">
@@ -300,29 +328,9 @@ const PlanningPage = () => {
             </div>
           </div>
 
-          <div className={`grid grid-cols-1 gap-4 transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+          <div className="grid grid-cols-1 gap-4">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-medium">Загрузка индикаторов...</p>
-              </div>
-            ) : activeTab === 'Все' ? (
-              Object.entries(
-                filteredIndicators.reduce((acc, item) => {
-                  if (!acc[item.category]) acc[item.category] = [];
-                  acc[item.category].push(item);
-                  return acc;
-                }, {})
-              ).map(([category, items]) => (
-                <div key={category} className="space-y-4 mb-6">
-                  <div className="flex items-center gap-4 py-2">
-                    <div className="h-px flex-grow bg-gray-200"></div>
-                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">{category}</span>
-                    <div className="h-px flex-grow bg-gray-200"></div>
-                  </div>
-                  {items.map(item => renderIndicatorCard(item))}
-                </div>
-              ))
+              <div className="py-20 text-center bg-white rounded-xl border border-dashed">Загрузка...</div>
             ) : (
               filteredIndicators.map(item => renderIndicatorCard(item))
             )}
@@ -335,30 +343,25 @@ const PlanningPage = () => {
               <h3 className="font-bold text-slate-900">Ваш выбор</h3>
             </div>
             <div className="p-6 space-y-4">
-              {selectedItems.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4 italic">Ничего не выбрано</p>
-              ) : (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  {selectedItems.map(item => (
-                    <div key={item.id} className="flex justify-between items-start gap-3 group border-b border-gray-50 pb-2">
-                      <div className="flex flex-col max-w-[85%]">
-                        <span className="text-sm font-medium text-slate-700 leading-tight">{item.title}</span>
-                        <span className="text-[10px] text-blue-500 font-bold mt-1 uppercase">{item.points} баллов</span>
-                      </div>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); removeIndicator(item.id); }}
-                        className="p-1 text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
-                      >
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {selectedItems.map(item => (
+                  <div key={item.id} className="flex justify-between items-start gap-3 border-b border-gray-50 pb-2">
+                    <div className="flex flex-col max-w-[85%]">
+                      <span className="text-sm font-medium text-slate-700">{item.title}</span>
+                      <span className="text-[10px] text-blue-500 font-bold uppercase">{item.points} баллов</span>
+                    </div>
+                    {!isReadOnly && (
+                      <button onClick={() => removeIndicator(item.id)} className="text-gray-300 hover:text-red-500">
                         <Trash2 size={16} />
                       </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    )}
+                  </div>
+                ))}
+              </div>
               
               <div className="pt-4 border-t border-gray-100">
-                <div className="flex justify-between items-end mb-4">
-                  <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Итого:</span>
+                <div className="flex justify-between items-end">
+                  <span className="text-sm font-bold text-gray-500 uppercase">Итого:</span>
                   <div className="text-right">
                     <span className="text-3xl font-bold text-slate-900">{totalPoints}</span>
                     <span className="text-sm text-gray-400 font-bold ml-1">/ 600</span>

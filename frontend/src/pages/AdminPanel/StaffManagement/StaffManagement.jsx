@@ -187,12 +187,11 @@ const StaffManagement = () => {
   }, [users, searchTerm, selectedFaculty]);
 
   const stats = useMemo(() => ({
-    total: users.length,
-    active: users.filter(u => u.activities_count > 0).length,
-    new: users.filter(u => u.activities_count === 0).length,
-    admins: users.filter(u => u.role === 'admin').length
-  }), [users]);
-
+  total: users.length,
+  active: users.filter(u => u.activities_count > 0).length,
+  new: users.filter(u => u.activities_count === 0).length,
+  admins: users.filter(u => u.is_admin).length 
+}), [users]);
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       

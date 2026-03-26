@@ -94,7 +94,6 @@ class UserController extends Controller
     public function index()
 {
     try {
-        // Используем eager loading (Eager Loading), чтобы подтянуть названия вместо ID
         $users = User::with([
                 'faculty:id,title',     // Берем только id и название факультета
                 'department:id,title',  // Кафедра
@@ -113,6 +112,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'is_admin' => $user->is_admin,
                     'faculty' => $user->faculty->title ?? 'Не указан',
                     'department' => $user->department->title ?? 'Не указана',
                     'position' => $user->position->title ?? 'Сотрудник',

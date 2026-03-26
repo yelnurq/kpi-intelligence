@@ -67,33 +67,38 @@ private function getAuthenticatedUser(Request $request)
 public function admin(Request $request)
 {
     try {
-        $query = \App\Models\KpiActivity::with(['user.faculty', 'indicator', 'evidence']);
+        // Добавляем latest() в начало, чтобы база сразу отдала свежие записи
+        $query = \App\Models\KpiActivity::latest()
+            ->with(['user.faculty', 'indicator', 'evidence']);
 
+        // Фильтрация по факультету
         if ($request->has('faculty') && $request->faculty !== 'all') {
             $query->whereHas('user.faculty', function($q) use ($request) {
                 $q->where('title', $request->faculty); 
             });
         }
 
-        $activities = $query->orderBy('created_at', 'desc')->get();
+        $activities = $query->get();
 
         $allFaculties = \App\Models\Faculty::pluck('title')->toArray();
 
+        // Группировка
         $groupedByFaculty = $activities->groupBy(function ($activity) {
             return $activity->user->faculty->title ?? 'Общий факультет';
         })->map(function ($facultyActivities, $facultyName) {
             return [
                 'faculty' => $facultyName,
-                'items' => $facultyActivities->map(function ($item) {
+                // Сортировка внутри группы (на случай, если groupBy перемешал)
+                'items' => $facultyActivities->sortByDesc('created_at')->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'user_name' => $item->user->name ?? 'Сотрудник',
                         'title' => $item->title ?? ($item->indicator->title ?? 'Без названия'),
                         'category' => $item->indicator->category ?? 'Общее',
-                        'date' => $item->created_at->format('d.m.Y'),
+                        'date' => $item->created_at->format('d.m.Y H:i'), // Добавил время для точности
                         'total_points' => $item->total_points,
                         'status' => $item->status,
-                        'comment' => $item->comment, // Твой комментарий (причина отказа)
+                        'comment' => $item->comment,
                         'files' => $item->evidence ? $item->evidence->map(fn($f) => [
                             'name' => $f->file_name,
                             'url' => asset('storage/' . $f->file_path)
@@ -109,6 +114,7 @@ public function admin(Request $request)
             'faculties' => $allFaculties,
             'stats' => [
                 'total' => $activities->count(),
+                // Используем значения констант или строковые литералы как в базе
                 'approved' => $activities->where('status', 'approved')->count(),
                 'pending' => $activities->where('status', 'pending')->count(),
                 'rejected' => $activities->where('status', 'rejected')->count(),
@@ -118,10 +124,10 @@ public function admin(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error', 
-            'message' => 'Ошибка SQL: ' . $e->getMessage()
+            'message' => 'Ошибка сервера: ' . $e->getMessage()
         ], 500);
     }
-}   
+}
  public function index(Request $request)
     {
         $user = $this->getAuthenticatedUser($request);

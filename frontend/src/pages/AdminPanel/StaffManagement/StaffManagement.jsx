@@ -200,7 +200,7 @@ const StaffManagement = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Сотрудники и ППС</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами KPI Intelligence</p>
+          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами</p>
         </div>
 
         <button 

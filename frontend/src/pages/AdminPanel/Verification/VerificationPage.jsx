@@ -122,8 +122,8 @@ const StaffManagement = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Верификация KPI</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Система проверки и подтверждения достижений</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Верификация KPI</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Система проверки и подтверждения достижений</p>
         </div>
 
         <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">

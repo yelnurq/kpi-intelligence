@@ -127,8 +127,8 @@ const AssetManagement = () => {
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Хранилище данных</h1>
-            <p className="text-sm text-slate-500 font-medium mt-1">Просмотр и модерация объектов хранения</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Хранилище данных</h1>
+            <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Просмотр и модерация объектов хранения</p>
           </div>
       </div>
 

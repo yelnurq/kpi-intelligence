@@ -48,13 +48,13 @@ const TaxonomySettings = () => {
   };
 
   return (
-    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER - Рендерится всегда */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Настройки системы</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Управление справочниками и структурой университета</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Настройки системы</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Управление справочниками и структурой университета</p>
         </div>
 
         <div className="flex flex-wrap bg-white p-1 rounded-xl border border-slate-200 shadow-sm">

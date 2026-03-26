@@ -194,13 +194,13 @@ const StaffManagement = () => {
   }), [users]);
 
   return (
-    <main className="mx-auto px-6 md:px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Сотрудники и ППС</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Сотрудники и ППС</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Управление кадрами</p>
         </div>
 
         <button 

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Search, UserPlus, Mail, Building2, Filter, 
   ChevronRight, Loader2, Trash2, Edit2, X, 
-  ShieldCheck, MapPin, Users,
-  UserCheck, UserMinus, ArrowRight, Shield
+  ShieldCheck, Users, UserCheck, UserMinus, 
+  ArrowRight, Shield, User
 } from 'lucide-react';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
@@ -51,13 +51,12 @@ const StaffManagement = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', password_confirmation: '',
     faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-    role: 'user'
+    is_admin: 0 
   });
 
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // Загрузка пользователей
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -79,7 +78,6 @@ const StaffManagement = () => {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  // Загрузка справочников для формы
   const fetchOptions = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/admin/helpers/options`, {
@@ -97,7 +95,7 @@ const StaffManagement = () => {
     setFormData({
       name: '', email: '', password: '', password_confirmation: '',
       faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-      role: 'user'
+      is_admin: 0
     });
     setEditingId(null);
   };
@@ -111,17 +109,14 @@ const StaffManagement = () => {
   const handleEditClick = (user) => {
     setEditingId(user.id);
     setIsModalOpen(true);
-
+    
     const initialFormData = {
-      name: user.name,
-      email: user.email,
+      name: user.name || '',
+      email: user.email || '',
       password: '', 
       password_confirmation: '',
-      role: user.role || 'user',
-      faculty_id: options.faculties.find(f => f.name === user.faculty)?.id || '',
-      department_id: options.departments.find(d => d.name === user.department)?.id || '',
-      position_id: options.positions.find(p => p.name === user.position)?.id || '',
-      academic_degree_id: options.degrees.find(d => d.name === user.academic_degree)?.id || '',
+      is_admin: user.is_admin ? 1 : 0,
+      faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
     };
     setFormData(initialFormData);
 
@@ -129,17 +124,17 @@ const StaffManagement = () => {
       if (freshOptions) {
         setFormData(prev => ({
           ...prev,
-          faculty_id: freshOptions.faculties.find(f => f.name === user.faculty)?.id || prev.faculty_id,
-          department_id: freshOptions.departments.find(d => d.name === user.department)?.id || prev.department_id,
-          position_id: freshOptions.positions.find(p => p.name === user.position)?.id || prev.position_id,
-          academic_degree_id: freshOptions.degrees.find(d => d.name === user.academic_degree)?.id || prev.academic_degree_id,
+          faculty_id: freshOptions.faculties.find(f => f.name === user.faculty)?.id || '',
+          department_id: freshOptions.departments.find(d => d.name === user.department)?.id || '',
+          position_id: freshOptions.positions.find(p => p.name === user.position)?.id || '',
+          academic_degree_id: freshOptions.degrees.find(d => d.name === user.academic_degree)?.id || '',
         }));
       }
     });
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("Удалить этого сотрудника?")) return;
+    if (!window.confirm("Удалить пользователя?")) return;
     try {
       const res = await fetch(`${API_BASE}/admin/users/${id}`, {
         method: 'DELETE',
@@ -173,10 +168,14 @@ const StaffManagement = () => {
         setIsModalOpen(false);
         resetForm();
         fetchUsers();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || "Ошибка при сохранении");
       }
     } finally { setIsSubmitting(false); }
   };
 
+  // ФИЛЬТРАЦИЯ: Все пользователи
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
       const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -187,19 +186,20 @@ const StaffManagement = () => {
   }, [users, searchTerm, selectedFaculty]);
 
   const stats = useMemo(() => ({
-  total: users.length,
-  active: users.filter(u => u.activities_count > 0).length,
-  new: users.filter(u => u.activities_count === 0).length,
-  admins: users.filter(u => u.is_admin).length 
-}), [users]);
+    total: users.length,
+    active: users.filter(u => u.activities_count > 0).length,
+    new: users.filter(u => u.activities_count === 0).length,
+    admins: users.filter(u => u.is_admin).length 
+  }), [users]);
+
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Сотрудники и ППС</h1>
-          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Управление кадрами</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Управление штатом</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Список сотрудников и администраторов системы</p>
         </div>
 
         <button 
@@ -214,9 +214,9 @@ const StaffManagement = () => {
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Общий штат" value={stats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Всего в системе" />
-        <StatCard label="Активные" value={stats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="С заявками KPI" isPrimary={true} />
-        <StatCard label="Новые" value={stats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Без активности" />
-        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="С правами доступа" />
+        <StatCard label="С активностью" value={stats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="Заполнили KPI" isPrimary={true} />
+        <StatCard label="Без данных" value={stats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Новые профили" />
+        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="Права управления" />
       </div>
 
       {/* FILTERS */}
@@ -248,7 +248,6 @@ const StaffManagement = () => {
 
       {/* CONTENT AREA */}
       <div className="relative min-h-[400px]">
-        {/* Индикатор загрузки поверх контента (для обновлений) */}
         {loading && users.length > 0 && (
           <div className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] flex items-start justify-center pt-20">
             <div className="bg-white px-6 py-3 rounded-full shadow-xl border border-slate-100 flex items-center gap-3 animate-in fade-in zoom-in duration-200">
@@ -258,22 +257,21 @@ const StaffManagement = () => {
           </div>
         )}
 
-        {/* Начальная загрузка (Skeleton) или Список */}
         {loading && users.length === 0 ? (
           <ListSkeleton />
         ) : filteredUsers.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {filteredUsers.map((user) => (
-              <div key={user.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group">
+              <div key={user.id} className={`bg-white p-6 rounded-2xl border transition-all group ${user.is_admin ? 'border-blue-100' : 'border-slate-200 shadow-sm'}`}>
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                   <div className="flex items-center gap-4 w-full md:w-auto text-left">
-                    <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all font-bold text-xl shrink-0">
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all font-bold text-xl shrink-0 ${user.is_admin ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
                       {user.name?.charAt(0) || '?'}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-slate-900 text-base">{user.name}</h4>
-                        {user.role === 'admin' && <Shield size={14} className="text-blue-600" title="Администратор" />}
+                        {user.is_admin ? <Shield size={14} className="text-blue-600" title="Администратор" /> : <User size={14} className="text-slate-300" />}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
@@ -303,9 +301,9 @@ const StaffManagement = () => {
           </div>
         ) : (
           <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-20 text-center">
-             <Search size={32} className="text-slate-200 mx-auto mb-6" />
-             <h3 className="text-xl font-bold text-slate-900">Ничего не найдено</h3>
-             <p className="text-sm text-slate-400 mt-2">Попробуйте изменить параметры поиска или фильтры</p>
+             <Users size={32} className="text-slate-200 mx-auto mb-6" />
+             <h3 className="text-xl font-bold text-slate-900">Пользователи не найдены</h3>
+             <p className="text-sm text-slate-400 mt-2">Попробуйте изменить параметры поиска или фильтрации</p>
           </div>
         )}
       </div>
@@ -314,14 +312,13 @@ const StaffManagement = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
             <div className="p-10 pb-6 flex justify-between items-start text-left">
               <div>
                 <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">
-                  {editingId ? 'Редактирование данных' : 'Регистрация сотрудника'}
+                  {editingId ? 'Редактирование профиля' : 'Новый сотрудник'}
                 </h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  Заполните все обязательные поля системы
+                  Учетные данные и права доступа
                 </p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
@@ -329,9 +326,28 @@ const StaffManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="px-10 pb-10 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                {/* РОЛЬ */}
+                <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${formData.is_admin ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}>
+                      <Shield size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Права администратора</p>
+                      <p className="text-[10px] text-slate-500 font-medium italic">Дает доступ к управлению всей системой</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setFormData({...formData, is_admin: formData.is_admin ? 0 : 1})}
+                    className={`w-12 h-6 rounded-full relative transition-all ${formData.is_admin ? 'bg-blue-600' : 'bg-slate-300'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_admin ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Полное ФИО</label>
@@ -371,43 +387,34 @@ const StaffManagement = () => {
                   </div>
                 </div>
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6 border-t border-slate-100">
-  <div className="space-y-1.5">
-    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
-      {editingId ? 'Новый пароль' : 'Пароль'}
-    </label>
-    <input 
-      type="password" 
-      // Если редактируем — не обязательно. Если создаем — обязательно.
-      required={!editingId} 
-      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
-      value={formData.password} 
-      onChange={e => setFormData({...formData, password: e.target.value})} 
-      placeholder={editingId ? "••••••••" : ""}
-    />
-  </div>
-
-  <div className="space-y-1.5">
-    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
-      Подтвердите пароль
-    </label>
-    <input 
-      type="password" 
-      // Обязательно только если: 1. Это создание нового юзера 
-      // ИЛИ 2. Поле пароля не пустое (пользователь решил сменить пароль при эдите)
-      required={!editingId || formData.password !== ''} 
-      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
-      value={formData.password_confirmation} 
-      onChange={e => setFormData({...formData, password_confirmation: e.target.value})} 
-      placeholder={editingId ? "••••••••" : ""}
-    />
-  </div>
-</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6 border-t border-slate-100">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль' : 'Пароль'}</label>
+                    <input 
+                      type="password" 
+                      required={!editingId} 
+                      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
+                      value={formData.password} 
+                      onChange={e => setFormData({...formData, password: e.target.value})} 
+                      placeholder={editingId ? "Оставьте пустым, чтобы не менять" : "••••••••"}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
+                    <input 
+                      type="password" 
+                      required={!editingId || formData.password !== ''} 
+                      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
+                      value={formData.password_confirmation} 
+                      onChange={e => setFormData({...formData, password_confirmation: e.target.value})} 
+                    />
+                  </div>
+                </div>
 
                 <div className="flex gap-4 mt-10">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Отмена</button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-3 transition-all">
-                    {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <>{editingId ? 'Обновить данные' : 'Зарегистрировать'} <ArrowRight size={16} /></>}
+                    {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <>{editingId ? 'Обновить данные' : 'Сохранить'} <ArrowRight size={16} /></>}
                   </button>
                 </div>
               </form>

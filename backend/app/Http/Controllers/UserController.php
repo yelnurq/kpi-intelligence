@@ -154,7 +154,6 @@ public function update(Request $request, $id)
             'department_id' => 'required|exists:departments,id',
             'position_id' => 'required|exists:positions,id',
             'academic_degree_id' => 'required|exists:academic_degrees,id',
-            'role' => 'nullable|string'
         ]);
 
         $updateData = [
@@ -164,7 +163,7 @@ public function update(Request $request, $id)
             'department_id' => $validated['department_id'],
             'position_id' => $validated['position_id'],
             'academic_degree_id' => $validated['academic_degree_id'],
-            'role' => $request->role ?? $user->role,
+            'is_admin' => $request->is_admin ?? $user->is_admin,
         ];
 
         // Обновляем пароль только если он введен
@@ -225,7 +224,6 @@ public function store(Request $request)
             'department_id' => 'required|exists:departments,id',
             'position_id' => 'required|exists:positions,id',
             'academic_degree_id' => 'required|exists:academic_degrees,id',
-            'role' => 'nullable|string'
         ]);
 
         $user = User::create([
@@ -236,7 +234,7 @@ public function store(Request $request)
             'department_id' => $validated['department_id'],
             'position_id' => $validated['position_id'],
             'academic_degree_id' => $validated['academic_degree_id'],
-            'role' => $request->role ?? 'user',
+            'is_admin' => $request->is_admin ?? 0,
         ]);
 
         return response()->json([

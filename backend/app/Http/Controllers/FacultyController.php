@@ -13,30 +13,26 @@ class FacultyController extends Controller
     {
         $tableName = 'kpi_activities'; 
 
-        $faculties = Faculty::withCount(['users as total_staff']) // Общий штат факультета
+        $faculties = Faculty::withCount(['users as total_staff']) 
             ->addSelect([
-                // 1. Суммарный балл (Approved)
                 'total_score' => DB::table($tableName)
                     ->join('users', "$tableName.user_id", '=', 'users.id')
                     ->whereColumn('users.faculty_id', 'faculties.id')
                     ->where("$tableName.status", '=', 'approved')
                     ->selectRaw('COALESCE(SUM(total_points), 0)'),
 
-                // 2. Активные сотрудники (уникальные user_id с одобренными записями)
                 'active_staff_count' => DB::table($tableName)
                     ->join('users', "$tableName.user_id", '=', 'users.id')
                     ->whereColumn('users.faculty_id', 'faculties.id')
                     ->where("$tableName.status", '=', 'approved')
                     ->selectRaw('COUNT(DISTINCT user_id)'),
 
-                // 3. Эффективность (среднее по активностям)
                 'efficiency_raw' => DB::table($tableName)
                     ->join('users', "$tableName.user_id", '=', 'users.id')
                     ->whereColumn('users.faculty_id', 'faculties.id')
                     ->where("$tableName.status", '=', 'approved')
                     ->selectRaw('COALESCE(AVG(total_points), 0)'),
 
-                // 4. Баллы неделю назад
                 'last_week_score' => DB::table($tableName)
                     ->join('users', "$tableName.user_id", '=', 'users.id')
                     ->whereColumn('users.faculty_id', 'faculties.id')
@@ -58,7 +54,7 @@ class FacultyController extends Controller
                 'name' => $faculty->title, 
                 'short' => $faculty->short_title ?? $faculty->short_name, 
                 'score' => $current,
-                'students' => $active, // Для совместимости с твоим фронтендом (используем активных для расчета среднего)
+                'students' => $active,
                 'active_staff' => $active,
                 'total_staff' => $total,
                 'efficiency' => $this->calculateEff($faculty->efficiency_raw),
@@ -80,7 +76,7 @@ class FacultyController extends Controller
 
     private function calculateEff($avg): int 
     {
-        $target = 100; // Целевой средний балл за одну активность
+        $target = 100;
         return min(round(((float)$avg / $target) * 100), 100);
     }
 

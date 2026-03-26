@@ -23,7 +23,6 @@ class BaseCategorySheet implements FromView, WithTitle, WithColumnWidths, WithSt
     }
 
    public function title(): string { 
-    // Удаляем спецсимволы, которые запрещены в названиях вкладок Excel
     $cleanTitle = str_replace(['/', '*', '?', ':', '[', ']'], ' ', $this->fullTitle);
     return mb_substr($cleanTitle, 0, 31); 
 }
@@ -31,7 +30,7 @@ class BaseCategorySheet implements FromView, WithTitle, WithColumnWidths, WithSt
     public function view(): View {
         return view('exports.kpi_base', [
             'items' => $this->data['selectedItems']->where('category', $this->categoryKey),
-            'categoryTitle' => $this->fullTitle, // Передаем длинный заголовок в Blade
+            'categoryTitle' => $this->fullTitle, 
             'year' => $this->data['year']
         ]);
     }

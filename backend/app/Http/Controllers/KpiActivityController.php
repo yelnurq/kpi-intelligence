@@ -67,11 +67,9 @@ private function getAuthenticatedUser(Request $request)
 public function admin(Request $request)
 {
     try {
-        // Добавляем latest() в начало, чтобы база сразу отдала свежие записи
         $query = \App\Models\KpiActivity::latest()
             ->with(['user.faculty', 'indicator', 'evidence']);
 
-        // Фильтрация по факультету
         if ($request->has('faculty') && $request->faculty !== 'all') {
             $query->whereHas('user.faculty', function($q) use ($request) {
                 $q->where('title', $request->faculty); 
@@ -82,13 +80,11 @@ public function admin(Request $request)
 
         $allFaculties = \App\Models\Faculty::pluck('title')->toArray();
 
-        // Группировка
         $groupedByFaculty = $activities->groupBy(function ($activity) {
             return $activity->user->faculty->title ?? 'Общий факультет';
         })->map(function ($facultyActivities, $facultyName) {
             return [
                 'faculty' => $facultyName,
-                // Сортировка внутри группы (на случай, если groupBy перемешал)
                 'items' => $facultyActivities->sortByDesc('created_at')->map(function ($item) {
                     return [
                         'id' => $item->id,
@@ -114,7 +110,6 @@ public function admin(Request $request)
             'faculties' => $allFaculties,
             'stats' => [
                 'total' => $activities->count(),
-                // Используем значения констант или строковые литералы как в базе
                 'approved' => $activities->where('status', 'approved')->count(),
                 'pending' => $activities->where('status', 'pending')->count(),
                 'rejected' => $activities->where('status', 'rejected')->count(),
@@ -133,7 +128,7 @@ public function admin(Request $request)
         $user = $this->getAuthenticatedUser($request);
 
         $query = KpiActivity::where('user_id', $user->id)
-            ->with(['indicator', 'evidence']) // Жадная загрузка индикатора
+            ->with(['indicator', 'evidence']) 
             ->orderBy('created_at', 'desc');
 
         $activities = $query->get();
@@ -153,7 +148,6 @@ public function admin(Request $request)
                     'title' => $item->title ?? $item->indicator->title,
                     'category' => $item->indicator->category ?? 'Общее',
                     'date' => $item->created_at->format('d.m.Y'),
-                    // Берем баллы напрямую из связанного индикатора
                     'points' => $item->indicator ? $item->indicator->points : 0, 
                     'total_points' => $item->indicator->points ?? 0, 
                     'status' => $item->status,
@@ -177,20 +171,15 @@ public function updateStatus(Request $request, $id)
         'comment' => 'nullable|string'
     ]);
 
-    // Загружаем активность вместе с индикатором
     $activity = \App\Models\KpiActivity::with('indicator')->findOrFail($id);
     
     $activity->status = $request->status;
     
     if ($request->status === 'approved') {
-        // Очищаем комментарий при одобрении
         $activity->comment = null;
         
     } else {
-        // Если отклонено (rejected)
         $activity->comment = $request->comment;
-        // Опционально: можно обнулять баллы при отказе, чтобы они не путались в статистике
-        // $activity->total_points = 0; 
     }
 
     $activity->save();
@@ -222,13 +211,8 @@ public function store(Request $request)
         'files.*'      => 'file|max:10240',
     ]);
 
-    // 1. Получаем индикатор из базы по переданному ID
-    // 1. Находим индикатор по ID
 $indicator = \App\Models\KpiIndicator::findOrFail($request->indicator_id);
 
-// 2. Берем чистый балл из индикатора (без умножения на quantity)
-
-// 3. Создаем запись
 $activity = \App\Models\KpiActivity::create([
     'user_id'      => $user->id,
     'indicator_id' => $request->indicator_id,

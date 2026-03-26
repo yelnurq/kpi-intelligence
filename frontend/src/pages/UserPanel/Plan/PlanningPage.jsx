@@ -36,12 +36,10 @@ const PlanningPage = () => {
           'Accept': 'application/json'
         };
 
-        // 1. Загружаем все индикаторы
         const resIndicators = await fetch('http://localhost:8000/api/kpi-indicators', { headers });
         if (resIndicators.status === 401) { navigate('/login'); return; }
         const dataIndicators = await resIndicators.json();
 
-        // 2. Загружаем сохраненный план для текущего года
         const resPlan = await fetch(`http://localhost:8000/api/get-user-plan-ids?year=${selectedYear}`, { headers });
         const dataPlan = await resPlan.json();
 
@@ -56,10 +54,9 @@ const PlanningPage = () => {
     };
 
     fetchData();
-  }, [navigate, selectedYear]); // Перезагружаем при смене года
+  }, [navigate, selectedYear]); 
 
   const handleSave = async () => {
-    // Сохранение (теперь можно сохранять даже пустой список, если всё удалили)
     try {
       setSaving(true);
       const token = localStorage.getItem("token");
@@ -89,7 +86,7 @@ const PlanningPage = () => {
   };
   const handleExport = async () => {
     try {
-      setExporting(true); // Включаем лоадер
+      setExporting(true);
       const token = localStorage.getItem("token");
       const indicatorIds = selectedItems.map(item => item.id);
 
@@ -122,14 +119,13 @@ const PlanningPage = () => {
       console.error("Export failed:", err);
       alert("Не удалось подготовить файл.");
     } finally {
-      setExporting(false); // Выключаем лоадер
+      setExporting(false);
     }
   };
   const toggleIndicator = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  // Удаление теперь просто вызывает toggle (дизайн кнопки Trash в правой колонке уже настроен на это)
   const removeIndicator = (id) => {
     setSelectedIds(prev => prev.filter(i => i !== id));
   };
@@ -193,7 +189,6 @@ const renderIndicatorCard = (item) => {
  
 return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
-    {/* Header остается без изменений */}
     <div className="flex justify-between items-end mb-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Планирование KPI</h1>
@@ -210,7 +205,6 @@ return (
         </div>
       </div>
       
-      {/* Кнопки экспорта и сохранения */}
       <div className="flex items-center gap-3">
         <button 
           onClick={handleExport}
@@ -235,10 +229,8 @@ return (
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Левая колонка с индикаторами */}
       <div className="lg:col-span-8 space-y-6">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          {/* Tabs & Search... */}
           <div className="custom-scrollbar flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
    <div className="flex flex-nowrap gap-1">
                 {categories.map(cat => (
@@ -255,13 +247,11 @@ return (
                   </button>
                 ))}
               </div>
-                        </div>
+                  </div>
         </div>
 
-        {/* СЕКЦИЯ КОНТЕНТА С ЛОКАЛЬНОЙ ЗАГРУЗКОЙ */}
         <div className={`grid grid-cols-1 gap-4 transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
           {loading ? (
-            // Локальный индикатор загрузки вместо пустого экрана
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
                <p className="text-gray-500 font-medium">Загрузка индикаторов...</p>
@@ -289,14 +279,12 @@ return (
         </div>
       </div>
 
-      {/* Правая колонка "Ваш выбор" (Sidebar) */}
       <div className="lg:col-span-4">
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm sticky top-8">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="font-bold text-slate-900">Ваш выбор</h3>
           </div>
           <div className="p-6 space-y-4">
-            {/* Здесь загрузку можно не показывать, так как selectedItems зависят от локального стейта */}
             {selectedItems.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-4 italic">Ничего не выбрано</p>
             ) : (

@@ -10,7 +10,6 @@ import {
   Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ (SKELETONS) ---
 const StatSkeleton = () => (
   <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm animate-pulse">
     <div className="flex justify-between items-start mb-4">
@@ -74,11 +73,9 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary
   </div>
 );
 
-// --- ОСНОВНОЙ КОМПОНЕНТ ---
 const Dashboard = () => {
   const navigate = useNavigate();
   
-  // Инициализация из localStorage (мгновенное получение имени)
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -90,7 +87,6 @@ const Dashboard = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     
-    // Если нет токена или данных юзера в локалке — выкидываем на логин
     if (!token || !user) {
       navigate('/login');
       return;
@@ -116,12 +112,11 @@ const Dashboard = () => {
     });
   }, [navigate]);
 
-  if (!user && !loading) return null; // Предотвращает мерцание перед редиректом
+  if (!user && !loading) return null; 
 
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
       
-      {/* HEADER - Имя будет сразу, т.к. взяли из localStorage */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-slate-200 pb-8">
         <div className="flex items-center gap-6 text-left">
           <div className="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg">
@@ -141,7 +136,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* STATS & CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
         <div className="lg:col-span-1 space-y-6">
           {loading ? (
@@ -167,7 +161,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* GRAPH COLUMN */}
         {loading ? <ChartSkeleton /> : (
           <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-8">
@@ -199,7 +192,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* ДОПОЛНИТЕЛЬНЫЕ КАРТОЧКИ */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {loading ? (
           <><StatSkeleton /><StatSkeleton /><StatSkeleton /></>
@@ -212,7 +204,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* ACTIVITIES TABLE */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mt-6">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight text-left">Журнал последних достижений</h3>

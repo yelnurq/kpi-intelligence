@@ -122,40 +122,16 @@ const AssetManagement = () => {
 
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Хранилище данных</h1>
-          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500 font-medium">Просмотр и модерация объектов хранения</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter mb-0">Хранилище данных</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500 font-medium mb-0">Просмотр и модерация объектов хранения</p>
         </div>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0"><HardDrive size={24}/></div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Всего файлов</p>
-            <p className="text-lg font-bold text-slate-900 leading-none mt-1">{assets.length}</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm">
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0"><CheckCircle2 size={24}/></div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Типы контента</p>
-            <p className="text-lg font-bold text-slate-900 leading-none mt-1">4 категории</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm">
-          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><AlertCircle size={24}/></div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Статус БД</p>
-            <p className="text-lg font-bold text-slate-900 leading-none mt-1 text-emerald-600">Sync Online</p>
-          </div>
-        </div>
-      </div>
 
       {/* SEARCH & FILTERS */}
-      <div className="sticky top-0 z-40 bg-[#f8fafc]/90 backdrop-blur-md py-4">
+      <div className="mt-0 sticky top-0 z-40 bg-[#f8fafc]/90 backdrop-blur-md py-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -170,18 +146,7 @@ const AssetManagement = () => {
             <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-slate-100 text-blue-600' : 'text-slate-400'}`}><List size={20}/></button>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 mt-4">
-           {['all', 'article', 'archive', 'patent'].map((f) => (
-              <button 
-                key={f} onClick={() => {setActiveFilter(f); setCurrentPage(1);}}
-                className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all 
-                  ${activeFilter === f ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-200 hover:border-blue-300'}`}
-              >
-                {f === 'all' ? 'Все объекты' : f === 'article' ? 'Документы' : f === 'archive' ? 'Архивы' : 'Патенты/Прочее'}
-              </button>
-            ))}
-        </div>
+
       </div>
 
       {/* CONTENT AREA */}

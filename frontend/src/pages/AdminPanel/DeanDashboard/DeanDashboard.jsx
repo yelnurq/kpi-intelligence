@@ -143,7 +143,7 @@ const DeanDashboard = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Панель</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Статус подготовки планов</h1>
           <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Утверждение индивидуальных планов KPI • {ACADEMIC_YEAR}</p>
         </div>
 

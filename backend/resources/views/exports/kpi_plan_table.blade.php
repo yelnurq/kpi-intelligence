@@ -12,26 +12,22 @@
 
         </th>
     </tr>
-    {{-- 1-я строка шапки --}}
     <tr style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-weight: bold;">
         <td rowspan="4" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">p/c № п/п</td>
         <td rowspan="4" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">Жұмыс түрлері / Виды работ</td>
         <td colspan="6" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">Оқу жүктемесі, академиялық сағатта/ Учебная нагрузка, в академических часах</td>
     </tr>
 
-    {{-- 2-я строка шапки --}}
     <tr style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-weight: bold;">
         <td colspan="4" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">академиялық кезең бойынша/ за академический период</td>
         <td colspan="2" rowspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black; vertical-align: middle;">оқу жылы бойынша/ за учебный год</td>
     </tr>
 
-    {{-- 3-я строка шапки --}}
     <tr style="font-family: 'Times New Roman';font-size:12px; text-align:center;font-weight: bold;">
         <td colspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">бірінші/ первый</td>
         <td colspan="2" style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">екінші/ второй</td>
     </tr>
 
-    {{-- 4-я строка шапки: План/Факт для всех колонок --}}
     <tr style="font-family: 'Times New Roman';font-size:10px; text-align:center;font-weight: bold;">
         <td style="font-family: 'Times New Roman';font-size:10px; text-align:center;border: 1px solid black;">жоспарланған/ запланировано</td>
         <td style="font-family: 'Times New Roman';font-size:10px; text-align:center;border: 1px solid black;">орындалған/ выполнено</td>
@@ -41,7 +37,6 @@
         <td style="font-family: 'Times New Roman';font-size:10px; text-align:center;border: 1px solid black;">орындалған/ выполнено</td>
     </tr>
 
-    {{-- 5-я строка: Техническая нумерация 1-8 --}}
     <tr style="font-family: 'Times New Roman';font-size:12px; text-align:center;background-color: #f0f0f0; font-weight: bold;">
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">1</td>
         <td style="font-family: 'Times New Roman';font-size:12px; text-align:center;border: 1px solid black;">2</td>

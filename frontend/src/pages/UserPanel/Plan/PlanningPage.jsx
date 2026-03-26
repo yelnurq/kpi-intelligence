@@ -116,46 +116,39 @@ const exportToExcel = async () => {
     }
 
     setExporting(true);
-    try {
+      try {
+      setExporting(true);
       const token = localStorage.getItem("token");
-      
-      // Вызываем твой POST роут
-      const response = await fetch('http://localhost:8000/api/export', {
+      const indicatorIds = selectedItems.map(item => item.id);
+
+      const response = await fetch("http://localhost:8000/api/export", {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Ожидаем Excel
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
         body: JSON.stringify({
-          indicator_ids: selectedIds, // Передаем ID выбранных индикаторов
-          year: selectedYear         // Передаем учебный год
+          indicator_ids: indicatorIds,
+          year: selectedYear
         })
       });
 
-      if (!response.ok) throw new Error('Ошибка при генерации файла');
+      if (!response.ok) throw new Error("Ошибка сервера");
 
-      // Получаем бинарные данные (blob)
       const blob = await response.blob();
-      
-      // Создаем временную ссылку для скачивания
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
-      // Имя файла (можно подтянуть из заголовков или задать вручную)
-      link.setAttribute('download', `KPI_Report_${selectedYear.replace('/', '_')}.xlsx`);
-      
+      link.setAttribute('download', `Individual_Plan_${selectedYear.replace('/', '_')}.xlsx`);
       document.body.appendChild(link);
       link.click();
-      
-      // Очистка
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-    } catch (error) {
-      console.error("Ошибка экспорта:", error);
-      alert("Не удалось скачать Excel файл");
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Не удалось подготовить файл.");
     } finally {
       setExporting(false);
     }

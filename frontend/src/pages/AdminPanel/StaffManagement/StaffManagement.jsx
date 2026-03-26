@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Search, UserPlus, Mail, Building2, Filter, 
   ChevronRight, Loader2, Trash2, Edit2, X, 
   ShieldCheck, MapPin, Users,
-  UserCheck, UserMinus
+  UserCheck, UserMinus, ArrowRight, Shield
 } from 'lucide-react';
 
-// Компонент карточки статистики
+// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
+
 const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "чел." }) => (
   <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md ${isPrimary ? 'ring-1 ring-blue-600/10' : ''}`}>
     <div className={`absolute top-0 left-0 w-1 h-full ${isPrimary ? 'bg-blue-600' : 'bg-slate-200'}`} />
@@ -25,6 +26,16 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary
     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-left">{description}</p>
   </div>
 );
+
+const ListSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    {[1, 2, 3, 4].map(i => (
+      <div key={i} className="h-[100px] bg-white border border-slate-100 rounded-2xl w-full" />
+    ))}
+  </div>
+);
+
+// --- ОСНОВНОЙ КОМПОНЕНТ ---
 
 const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
@@ -46,7 +57,7 @@ const StaffManagement = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // Загрузка списка пользователей
+  // Загрузка пользователей
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -64,23 +75,11 @@ const StaffManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
-
- 
+  }, [token, API_BASE]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const resetForm = () => {
-    setFormData({
-      name: '', email: '', password: '', password_confirmation: '',
-      faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-      role: 'user'
-    });
-    setEditingId(null);
-  };
-
-
-  // 1. Улучшаем загрузку справочников (кешируем их в состоянии)
+  // Загрузка справочников для формы
   const fetchOptions = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/admin/helpers/options`, {
@@ -92,30 +91,33 @@ const StaffManagement = () => {
     } catch (error) {
       console.error("Ошибка справочников:", error);
     }
-  }, [token]);
+  }, [token, API_BASE]);
 
-  // 2. Мгновенное открытие для создания
-  const handleOpenCreateModal = () => {
-    resetForm();
-    setIsModalOpen(true); // Сначала открываем
-    fetchOptions();      // Загружаем опции в фоне
+  const resetForm = () => {
+    setFormData({
+      name: '', email: '', password: '', password_confirmation: '',
+      faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
+      role: 'user'
+    });
+    setEditingId(null);
   };
 
-  // 3. Мгновенное открытие для редактирования
+  const handleOpenCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+    fetchOptions();
+  };
+
   const handleEditClick = (user) => {
     setEditingId(user.id);
-    
-    // Сначала открываем окно с имеющимися данными
     setIsModalOpen(true);
 
-    // Заполняем текстовые поля сразу
     const initialFormData = {
       name: user.name,
       email: user.email,
       password: '', 
       password_confirmation: '',
       role: user.role || 'user',
-      // ID пока пустые, если опции еще не загружены
       faculty_id: options.faculties.find(f => f.name === user.faculty)?.id || '',
       department_id: options.departments.find(d => d.name === user.department)?.id || '',
       position_id: options.positions.find(p => p.name === user.position)?.id || '',
@@ -123,7 +125,6 @@ const StaffManagement = () => {
     };
     setFormData(initialFormData);
 
-    // Обновляем справочники и пересчитываем ID в фоне
     fetchOptions().then(freshOptions => {
       if (freshOptions) {
         setFormData(prev => ({
@@ -138,17 +139,14 @@ const StaffManagement = () => {
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("Удалить этого сотрудника? Все связанные данные могут быть потеряны.")) return;
+    if (!window.confirm("Удалить этого сотрудника?")) return;
     try {
       const res = await fetch(`${API_BASE}/admin/users/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) fetchUsers();
-      else alert("Ошибка при удалении");
-    } catch (error) {
-      console.error("Ошибка:", error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleSubmit = async (e) => {
@@ -167,65 +165,47 @@ const StaffManagement = () => {
         method: method,
         headers: { 
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
       });
-      
-      const result = await res.json();
-      
       if (res.ok) {
         setIsModalOpen(false);
         resetForm();
         fetchUsers();
-      } else {
-        alert(result.message || "Ошибка операции");
       }
-    } catch (error) {
-      alert("Ошибка соединения с сервером");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFaculty = selectedFaculty === 'all' || user.faculty === selectedFaculty;
-    return matchesSearch && matchesFaculty;
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFaculty = selectedFaculty === 'all' || user.faculty === selectedFaculty;
+      return matchesSearch && matchesFaculty;
+    });
+  }, [users, searchTerm, selectedFaculty]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: users.length,
     active: users.filter(u => u.activities_count > 0).length,
     new: users.filter(u => u.activities_count === 0).length,
     admins: users.filter(u => u.role === 'admin').length
-  };
-
-  if (loading && users.length === 0) {
-    return (
-      <div className="fixed inset-0 flex flex-col justify-center items-center bg-white">
-        <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Загрузка данных...</span>
-      </div>
-    );
-  }
+  }), [users]);
 
   return (
-    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
+    <main className="mx-auto px-6 md:px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div>
-        
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Сотрудники и ППС</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами и структурой</p>
+          <p className="text-sm text-slate-500 font-medium mt-1">Управление кадрами KPI Intelligence</p>
         </div>
 
         <button 
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95"
         >
           <UserPlus size={18} />
           Добавить сотрудника
@@ -234,10 +214,10 @@ const StaffManagement = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Всего" value={stats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Общий штат" />
+        <StatCard label="Общий штат" value={stats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Всего в системе" />
         <StatCard label="Активные" value={stats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="С заявками KPI" isPrimary={true} />
         <StatCard label="Новые" value={stats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Без активности" />
-        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="Управляющий состав" />
+        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="С правами доступа" />
       </div>
 
       {/* FILTERS */}
@@ -258,7 +238,7 @@ const StaffManagement = () => {
           <select 
             value={selectedFaculty}
             onChange={(e) => setSelectedFaculty(e.target.value)}
-            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none cursor-pointer"
+            className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none cursor-pointer shadow-sm"
           >
             <option value="all">Все подразделения</option>
             {faculties.map(f => <option key={f} value={f}>{f}</option>)}
@@ -267,32 +247,45 @@ const StaffManagement = () => {
         </div>
       </div>
 
-      {/* LIST */}
-      <div className="space-y-4">
-        {filteredUsers.length > 0 ? (
+      {/* CONTENT AREA */}
+      <div className="relative min-h-[400px]">
+        {/* Индикатор загрузки поверх контента (для обновлений) */}
+        {loading && users.length > 0 && (
+          <div className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] flex items-start justify-center pt-20">
+            <div className="bg-white px-6 py-3 rounded-full shadow-xl border border-slate-100 flex items-center gap-3 animate-in fade-in zoom-in duration-200">
+              <Loader2 className="animate-spin text-blue-600" size={20} />
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Обновление...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Начальная загрузка (Skeleton) или Список */}
+        {loading && users.length === 0 ? (
+          <ListSkeleton />
+        ) : filteredUsers.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {filteredUsers.map((user) => (
               <div key={user.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                  <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="flex items-center gap-4 w-full md:w-auto text-left">
                     <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all font-bold text-xl shrink-0">
-                      {user.name.charAt(0)}
+                      {user.name?.charAt(0) || '?'}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-slate-900 text-base">{user.name}</h4>
-                        {user.role === 'admin' && <ShieldCheck size={14} className="text-blue-600" />}
+                        {user.role === 'admin' && <Shield size={14} className="text-blue-600" title="Администратор" />}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-xs mt-0.5">
+                      <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
-                        <span className="flex items-center gap-1.5"><MapPin size={12} /> {user.faculty}</span>
+                        <span className="flex items-center gap-1.5"><Building2 size={12} /> {user.faculty}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between md:justify-end gap-8 w-full md:w-auto">
-                    <div className="text-left md:text-right">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position}</p>
+                    <div className="text-left md:text-right min-w-[120px]">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position || 'Должность...'}</p>
                       <p className="text-xs font-bold text-slate-700">{user.academic_degree || 'Без степени'}</p>
                     </div>
                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase border ${
@@ -301,8 +294,8 @@ const StaffManagement = () => {
                       {user.activities_count > 0 ? `Активен (${user.activities_count})` : 'Нет заявок'}
                     </span>
                     <div className="flex items-center gap-2 border-l border-slate-100 pl-6">
-                      <button onClick={() => handleEditClick(user)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit2 size={18}/></button>
-                      <button onClick={() => handleDeleteUser(user.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={18}/></button>
+                      <button onClick={() => handleEditClick(user)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Редактировать"><Edit2 size={18}/></button>
+                      <button onClick={() => handleDeleteUser(user.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Удалить"><Trash2 size={18}/></button>
                     </div>
                   </div>
                 </div>
@@ -310,81 +303,112 @@ const StaffManagement = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-20 text-center border border-slate-200">
-             <Search size={40} className="text-slate-200 mx-auto mb-4" />
-             <h3 className="text-lg font-bold text-slate-900">Никто не найден</h3>
+          <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-20 text-center">
+             <Search size={32} className="text-slate-200 mx-auto mb-6" />
+             <h3 className="text-xl font-bold text-slate-900">Ничего не найдено</h3>
+             <p className="text-sm text-slate-400 mt-2">Попробуйте изменить параметры поиска или фильтры</p>
           </div>
         )}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL WINDOW */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="p-10">
-              <div className="flex justify-between items-center mb-8">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{editingId ? 'Редактирование' : 'Новый сотрудник'}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Система управления кадрами</p>
-                </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"><X size={24} /></button>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-10 pb-6 flex justify-between items-start text-left">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">
+                  {editingId ? 'Редактирование данных' : 'Регистрация сотрудника'}
+                </h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  Заполните все обязательные поля системы
+                </p>
               </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Modal Body */}
+            <div className="px-10 pb-10 overflow-y-auto">
+              <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">ФИО</label>
-                    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Полное ФИО</label>
+                    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Email</label>
-                    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Email (Логин)</label>
+                    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
-                      <option value="">Выберите факультет</option>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
+                      <option value="">Выберите подразделение</option>
                       {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
                       <option value="">Выберите кафедру</option>
                       {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
                       <option value="">Выберите должность</option>
                       {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Степень</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
+                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
                       <option value="">Выберите степень</option>
                       {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль (опц.)' : 'Пароль'}</label>
-                    <input type="password" required={!editingId} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
-                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} />
-                  </div>
-                </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6 border-t border-slate-100">
+  <div className="space-y-1.5">
+    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
+      {editingId ? 'Новый пароль' : 'Пароль'}
+    </label>
+    <input 
+      type="password" 
+      // Если редактируем — не обязательно. Если создаем — обязательно.
+      required={!editingId} 
+      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
+      value={formData.password} 
+      onChange={e => setFormData({...formData, password: e.target.value})} 
+      placeholder={editingId ? "••••••••" : ""}
+    />
+  </div>
 
-                <div className="flex items-center gap-3 mt-10 pt-6">
+  <div className="space-y-1.5">
+    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
+      Подтвердите пароль
+    </label>
+    <input 
+      type="password" 
+      // Обязательно только если: 1. Это создание нового юзера 
+      // ИЛИ 2. Поле пароля не пустое (пользователь решил сменить пароль при эдите)
+      required={!editingId || formData.password !== ''} 
+      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" 
+      value={formData.password_confirmation} 
+      onChange={e => setFormData({...formData, password_confirmation: e.target.value})} 
+      placeholder={editingId ? "••••••••" : ""}
+    />
+  </div>
+</div>
+
+                <div className="flex gap-4 mt-10">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Отмена</button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : editingId ? 'Обновить данные' : 'Зарегистрировать'}
+                  <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-3 transition-all">
+                    {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <>{editingId ? 'Обновить данные' : 'Зарегистрировать'} <ArrowRight size={16} /></>}
                   </button>
                 </div>
               </form>

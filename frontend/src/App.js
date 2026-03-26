@@ -58,6 +58,7 @@ function App() {
           <Route path="assets" element={<AssetManagement />} />
           <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />
+          <Route path="faculties" element={<FacultyRanking />} />
           <Route path="users" element={<StaffManagement />} />
         </Route>
 

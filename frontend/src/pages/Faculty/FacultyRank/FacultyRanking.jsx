@@ -84,16 +84,7 @@ const FacultyRanking = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all tracking-wider uppercase border bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50">
-            <FileSpreadsheet size={16} />
-            <span>Экспорт XLSX</span>
-          </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-xs transition-all tracking-wider uppercase bg-slate-900 text-white hover:bg-slate-800 shadow-sm">
-            <BarChart3 size={16} />
-            <span>Методология KPI</span>
-          </button>
-        </div>
+     
       </div>
 
       {/* TOP ANALYTICS */}

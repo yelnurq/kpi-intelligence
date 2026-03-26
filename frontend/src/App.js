@@ -49,9 +49,9 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route index element={<Navigate to="" replace />} />
+          <Route path="" element={<VerificationAudit />} />
           <Route path="dashboard" element={<AdminPanel />} />
-          <Route path="audit" element={<VerificationAudit />} />
           <Route path="assets" element={<AssetManagement />} />
           <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />

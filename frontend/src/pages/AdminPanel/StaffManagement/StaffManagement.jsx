@@ -275,7 +275,7 @@ const StaffManagement = () => {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
-                        <span className="flex items-center gap-1.5"><Building2 size={12} /> {user.faculty}</span>
+                        <span className="flex items-center gap-1.5"><Building2 size={12} /> {user.faculty_short}</span>
                       </div>
                     </div>
                   </div>

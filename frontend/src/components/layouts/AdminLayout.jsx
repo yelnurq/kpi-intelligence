@@ -152,14 +152,6 @@ const AdminLayout = () => {
                </h1>
             </div>
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-2 bg-slate-100 px-4 py-2.5 rounded-xl border border-slate-200">
-               <Search size={14} className="text-slate-400" />
-               <input type="text" placeholder="Поиск по системе..." className="bg-transparent border-none text-[11px] font-bold focus:outline-none w-48 placeholder:text-slate-400" />
-            </div>
-          
-          </div>
         </header>
 
         {/* ROUTE CONTENT */}

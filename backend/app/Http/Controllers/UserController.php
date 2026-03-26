@@ -95,8 +95,8 @@ class UserController extends Controller
 {
     try {
         $users = User::with([
-                'faculty:id,title',     // Берем только id и название факультета
-                'department:id,title',  // Кафедра
+                'faculty:id,title,short_title',     // Берем только id и название факультета
+                'department:id,title,short_title',  // Кафедра
                 'position:id,title',    // Должность
                 'academic_degree:id,title' // Ученая степень
             ])
@@ -115,6 +115,8 @@ class UserController extends Controller
                     'is_admin' => $user->is_admin,
                     'faculty' => $user->faculty->title ?? 'Не указан',
                     'department' => $user->department->title ?? 'Не указана',
+                    'faculty_short' => $user->faculty->short_title ?? 'Не указан',
+                    'department_short' => $user->department->short_title ?? 'Не указана',
                     'position' => $user->position->title ?? 'Сотрудник',
                     'academic_degree' => $user->academic_degree->title ?? 'Нет',
                     'activities_count' => $user->activities_count

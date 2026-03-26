@@ -79,7 +79,7 @@ class AuthController extends Controller
         $rules = [
             "email" => "required|email",
             "password" => "required",
-        ]; 
+        ];  
 
         $messages = [
             "email.required" => "Введите ваш Email",

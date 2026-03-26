@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, CheckCircle2, Globe, BookOpen, PenTool, 
   Trash2, Calendar, FileText, Info, Printer, 
-  X, FileSpreadsheet, AlertTriangle, Clock, Check, XCircle 
+  X, FileSpreadsheet, AlertTriangle, Clock, Check, XCircle, 
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -107,7 +108,58 @@ const PlanningPage = () => {
 
     fetchData();
   }, [navigate, selectedYear]);
+  
+const exportToExcel = async () => {
+    if (selectedIds.length === 0) {
+      alert("Выберите хотя бы один индикатор для экспорта");
+      return;
+    }
 
+    setExporting(true);
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Вызываем твой POST роут
+      const response = await fetch('http://localhost:8000/api/export', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Ожидаем Excel
+        },
+        body: JSON.stringify({
+          indicator_ids: selectedIds, // Передаем ID выбранных индикаторов
+          year: selectedYear         // Передаем учебный год
+        })
+      });
+
+      if (!response.ok) throw new Error('Ошибка при генерации файла');
+
+      // Получаем бинарные данные (blob)
+      const blob = await response.blob();
+      
+      // Создаем временную ссылку для скачивания
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Имя файла (можно подтянуть из заголовков или задать вручную)
+      link.setAttribute('download', `KPI_Report_${selectedYear.replace('/', '_')}.xlsx`);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Очистка
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Ошибка экспорта:", error);
+      alert("Не удалось скачать Excel файл");
+    } finally {
+      setExporting(false);
+    }
+  };
   const handleFinalSubmit = async () => {
     try {
       setSaving(true);
@@ -282,9 +334,14 @@ const PlanningPage = () => {
               Отправить декану
             </button>
           )}
-          <button className="p-2.5 text-gray-400 hover:text-gray-600 bg-white border border-gray-100 rounded-xl">
-            <Printer size={20} />
-          </button>
+         <button 
+  onClick={exportToExcel}
+  disabled={exporting || selectedIds.length === 0}
+  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95 disabled:opacity-50"
+>
+  {exporting ? <Loader2 className="animate-spin" size={18} /> : <FileSpreadsheet size={18} />}
+  Excel
+</button>
         </div>
       </div>
 

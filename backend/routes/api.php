@@ -8,15 +8,18 @@ use App\Http\Controllers\KpiController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FacultyController;
+use App\Http\Controllers\KPIPlanController;
 
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("token")->group(function(){
-
+    Route::get('/get-plan-status', [KPIPlanController::class, 'getPlanStatus']);
+    Route::post('/submit-plan', [KPIPlanController::class, 'submitPlan']);
+    
     Route::get('/assets', [KpiEvidenceController::class, 'index']);
     Route::post('/assets/upload', [KpiEvidenceController::class, 'store']);
-    Route::delete('/assets/{id}', [KpiEvidenceController::class, 'destroy']); // Поддерживает 1,2,3
+    Route::delete('/assets/{id}', [KpiEvidenceController::class, 'destroy']); 
 
     Route::get('/faculty-ranking', [FacultyController::class, 'index']);
 
@@ -26,6 +29,7 @@ Route::middleware("token")->group(function(){
     Route::put('/admin/users/{id}', [UserController::class, 'update']);
     Route::get('/admin/users/stats', [UserController::class, 'stats']);   
     Route::get('/admin/helpers/options', [UserController::class, 'getOptions']);
+    Route::get('/admin/kpi-activities', [KpiActivityController::class, 'admin']);
 
     Route::post("/logout", [AuthController::class, "logout"]);
     
@@ -40,7 +44,6 @@ Route::middleware("token")->group(function(){
     Route::get('/get-user-plan-ids', [KpiController::class, 'getPlan']);
     Route::get('/user/kpi-activities', [KpiActivityController::class, 'latest']);
     Route::get('/kpi-activities', [KpiActivityController::class, 'index']);
-    Route::get('/admin/kpi-activities', [KpiActivityController::class, 'admin']);
     Route::post('/kpi/activity', [KpiController::class, 'storeActivity']);
     Route::get('/kpi/my-rating', [KpiController::class, 'myRating']);
     Route::get('/kpi/department/{id}', [KpiController::class, 'departmentRating']);

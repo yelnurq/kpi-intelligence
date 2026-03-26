@@ -124,8 +124,14 @@ const AssetManagement = () => {
   }
 
   return (
-    <main className="mx-auto px-6 py-8 bg-[#f8fafc] min-h-screen font-sans text-left border rounded-2xl shadow-2xl relative overflow-hidden">
-      
+    <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Хранилище данных</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">Просмотр и модерация объектов хранения</p>
+          </div>
+      </div>
+
       {/* СТАТИСТИКА */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-4">

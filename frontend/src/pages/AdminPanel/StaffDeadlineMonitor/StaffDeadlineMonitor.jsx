@@ -262,58 +262,149 @@ const StaffDeadlineMonitor = () => {
       </div>
 
       {/* DETAILED MODAL */}
-      {selectedEmployee && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-400 flex flex-col max-h-[90vh]">
-            <div className="p-10 pb-6 flex justify-between items-start text-left bg-slate-50/50 border-b border-slate-100">
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                    <span className="px-3 py-1 bg-red-100 text-red-600 text-[9px] font-black uppercase rounded-full">Требует внимания</span>
-                </div>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{selectedEmployee.name}</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 italic">Список просроченных и текущих индикаторов</p>
-              </div>
-              <button onClick={() => setSelectedEmployee(null)} className="p-3 hover:bg-white hover:shadow-md rounded-2xl text-slate-400 transition-all">
-                <X size={28} />
-              </button>
+{selectedEmployee && (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl relative overflow-hidden text-left border border-slate-200 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+      
+      {/* Акцентная полоса слева (красная, если есть просрочки) */}
+      <div className={`absolute top-0 left-0 w-2 h-full ${selectedEmployee.overdue > 0 ? 'bg-red-600' : 'bg-blue-600'}`} />
+      
+      {/* HEADER */}
+      <div className="p-8 border-b border-slate-100 bg-white">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-md tracking-widest ${
+                selectedEmployee.overdue > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
+              }`}>
+                {selectedEmployee.overdue > 0 ? 'Внимание: Просрочка' : 'В процессе'}
+              </span>
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">
+                {selectedEmployee.faculty}
+              </span>
             </div>
-
-            <div className="px-10 py-8 overflow-y-auto flex-1">
-                <div className="space-y-4">
-                    {selectedEmployee.indicators.map(ind => (
-                        <div key={ind.id} className="group flex items-center justify-between p-6 bg-white rounded-3xl border border-slate-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-50 transition-all">
-                            <div className="flex items-center gap-5">
-                                <div className={`p-4 rounded-[20px] ${ind.status === 'overdue' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                    <Clock size={20}/>
-                                </div>
-                                <div>
-                                    <span className="block text-sm font-black text-slate-800 mb-0.5">{ind.title}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                        Дедлайн: {ind.date} <ArrowRight size={10}/>
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <span className={`text-[9px] font-black uppercase px-4 py-1.5 rounded-full border ${ind.status === 'overdue' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-blue-50 text-blue-500 border-blue-100'}`}>
-                                    {ind.status === 'overdue' ? 'Просрочено' : 'В работе'}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="p-10 bg-slate-50 border-t border-slate-100 flex gap-4">
-                <button className="flex-1 py-5 bg-[#25D366] text-white rounded-3xl text-[11px] font-black uppercase tracking-widest hover:bg-[#1ebd5b] hover:shadow-xl hover:shadow-emerald-200 flex items-center justify-center gap-3 transition-all active:scale-95">
-                    WhatsApp Напоминание <MessageCircle size={18} fill="currentColor" />
-                </button>
-                <button className="p-5 bg-white border border-slate-200 text-slate-400 rounded-3xl hover:text-blue-600 transition-all">
-                    <ExternalLink size={20} />
-                </button>
-            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
+              {selectedEmployee.name}
+            </h3>
+            <p className="text-sm text-slate-500 font-medium">
+              {selectedEmployee.department}
+            </p>
           </div>
+          <button 
+            onClick={() => setSelectedEmployee(null)} 
+            className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-all active:scale-90"
+          >
+            <X size={24} />
+          </button>
+        </div>
+      </div>
+
+{/* CONTENT */}
+<div className="p-8 overflow-y-auto bg-slate-50/50 flex-1 custom-scrollbar">
+  <div className="space-y-6">
+    
+    <div className="flex justify-between items-end">
+      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">
+        Критические просрочки
+      </p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase">
+        Найдено: {selectedEmployee.indicators?.filter(ind => ind.status === 'overdue').length || 0}
+      </p>
+    </div>
+
+    <div className="grid gap-3">
+      {selectedEmployee.indicators?.filter(ind => ind.status === 'overdue').length > 0 ? (
+        selectedEmployee.indicators
+          .filter(ind => ind.status === 'overdue') // Фильтруем только просроченные
+          .map((ind) => (
+            <div 
+              key={ind.id} 
+              className="group bg-white border border-red-100 p-5 rounded-2xl flex justify-between items-center transition-all hover:border-red-300 shadow-sm shadow-red-50"
+            >
+              <div className="space-y-2 pr-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  <p className="text-sm font-bold text-slate-800 leading-tight">
+                    {ind.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 ml-5">
+                  <span className="text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1.5 uppercase tracking-tighter text-red-600 bg-red-50">
+                    <Clock size={12} /> Дедлайн был: {ind.date}
+                  </span>
+                  <span className="text-[9px] text-red-400 font-black uppercase tracking-widest">
+                    Просрочено
+                  </span>
+                </div>
+              </div>
+              
+              <div className="shrink-0">
+                <div className="p-2.5 rounded-xl bg-red-50 text-red-500">
+                  <AlertTriangle size={18} />
+                </div>
+              </div>
+            </div>
+          ))
+      ) : (
+        /* Состояние, если просрочек нет */
+        <div className="bg-white border border-slate-200 p-10 rounded-3xl text-center border-dashed">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <CheckCircle2 size={24} />
+          </div>
+          <p className="text-sm font-bold text-slate-900">Просрочек не обнаружено</p>
+          <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Все индикаторы в норме</p>
         </div>
       )}
+    </div>
+
+    {/* Инфо-блок контактов остается без изменений */}
+    <div className="grid grid-cols-2 gap-4 pt-2">
+      <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
+        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+          <Phone size={14} />
+        </div>
+        <div>
+          <p className="text-[8px] font-black text-slate-400 uppercase leading-none">Телефон</p>
+          <p className="text-xs font-bold text-slate-700">{selectedEmployee.phone}</p>
+        </div>
+      </div>
+      <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
+        <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
+          <Mail size={14} />
+        </div>
+        <div>
+          <p className="text-[8px] font-black text-slate-400 uppercase leading-none">Email</p>
+          <p className="text-xs font-bold text-slate-700">{selectedEmployee.email}</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+      {/* FOOTER ACTIONS */}
+      <div className="p-8 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+        <div className="flex gap-4">
+          <button 
+            className="flex-1 py-4 bg-[#25D366] text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[#1ebd5b] hover:shadow-xl hover:shadow-emerald-100 transition-all flex items-center justify-center gap-3 active:scale-95"
+          >
+            <MessageCircle size={18} fill="currentColor" />
+            WhatsApp Напоминание
+          </button>
+          
+          <button 
+            title="Открыть профиль"
+            className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg"
+          >
+            <ExternalLink size={20} />
+          </button>
+        </div>
+        <p className="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest mt-6">
+          Последнее уведомление: {selectedEmployee.lastNotified || 'Никогда'}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* FOOTER */}
       <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">

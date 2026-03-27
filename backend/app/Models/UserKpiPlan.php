@@ -19,4 +19,8 @@ class UserKpiPlan extends Model
     {
         return $this->belongsTo(KpiIndicator::class, 'kpi_indicator_id');
     }
+protected $casts = [
+    'deadline' => 'date',
+];
+
 }

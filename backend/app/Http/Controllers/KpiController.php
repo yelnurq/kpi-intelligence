@@ -164,8 +164,6 @@ public function savePlan(Request $request)
     // 1. Получаем текущего авторизованного пользователя
     $user = $this->getAuthenticatedUser($request);
 
-    // 2. Делаем запрос к модели UserKpiPlan, вытягивая только индикаторы этого юзера
-    // Используем with('indicator'), чтобы подгрузить данные из основной таблицы kpi_indicators
     $myPlans = \App\Models\UserKpiPlan::where('user_id', $user->id)
         ->with('indicator')
         ->get();
@@ -179,6 +177,33 @@ public function savePlan(Request $request)
             'category' => $plan->indicator->category,
             // можно добавить данные из плана, если нужно (например, целевое количество)
             'target_quantity' => $plan->target_quantity ?? 0, 
+        ];
+    });
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $indicators
+    ]);
+}
+public function getMyIndicatorsDeadline(Request $request)
+{
+    $user = $this->getAuthenticatedUser($request);
+
+    $myPlans = \App\Models\UserKpiPlan::where('user_id', $user->id)
+        ->with('indicator')
+        ->get();
+
+    $indicators = $myPlans->map(function ($plan) {
+        return [
+            'id' => $plan->indicator->id,
+            'title' => $plan->indicator->title,
+            'weight' => $plan->indicator->points, // На фронте у тебя weight
+            'category' => $plan->indicator->category,
+            'target_quantity' => $plan->target_quantity ?? 0,
+            // Добавляем дедлайн. Если в БД он типа Date, Carbon отформатирует его
+            'deadline' => $plan->deadline ? $plan->deadline->format('Y-m-d') : '2026-12-31', 
+            // Добавим прогресс (если есть в таблице планов, иначе 0)
+            'progress' => $plan->progress ?? 0, 
         ];
     });
 

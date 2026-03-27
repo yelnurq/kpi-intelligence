@@ -41,10 +41,11 @@ Route::middleware("token")->group(function(){
     Route::post('/kpi-activities/{id}/status', [KpiActivityController::class, 'updateStatus']);
     Route::get('/kpi-indicators', [KpiController::class, 'getIndicators']);
     Route::get('/user/kpi-indicators', [KpiController::class, 'getMyIndicators']);
+    Route::get('/get-my-indicators', [KpiController::class, 'getMyIndicatorsDeadline']);
+    Route::get('/user/kpi-activities', [KpiActivityController::class, 'latest']);
     Route::post("/save-kpi-plan", [KpiController::class, "savePlan"]);
     Route::post("/kpi-activities", [KpiActivityController::class, "store"]);
     Route::get('/get-user-plan-ids', [KpiController::class, 'getPlan']);
-    Route::get('/user/kpi-activities', [KpiActivityController::class, 'latest']);
     Route::get('/kpi-activities', [KpiActivityController::class, 'index']);
     Route::post('/kpi/activity', [KpiController::class, 'storeActivity']);
     Route::get('/kpi/my-rating', [KpiController::class, 'myRating']);

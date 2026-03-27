@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Clock, CheckCircle2, AlertCircle, 
-  Calendar, Loader2, ArrowUpRight, Zap, Info, 
-  Target, TrendingUp, Filter
+  Calendar, Loader2, ArrowUpRight, Target, 
+  TrendingUp, Filter, ShieldCheck, Hourglass
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,18 +36,18 @@ const KpiPlanMonitor = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [planIndicators, setPlanIndicators] = useState([]);
+  const [submissions, setSubmissions] = useState([]); 
   const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, rejected: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Исправлено: запрашиваем обе ветки данных
         const [indicatorsRes, archiveRes] = await Promise.all([
           fetch(`${API_BASE}/get-my-indicators`, {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
           }),
-          fetch(`${API_BASE}/kpi-activities`, { // Предполагаемый роут для статистики
+          fetch(`${API_BASE}/kpi-activities`, {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
           })
         ]);
@@ -61,6 +61,7 @@ const KpiPlanMonitor = () => {
 
         if (archiveResult.status === 'success') {
           setStats(archiveResult.stats || { total: 0, approved: 0, pending: 0, rejected: 0 });
+          setSubmissions(archiveResult.data || []); 
         }
 
       } catch (error) {
@@ -73,13 +74,46 @@ const KpiPlanMonitor = () => {
     if (token) fetchData();
   }, [token]);
 
-  const getDeadlineStatus = (deadline, progress) => {
-    if (progress >= 100) return { label: 'Выполнено', color: 'bg-green-50 text-green-600 border-green-100', icon: <CheckCircle2 size={14} />, priority: 4 };
-    if (!deadline) return { label: 'Бессрочно', color: 'bg-slate-50 text-slate-400 border-slate-100', icon: <Calendar size={14} />, priority: 5 };
+  // Функция для определения статуса проверки конкретного индикатора (Бейдж под названием)
+  const getSubmissionStatus = (indicatorId) => {
+    const itemSubmissions = submissions.filter(s => s.indicator_id === indicatorId);
+    if (itemSubmissions.length === 0) return null;
+
+    if (itemSubmissions.some(s => s.status === 'approved')) {
+      return { label: 'Одобрено', color: 'text-emerald-600 bg-emerald-50 border-emerald-100', icon: <ShieldCheck size={12} /> };
+    }
+    if (itemSubmissions.some(s => s.status === 'pending')) {
+      return { label: 'На проверке', color: 'text-amber-600 bg-amber-50 border-amber-100', icon: <Hourglass size={12} /> };
+    }
+    return null;
+  };
+
+  // Функция для определения дедлайна с учетом прогресса и статуса модерации
+  const getDeadlineStatus = (deadline, progress, dbStatus) => {
+    if (dbStatus === 'completed' || progress >= 100) {
+      return { 
+        label: 'Выполнено', 
+        color: 'bg-green-50 text-green-600 border-green-100', 
+        icon: <CheckCircle2 size={14} />, 
+        priority: 5 
+      };
+    }
+
+    if (dbStatus === 'checking') {
+      return { 
+        label: 'Проверяется', 
+        color: 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse', 
+        icon: <Clock size={14} />, 
+        priority: 1 
+      };
+    }
+
+    if (!deadline) return { label: 'Бессрочно', color: 'bg-slate-50 text-slate-400 border-slate-100', icon: <Calendar size={14} />, priority: 4 };
 
     const diff = Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return { label: 'Просрочено', color: 'bg-red-50 text-red-600 border-red-100 animate-pulse', icon: <AlertCircle size={14} />, priority: 1 };
+    if (diff < 0) return { label: 'Просрочено', color: 'bg-red-50 text-red-600 border-red-100', icon: <AlertCircle size={14} />, priority: 0 };
     if (diff <= 7) return { label: `Срочно: ${diff} дн.`, color: 'bg-orange-50 text-orange-600 border-orange-100', icon: <Clock size={14} />, priority: 2 };
+    
     return { label: `До ${deadline}`, color: 'bg-slate-50 text-slate-500 border-slate-100', icon: <Calendar size={14} />, priority: 3 };
   };
 
@@ -87,18 +121,25 @@ const KpiPlanMonitor = () => {
     return planIndicators
       .filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const isCompleted = (item.progress || 0) >= 100;
+        const sub = submissions.find(s => s.indicator_id === item.id);
+        const isCompleted = (item.progress || 0) >= 100 || sub?.status === 'approved';
         const matchesTab = filter === 'all' || (filter === 'completed' ? isCompleted : !isCompleted);
         return matchesSearch && matchesTab;
       })
       .sort((a, b) => {
-        const statusA = getDeadlineStatus(a.deadline, a.progress || 0);
-        const statusB = getDeadlineStatus(b.deadline, b.progress || 0);
+        const subA = submissions.find(s => s.indicator_id === a.id);
+        const subB = submissions.find(s => s.indicator_id === b.id);
+        
+        const dbStatusA = subA?.status === 'approved' ? 'completed' : subA?.status === 'pending' ? 'checking' : null;
+        const dbStatusB = subB?.status === 'approved' ? 'completed' : subB?.status === 'pending' ? 'checking' : null;
+
+        const statusA = getDeadlineStatus(a.deadline, a.progress || 0, dbStatusA);
+        const statusB = getDeadlineStatus(b.deadline, b.progress || 0, dbStatusB);
+
         if (statusA.priority !== statusB.priority) return statusA.priority - statusB.priority;
-        // Используем weight из твоего JSON
         return (b.weight || 0) - (a.weight || 0);
       });
-  }, [searchTerm, filter, planIndicators]);
+  }, [searchTerm, filter, planIndicators, submissions]);
 
   const potentialTotal = useMemo(() => {
     return planIndicators.reduce((sum, item) => sum + (item.weight || 0), 0);
@@ -163,35 +204,58 @@ const KpiPlanMonitor = () => {
                 {loading ? (
                    <tr><td colSpan="4" className="px-6 py-20 text-center"><Loader2 className="animate-spin inline text-blue-500" /></td></tr>
                 ) : filteredData.map((item) => {
-                  const status = getDeadlineStatus(item.deadline, item.progress || 0);
+                  const sub = submissions.find(s => s.indicator_id === item.id);
+                  const dbStatus = sub?.status === 'approved' ? 'completed' : sub?.status === 'pending' ? 'checking' : null;
+                  const deadlineStatus = getDeadlineStatus(item.deadline, item.progress || 0, dbStatus);
+                  const isDone = dbStatus === 'completed' || item.progress >= 100;
+
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 group">
+                    <tr key={item.id} className={`hover:bg-slate-50/50 group transition-all ${isDone ? 'opacity-75' : ''}`}>
                       <td className="px-6 py-6 text-left max-w-md">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded w-fit uppercase">{item.category}</span>
-                          <span className="text-sm font-bold text-slate-800 leading-snug group-hover:text-blue-600 transition-colors">{item.title}</span>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">
+                              {item.category}
+                            </span>
+                            
+                            {getSubmissionStatus(item.id) && (
+                              <span className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase border-current/20 ${getSubmissionStatus(item.id).color}`}>
+                                {getSubmissionStatus(item.id).icon}
+                                {getSubmissionStatus(item.id).label}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`text-sm font-bold leading-snug group-hover:text-blue-600 transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                            {item.title}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center">
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${status.color}`}>
-                          {status.icon} {status.label}
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${deadlineStatus.color}`}>
+                          {deadlineStatus.icon} {deadlineStatus.label}
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center min-w-[140px]">
                         <div className="flex flex-col items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-700">{item.progress || 0}%</span>
+                          <span className="text-[10px] font-bold text-slate-700">{isDone ? '100%' : `${item.progress || 0}%`}</span>
                           <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
-                            <div className={`h-full ${item.progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600'}`} style={{ width: `${item.progress || 0}%` }} />
+                            <div 
+                                className={`h-full transition-all duration-500 ${isDone ? 'bg-emerald-500' : 'bg-blue-600'}`} 
+                                style={{ width: `${isDone ? 100 : (item.progress || 0)}%` }} 
+                            />
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-6 text-right">
                         <div className="flex items-center justify-end gap-4">
                            <div className="text-right">
-                              <span className="text-lg font-black text-slate-900">{item.weight}</span>
+                              <span className={`text-lg font-black ${isDone ? 'text-emerald-600' : 'text-slate-900'}`}>{item.weight}</span>
                               <p className="text-[9px] font-bold text-slate-400 uppercase">баллов</p>
                            </div>
-                           <button onClick={() => navigate(`/submit?indicator_id=${item.id}`)} className="p-2 bg-slate-50 text-slate-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all">
+                           <button 
+                             onClick={() => navigate(`/submit?indicator_id=${item.id}`)} 
+                             className={`p-2 rounded-lg transition-all ${isDone ? 'bg-emerald-50 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white'}`}
+                           >
                              <ArrowUpRight size={16} />
                            </button>
                         </div>

@@ -13,18 +13,22 @@ class KpiActivity extends Model
     }
 
     public function indicator() {
-        return $this->belongsTo(KpiIndicator::class);
+        // Явно указываем 'indicator_id' вторым параметром
+        return $this->belongsTo(KpiIndicator::class, 'indicator_id');
     }
 
     public function evidence() {
-        return $this->hasMany(KpiEvidence::class);
+        return $this->hasMany(KpiEvidence::class, 'kpi_activity_id'); // Проверь также имя ключа здесь
     }
 
     protected static function booted()
     {
         static::creating(function ($activity) {
             $indicator = KpiIndicator::find($activity->indicator_id);
-            $activity->total_points = $indicator->points * $activity->quantity;
+            if ($indicator) {
+                // Используем weight или points в зависимости от твоей базы
+                $activity->total_points = ($indicator->points ?? $indicator->weight ?? 0) * ($activity->quantity ?? 1);
+            }
         });
     }
 }

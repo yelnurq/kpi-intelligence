@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class KpiIndicator extends Model
 {
     protected $fillable = ['category', 'title', 'points', 'desc', 'difficulty', 'year'];
-    public function activities()
-    {
-        return $this->hasMany(KpiActivity::class);
-    }
+public function activities()
+{
+    return $this->hasMany(KpiActivity::class, 'indicator_id');
+}
     }

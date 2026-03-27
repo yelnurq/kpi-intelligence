@@ -190,20 +190,37 @@ public function getMyIndicatorsDeadline(Request $request)
     $user = $this->getAuthenticatedUser($request);
 
     $myPlans = \App\Models\UserKpiPlan::where('user_id', $user->id)
-        ->with('indicator')
+        ->with(['indicator.activities' => function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        }])
         ->get();
 
     $indicators = $myPlans->map(function ($plan) {
+        $activities = $plan->indicator->activities;
+        
+        $isApproved = $activities->where('status', 'approved')->isNotEmpty();
+        $isPending = $activities->where('status', 'pending')->isNotEmpty();
+
+        // Определяем системный прогресс
+        $progress = 0;
+        $displayStatus = 'active'; // по умолчанию
+
+        if ($isApproved) {
+            $progress = 100;
+            $displayStatus = 'completed';
+        } elseif ($isPending) {
+            $progress = 50; // Условный прогресс для анимации полоски
+            $displayStatus = 'checking';
+        }
+
         return [
             'id' => $plan->indicator->id,
             'title' => $plan->indicator->title,
-            'weight' => $plan->indicator->points, // На фронте у тебя weight
+            'weight' => $plan->indicator->points,
             'category' => $plan->indicator->category,
-            'target_quantity' => $plan->target_quantity ?? 0,
-            // Добавляем дедлайн. Если в БД он типа Date, Carbon отформатирует его
             'deadline' => $plan->deadline ? $plan->deadline->format('Y-m-d') : '2026-12-31', 
-            // Добавим прогресс (если есть в таблице планов, иначе 0)
-            'progress' => $plan->progress ?? 0, 
+            'progress' => $progress,
+            'db_status' => $displayStatus // Передаем статус для фронта
         ];
     });
 

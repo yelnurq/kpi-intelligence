@@ -3,13 +3,25 @@ import axios from 'axios';
 import { 
   Target, Zap, Award, User, Briefcase, 
   Clock, BarChart3, Loader2, ClipboardCheck, 
-  ChevronRight, ArrowUpRight, AlertCircle
+  ChevronRight, ArrowUpRight
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer 
 } from 'recharts';
+
+// --- УТИЛИТА ДЛЯ КРАСИВОЙ ДАТЫ ---
+const formatDate = (dateString) => {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString; 
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(date);
+};
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
 const StatSkeleton = () => (
@@ -40,7 +52,7 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary
         <Icon size={18} />
       </div>
     </div>
-    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-left">{description}</p>
+    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-left leading-relaxed">{description}</p>
   </div>
 );
 
@@ -56,14 +68,18 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-// --- КОМПОНЕНТ КАРТОЧКИ ИНДИКАТОРА ---
-const IndicatorCard = ({ title, weight, progress, deadline, index }) => {
-  const isExpired = deadline && new Date(deadline) < new Date() && progress < 100;
-  const diffDays = deadline ? Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+const IndicatorCard = ({ id, title, weight, progress, deadline, index }) => {
+  const navigate = useNavigate();
+  const dateObj = deadline ? new Date(deadline) : null;
+  const isExpired = dateObj && dateObj < new Date() && progress < 100;
+  const diffDays = dateObj ? Math.ceil((dateObj - new Date()) / (1000 * 60 * 60 * 24)) : null;
   const isUrgent = diffDays !== null && diffDays <= 10 && diffDays >= 0 && progress < 100;
 
   return (
-    <div className={`bg-white p-5 rounded-xl border shadow-sm text-left group transition-all relative overflow-hidden ${isExpired ? 'border-red-200' : isUrgent ? 'border-amber-200' : 'border-slate-200'} hover:border-blue-200`}>
+    <div 
+      onClick={() => navigate(`/submit?indicator_id=${id}`)}
+      className={`bg-white p-5 rounded-xl border shadow-sm text-left group transition-all relative overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-400 ${isExpired ? 'border-red-200' : isUrgent ? 'border-amber-200' : 'border-slate-200'}`}
+    >
       {isExpired && (
         <div className="absolute top-0 right-0 bg-red-500 text-white px-2 py-0.5 rounded-bl-lg flex items-center gap-1">
           <span className="text-[8px] font-black uppercase tracking-tighter">Просрочено</span>
@@ -77,13 +93,13 @@ const IndicatorCard = ({ title, weight, progress, deadline, index }) => {
           {weight} баллов
         </span>
       </div>
-      <p className="text-[11px] font-bold text-slate-700 leading-tight mb-3 line-clamp-2 h-8">
+      <p className="text-[11px] font-bold text-slate-700 leading-tight mb-3 line-clamp-2 h-8 group-hover:text-blue-600 transition-colors">
         {title}
       </p>
       <div className="space-y-1.5">
         <div className="flex justify-between text-[9px] font-bold uppercase">
           <span className={isExpired ? 'text-red-500' : isUrgent ? 'text-amber-600' : 'text-slate-400'}>
-            До: {deadline || '—'}
+            {isExpired ? 'Срок истек: ' : 'Срок: '} {formatDate(deadline)}
           </span>
           <span className="text-slate-900">{progress}%</span>
         </div>
@@ -105,58 +121,44 @@ const Dashboard = () => {
   const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
 
- useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { navigate('/login'); return; }
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) { navigate('/login'); return; }
 
-    const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' };
+    const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' };
 
-    Promise.all([
-      axios.get('http://localhost:8000/api/user', { headers }),
-      axios.get('http://localhost:8000/api/user/kpi-activities', { headers }),
-      // Получаем и статус плана, и полный список индикаторов, чтобы вытащить названия
-      axios.get('http://localhost:8000/api/get-plan-status?year=2025/2026', { headers }),
-      axios.get('http://localhost:8000/api/kpi-indicators', { headers }) 
-    ])
-    .then(([userRes, actRes, planRes, allIndsRes]) => {
-      if (userRes.data.status === 'success') setUser(userRes.data.data);
-      setActivities(actRes.data.data || []);
-      
-      // 1. Берем ID выбранных индикаторов и дедлайны
-      const selectedIds = planRes.data.selected_ids || [];
-      const deadlines = planRes.data.deadlines || {};
+    Promise.all([
+      axios.get('http://localhost:8000/api/user', { headers }),
+      axios.get('http://localhost:8000/api/user/kpi-activities', { headers }),
+      // Используем новый метод для получения актуального плана со статусами из БД
+      axios.get('http://localhost:8000/api/get-my-indicators', { headers })
+    ])
+    .then(([userRes, actRes, planRes]) => {
+      if (userRes.data.status === 'success') setUser(userRes.data.data);
       
-      // 2. Берем эталонный список индикаторов (где есть названия и веса)
-      // Проверяем разные уровни вложенности, в зависимости от твоего API
-      const referenceIndicators = allIndsRes.data.data || allIndsRes.data || [];
+      setActivities(actRes.data.data || []);
+      
+      const allIndicators = planRes.data.data || [];
 
-      // 3. Собираем объекты для отображения
-      const userPlan = referenceIndicators
-        .filter(ind => selectedIds.includes(ind.id))
-        .map(ind => ({
-          id: ind.id,
-          title: ind.title || ind.name_ru || `Индикатор #${ind.id}`,
-          weight: ind.weight || 0,
-          progress: ind.progress || 0,
-          deadline: deadlines[ind.id] || null
-        }));
+      // ФИЛЬТРАЦИЯ: Оставляем только те задачи, которые имеют статус 'active'
+      // (т.е. они не 'completed' и не 'checking')
+      const priorityTasks = allIndicators
+        .filter(ind => ind.db_status === 'active')
+        .sort((a, b) => {
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return new Date(a.deadline) - new Date(b.deadline);
+        });
 
-      // 4. Фильтруем "горящие"
-      const criticalTasks = userPlan.filter(ind => {
-        if (!ind.deadline) return false;
-        const diff = (new Date(ind.deadline) - new Date()) / (1000 * 60 * 60 * 24);
-        return (diff <= 10 || diff < 0) && ind.progress < 100;
-      });
+      setIndicators(priorityTasks.slice(0, 4));
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Dashboard error:", err);
+      setLoading(false);
+    });
+  }, [navigate]);
 
-      // Если критических нет, показываем просто первые 4 из выбранных
-      setIndicators(criticalTasks.length > 0 ? criticalTasks : userPlan);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error("Ошибка загрузки данных дашборда:", err);
-      setLoading(false);
-    });
-  }, [navigate]);
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans text-slate-900">
       
@@ -168,7 +170,7 @@ const Dashboard = () => {
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">{user?.name || 'Загрузка...'}</h1>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-slate-500 font-bold text-left">
               <Briefcase size={14} className="text-blue-600" />
               <span>{user?.position_title || 'Должность'}</span>
               <span className="text-slate-300">|</span>
@@ -181,13 +183,12 @@ const Dashboard = () => {
         </Link>
       </div>
 
-      {/* KPI И ГРАФИК */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
         <div className="lg:col-span-1 space-y-6">
           {loading ? <><StatSkeleton /><StatSkeleton /></> : (
             <>
-              <StatCard icon={Zap} label="Текущий KPI" value={user?.current_kpi} isPrimary={true} colorClass="bg-blue-50 text-blue-600" description="Подтвержденные баллы" />
-              <StatCard icon={Clock} label="На проверке" value={`+${user?.pending_kpi}`} colorClass="bg-amber-50 text-amber-600" description="Ожидают верификации" />
+              <StatCard icon={Zap} label="Текущий KPI" value={user?.current_kpi} isPrimary={true} colorClass="bg-blue-50 text-blue-600" description="Подтвержденные баллы в системе" />
+              <StatCard icon={Clock} label="На проверке" value={`+${user?.pending_kpi}`} colorClass="bg-amber-50 text-amber-600" description="Ожидают подтверждения модератором" />
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-left">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                   <span>Прогресс цели</span>
@@ -206,12 +207,12 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <div className="p-2 bg-slate-900 rounded-lg text-white"><BarChart3 size={18} /></div>
               <div>
-                <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight leading-none">История KPI</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Динамика подтвержденных достижений</p>
+                <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight leading-none text-left">История KPI</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-left">Динамика достижений по месяцам</p>
               </div>
             </div>
           </div>
-          <div className="flex-1 min-h-[200px] w-full">
+          <div className="flex-1 min-h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={user?.chart_data || []}>
                 <defs>
@@ -230,25 +231,26 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* БЛОК ИНДИКАТОРОВ */}
+      {/* ПРИОРИТЕТНЫЕ ЗАДАЧИ */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4 px-1">
           <div className="flex items-center gap-2">
             <ClipboardCheck size={18} className="text-slate-900" />
-            <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight">Внимание: приоритетные задачи</h3>
+            <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight text-left">Внимание: приоритетные задачи</h3>
           </div>
           <Link to="/planning" className="text-[10px] font-bold text-blue-600 uppercase flex items-center gap-1 hover:underline">
             Весь план <ChevronRight size={14} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
           {loading ? (
              [1,2,3,4].map(i => <div key={i} className="h-32 bg-white border border-slate-100 rounded-xl animate-pulse" />)
           ) : indicators.length > 0 ? (
-            indicators.slice(0, 4).map((ind, idx) => (
+            indicators.map((ind, idx) => (
               <IndicatorCard 
-                key={ind.id || idx}
+                key={ind.id}
+                id={ind.id}
                 index={idx}
                 title={ind.title}
                 weight={ind.weight}
@@ -258,25 +260,23 @@ const Dashboard = () => {
             ))
           ) : (
             <div className="col-span-full py-10 bg-white border border-dashed border-slate-200 rounded-xl text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Активных задач не найдено</p>
-              <Link to="/planning" className="inline-block mt-3 text-[10px] text-blue-600 font-black uppercase underline">Перейти к планированию</Link>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Все задачи либо выполнены, либо на проверке</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* НИЖНИЕ КАРТОЧКИ */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
         {loading ? <><StatSkeleton /><StatSkeleton /><StatSkeleton /></> : (
           <>
-            <StatCard icon={Target} label="Цель на год" value={user?.min_kpi} colorClass="bg-slate-50 text-slate-600" description="Минимальный порог" />
+            <StatCard icon={Target} label="Цель на год" value={user?.min_kpi} colorClass="bg-slate-50 text-slate-600" description="Минимальный порог баллов" />
             <StatCard icon={Award} label="Кафедра" value={user?.leader || '—'} colorClass="bg-slate-50 text-slate-600" description={user?.department} hideUnit={true} />
             <StatCard icon={Award} label="Факультет" value={user?.dean || '—'} colorClass="bg-slate-50 text-slate-600" description={user?.faculty} hideUnit={true} />
           </>
         )}
       </div>
 
-      {/* ТАБЛИЦА АКТИВНОСТЕЙ */}
+      {/* ТАБЛИЦА */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mt-8">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight text-left">Журнал последних достижений</h3>
@@ -289,7 +289,7 @@ const Dashboard = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/30 text-[10px] uppercase tracking-[0.15em] text-slate-400 border-b border-slate-100">
-                <th className="px-6 py-4 font-bold">Активность</th>
+                <th className="px-6 py-4 font-bold text-left">Активность</th>
                 <th className="px-6 py-4 font-bold text-center">Баллы</th>
                 <th className="px-6 py-4 font-bold text-center">Дата</th>
                 <th className="px-6 py-4 font-bold text-right">Статус</th>
@@ -297,12 +297,12 @@ const Dashboard = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr><td colSpan="4" className="px-6 py-10 text-center"><Loader2 className="animate-spin inline mr-2 text-blue-500" /></td></tr>
+                <tr><td colSpan="4" className="px-6 py-10 text-center text-left"><Loader2 className="animate-spin inline mr-2 text-blue-500" /></td></tr>
               ) : activities.length > 0 ? (
                 activities.slice(0, 5).map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
+                    <td className="px-6 py-4 text-left">
+                      <div className="flex flex-col text-left">
                         <span className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{item.title}</span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{item.category}</span>
                       </div>
@@ -310,7 +310,7 @@ const Dashboard = () => {
                     <td className="px-6 py-4 text-center">
                       <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded border border-blue-100">+{item.points}</span>
                     </td>
-                    <td className="px-6 py-4 text-center text-[10px] font-bold text-slate-500 uppercase">{item.date}</td>
+                    <td className="px-6 py-4 text-center text-[10px] font-bold text-slate-500 uppercase">{formatDate(item.date)}</td>
                     <td className="px-6 py-4 text-right">
                       <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
                         item.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 

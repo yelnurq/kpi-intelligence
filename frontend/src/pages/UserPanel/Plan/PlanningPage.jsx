@@ -62,6 +62,56 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, selectedItems, onDe
   );
 };
 
+const ReviewModal = ({ isOpen, onClose, onConfirm, loading, selectedItems, totalPoints }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
+        <div className="p-6 text-center border-b border-gray-100">
+          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={32} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900">Проверьте ваш план</h3>
+          <p className="text-sm text-gray-500">После отправки редактирование будет заблокировано до проверки деканом.</p>
+        </div>
+
+        <div className="p-6 max-h-[40vh] overflow-y-auto custom-scrollbar">
+          <div className="space-y-3">
+            {selectedItems.map(item => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-slate-600 truncate mr-4">{item.title}</span>
+                <span className="font-bold text-slate-900 whitespace-nowrap">
+                  {new Date(item.deadline).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-6 bg-slate-50 border-t border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <span className="font-bold text-slate-500 uppercase text-xs">Общий балл:</span>
+            <span className="text-2xl font-black text-blue-600">{totalPoints}</span>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 transition-all">
+              Назад
+            </button>
+            <button 
+              onClick={onConfirm} 
+              disabled={loading}
+              className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="animate-spin" size={20} /> : "Всё верно, отправить"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PlanningPage = () => {
   const navigate = useNavigate();
   const [indicators, setIndicators] = useState([]);
@@ -74,8 +124,7 @@ const PlanningPage = () => {
   const [exporting, setExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deadlines, setDeadlines] = useState({}); // формат { "id_индикатора": "2026-05-20" }
-  
-  // Новое состояние для статуса подачи плана
+  const [isReviewOpen, setIsReviewOpen] = useState(false); // Состояние для второго окна
   const [submission, setSubmission] = useState({ status: 'draft', comment: null });
 
   const categories = ['Все', 'учеб.работа', 'учебно-методическая работа', 'организационно-методическая работа',
@@ -109,14 +158,17 @@ const PlanningPage = () => {
         const dataStatus = await resStatus.json();
 
         if (dataIndicators.status === 'success') setIndicators(dataIndicators.data);
-        if (dataStatus.status === 'success') {
-          setSelectedIds(dataStatus.selected_ids || []);
-          setSubmission({
-            status: dataStatus.plan_status || 'draft',
-            comment: dataStatus.comment
-          });
-        }
-
+      if (dataStatus.status === 'success') {
+    setSelectedIds(dataStatus.selected_ids || []);
+    
+    // ВАЖНО: Заполняем стейт дедлайнов из базы
+    setDeadlines(dataStatus.deadlines || {}); 
+    
+    setSubmission({
+      status: dataStatus.plan_status || 'draft',
+      comment: dataStatus.comment
+    });
+  }
       } catch (error) {
         console.error("Ошибка загрузки:", error);
       } finally {
@@ -203,29 +255,38 @@ const selectedItemsWithDeadlines = useMemo(() => {
       deadline: deadlines[item.id] || ''
     }));
 }, [indicators, selectedIds, deadlines]);
-const handleFinalSubmit = async () => {
-  // Подготавливаем данные: берем только те индикаторы, которые выбраны
+const handlePrepareReview = () => {
   const payload = selectedIds.map(id => ({
     indicator_id: id,
     deadline: deadlines[id] || null
   }));
 
-  // Валидация: не пускаем дальше, если хоть одна дата пуста
   if (payload.some(p => !p.deadline)) {
     alert("Пожалуйста, укажите дедлайны для всех выбранных индикаторов.");
     return;
   }
 
+  setIsModalOpen(false); // Закрываем ввод дат
+  setIsReviewOpen(true); // Открываем финальную проверку
+};
+
+// Реальная функция отправки на сервер
+const handleActualSubmit = async () => {
   try {
     setSaving(true);
     const token = localStorage.getItem("token");
     
+    // Подготовка payload
+    const payload = selectedIds.map(id => ({
+      indicator_id: id,
+      deadline: deadlines[id]
+    }));
+
     const response = await fetch('http://localhost:8000/api/submit-plan', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         items: payload,
@@ -234,16 +295,12 @@ const handleFinalSubmit = async () => {
     });
 
     if (response.ok) {
-      const result = await response.json();
       setSubmission({ status: 'submitted', comment: null });
-      setIsModalOpen(false);
-      alert("План успешно сформирован и отправлен на проверку!");
-    } else {
-      const errorData = await response.json();
-      alert("Ошибка сохранения: " + (errorData.message || "Неизвестная ошибка"));
+      setIsReviewOpen(false);
+      alert("План успешно отправлен!");
     }
   } catch (error) {
-    alert("Сетевая ошибка: " + error.message);
+    alert("Ошибка: " + error.message);
   } finally {
     setSaving(false);
   }
@@ -329,13 +386,27 @@ const toggleIndicator = (id) => {
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
       
-      <ConfirmModal 
+{/* 1. Модалка ввода дат */}
+<ConfirmModal 
   isOpen={isModalOpen} 
   onClose={() => setIsModalOpen(false)} 
-  onConfirm={handleFinalSubmit} 
+  onConfirm={handlePrepareReview} // Теперь ведет на проверку
   loading={saving}
-  selectedItems={selectedItemsWithDeadlines} // Передаем данные с дедлайнами
-  onDeadlineChange={handleDeadlineChange}   // Передаем функцию изменения
+  selectedItems={selectedItemsWithDeadlines}
+  onDeadlineChange={handleDeadlineChange}
+/>
+
+{/* 2. Модалка финального подтверждения */}
+<ReviewModal 
+  isOpen={isReviewOpen}
+  onClose={() => {
+    setIsReviewOpen(false);
+    setIsModalOpen(true); // Возвращаемся к датам, если нажали "Назад"
+  }}
+  onConfirm={handleActualSubmit} // Финальный POST запрос
+  loading={saving}
+  selectedItems={selectedItemsWithDeadlines}
+  totalPoints={totalPoints}
 />
       {/* СТАТУС-БАР ПЛАНА */}
       <div className={`mb-8 p-4 rounded-2xl border flex items-center justify-between transition-all ${
@@ -447,19 +518,40 @@ const toggleIndicator = (id) => {
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {selectedItems.map(item => (
-                  <div key={item.id} className="flex justify-between items-start gap-3 border-b border-gray-50 pb-2">
-                    <div className="flex flex-col max-w-[85%]">
-                      <span className="text-sm font-medium text-slate-700">{item.title}</span>
-                      <span className="text-[10px] text-blue-500 font-bold uppercase">{item.points} баллов</span>
-                    </div>
-                    {!isReadOnly && (
-                      <button onClick={() => removeIndicator(item.id)} className="text-gray-300 hover:text-red-500">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {/* Внутри блока <div className="space-y-3 max-h-[400px] ..."> */}
+{selectedItems.map(item => (
+  <div key={item.id} className="flex justify-between items-start gap-3 border-b border-gray-50 pb-3 group">
+    <div className="flex flex-col max-w-[85%]">
+      <span className="text-sm font-medium text-slate-700 leading-tight mb-1">{item.title}</span>
+      
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] text-blue-500 font-bold uppercase">{item.points} баллов</span>
+        
+        {/* ОТОБРАЖЕНИЕ ДЕДЛАЙНА, ЕСЛИ ОН УСТАНОВЛЕН */}
+        {deadlines[item.id] ? (
+          <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">
+            <Clock size={10} /> {new Date(deadlines[item.id]).toLocaleDateString()}
+          </span>
+        ) : (
+          !isReadOnly && (
+            <span className="text-[9px] font-bold text-amber-500 flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
+              <AlertTriangle size={10} /> Срок не задан
+            </span>
+          )
+        )}
+      </div>
+    </div>
+    
+    {!isReadOnly && (
+      <button 
+        onClick={() => removeIndicator(item.id)} 
+        className="text-gray-300 hover:text-red-500 transition-colors pt-1"
+      >
+        <Trash2 size={16} />
+      </button>
+    )}
+  </div>
+))}
               </div>
               
               <div className="pt-4 border-t border-gray-100">

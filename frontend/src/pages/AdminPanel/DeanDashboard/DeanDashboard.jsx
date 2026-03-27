@@ -301,23 +301,31 @@ const DeanDashboard = () => {
                       </div>
                     ) : (selectedPlan.indicators && selectedPlan.indicators.length > 0) ? (
                       selectedPlan.indicators.map((item, idx) => (
-                        <div key={idx} className="group bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-blue-200 shadow-sm">
-                          <div className="space-y-1 pr-4">
-                            <div className="flex items-start gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                              <p className="text-xs font-bold text-slate-800 leading-tight">
-                                {item.title || item.name}
-                              </p>
-                            </div>
-                            <p className="text-[9px] text-slate-400 uppercase font-medium ml-3.5">
-                              {item.category || 'Показатель'}
-                            </p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-lg font-black text-slate-900 tracking-tighter">{item.points}</span>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">баллов</p>
-                          </div>
-                        </div>
+<div key={idx} className="group bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-blue-200 shadow-sm">
+  <div className="space-y-1 pr-4 text-left"> {/* Добавил text-left для надежности */}
+    <div className="flex items-start gap-2">
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+      <p className="text-xs font-bold text-slate-800 leading-tight">
+        {item.title || item.name}
+      </p>
+    </div>
+    <div className="flex items-center gap-3 ml-3.5">
+      <p className="text-[9px] text-slate-400 uppercase font-medium">
+        {item.category || 'Показатель'}
+      </p>
+      {/* ОТОБРАЖЕНИЕ ДЕДЛАЙНА */}
+      {item.deadline && (
+        <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-1 uppercase">
+          <Clock size={10} /> До {new Date(item.deadline).toLocaleDateString()}
+        </span>
+      )}
+    </div>
+  </div>
+  <div className="text-right shrink-0">
+    <span className="text-lg font-black text-slate-900 tracking-tighter">{item.points}</span>
+    <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">баллов</p>
+  </div>
+</div>
                       ))
                     ) : (
                       <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400">

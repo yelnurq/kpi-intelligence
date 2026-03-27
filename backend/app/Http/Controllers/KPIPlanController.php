@@ -28,24 +28,30 @@ public function getPlanStatus(Request $request)
     $user = $this->getAuthenticatedUser($request);
     $year = $request->query('year', '2025/2026');
 
-    // Тянем ID индикаторов, которые мы только что сохранили в savePlan
-    $selectedIds = UserKpiPlan::where('user_id', $user->id)
+    // 1. Тянем данные по индикаторам (ID + Дедлайны)
+    $planData = \App\Models\UserKpiPlan::where('user_id', $user->id)
         ->where('academic_year', $year)
-        ->pluck('kpi_indicator_id');
+        ->get(['kpi_indicator_id', 'deadline']);
 
-    // Тянем статус из таблицы сабмитов (отправлено/утверждено)
-    $submission = KpiPlanSubmission::where('user_id', $user->id)
+    // Превращаем в плоский массив для синих галочек [1, 5, 10...]
+    $selectedIds = $planData->pluck('kpi_indicator_id');
+
+    // Превращаем в объект для дедлайнов { "1": "2026-05-20", "5": "2026-06-01" }
+    $deadlines = $planData->pluck('deadline', 'kpi_indicator_id');
+
+    // 2. Тянем статус сабмита
+    $submission = \App\Models\KpiPlanSubmission::where('user_id', $user->id)
         ->where('academic_year', $year)
         ->first();
 
     return response()->json([
         'status' => 'success',
-        'selected_ids' => $selectedIds, // Это заполнит синие галочки на фронте
-        'plan_status' => $submission ? $submission->status : 'draft',
-        'comment' => $submission ? $submission->comment : null
+        'selected_ids' => $selectedIds,
+        'deadlines'    => $deadlines, // Добавляем этот ключ!
+        'plan_status'  => $submission ? $submission->status : 'draft',
+        'comment'      => $submission ? $submission->comment : null
     ]);
 }
-
  public function submitPlan(Request $request)
 {
     $user = $this->getAuthenticatedUser($request);
@@ -163,7 +169,6 @@ public function getDeanSubmissions(Request $request)
         ], 500);
     }
 }
-// 1. Получение индикаторов конкретного пользователя
 public function getUserPlanDetails(Request $request, $userId)
 {
     $year = $request->query('year', '2025/2026');
@@ -171,7 +176,11 @@ public function getUserPlanDetails(Request $request, $userId)
     $indicators = \App\Models\UserKpiPlan::where('user_id', $userId)
         ->where('academic_year', $year)
         ->join('kpi_indicators', 'user_kpi_plans.kpi_indicator_id', '=', 'kpi_indicators.id')
-        ->select('kpi_indicators.title', 'kpi_indicators.points')
+        ->select(
+            'kpi_indicators.title', 
+            'kpi_indicators.points', 
+            'user_kpi_plans.deadline' 
+        )
         ->get();
 
     return response()->json([

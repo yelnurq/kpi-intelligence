@@ -235,25 +235,45 @@ const ActivityArchive = () => {
                 </span>
               )}
             </div>
-            
-            <div className="p-2 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide">
-              {loading ? (
-                <div className="p-10 text-center">
-                  <div className="w-8 h-8 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto" />
-                </div>
-              ) : (
-                pendingIndicators.map((indicator) => (
-                  <div key={indicator.id} onClick={() => navigate('/submit')} className="p-4 hover:bg-slate-50 rounded-2xl transition-all group border border-transparent hover:border-slate-100 cursor-pointer text-left">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">+{indicator.weight || indicator.points} баллов</span>
-                      <button className="opacity-0 group-hover:opacity-100 p-1 bg-blue-600 text-white rounded-md transition-all shadow-md"><Plus size={14} /></button>
-                    </div>
-                    <p className="text-xs font-bold text-slate-700 leading-relaxed mb-1">{indicator.title}</p>
-                    <p className="text-[10px] text-slate-400 font-medium italic">Нажмите, чтобы отправить отчет</p>
+          <div className="p-2 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide">
+            {loading ? (
+              <div className="p-10 text-center">
+                <div className="w-8 h-8 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto" />
+              </div>
+            ) : (
+              pendingIndicators.map((indicator) => (
+                <div 
+                  key={indicator.id} 
+                  // Добавляем параметр ID в URL для перехода
+                  onClick={() => navigate(`/submit?indicator_id=${indicator.id}`)} 
+                  className="p-4 hover:bg-slate-50 rounded-2xl transition-all group border border-transparent hover:border-slate-100 cursor-pointer text-left"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">
+                      +{indicator.weight || indicator.points} баллов
+                    </span>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Останавливаем всплытие, чтобы не срабатывал onClick у родительского div
+                        navigate(`/submit?indicator_id=${indicator.id}`);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 bg-blue-600 text-white rounded-md transition-all shadow-md"
+                    >
+                      <Plus size={14} />
+                    </button>
                   </div>
-                ))
-              )}
-            </div>
+                  
+                  <p className="text-xs font-bold text-slate-700 leading-relaxed mb-1">
+                    {indicator.title}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium italic">
+                    Нажмите, чтобы отправить отчет
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
           </div>
         </div>
       </div>

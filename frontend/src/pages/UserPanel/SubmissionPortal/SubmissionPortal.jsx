@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileUp, CheckCircle2, FileText, Loader2, Calendar as CalendarIcon, 
-  Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight, Download,
+  Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight,
   ArrowUpRight
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // Добавили useLocation
 import axios from 'axios';
 
 const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "баллов" }) => (
@@ -30,6 +30,8 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary
 
 const SubmissionPortal = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Хук для работы с URL
+  
   const [indicators, setIndicators] = useState([]);
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
@@ -46,13 +48,27 @@ const SubmissionPortal = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
+  // 1. Загрузка индикаторов и авто-выбор из URL
   useEffect(() => {
     const fetchIndicators = async () => {
       try {
         const response = await axios.get(`${API_BASE}/user/kpi-indicators`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (response.data.status === 'success') setIndicators(response.data.data);
+        
+        if (response.data.status === 'success') {
+          const fetchedIndicators = response.data.data;
+          setIndicators(fetchedIndicators);
+
+          // Пытаемся достать ID из параметров (?indicator_id=...)
+          const params = new URLSearchParams(location.search);
+          const idFromUrl = params.get('indicator_id');
+
+          // Если ID есть в URL, устанавливаем его в форму
+          if (idFromUrl) {
+            setFormData(prev => ({ ...prev, indicator_id: idFromUrl }));
+          }
+        }
       } catch (error) {
         console.error("Ошибка загрузки:", error);
       } finally {
@@ -60,18 +76,17 @@ const SubmissionPortal = () => {
       }
     };
     fetchIndicators();
-  }, [token]);
-useEffect(() => {
-  if (status === 'success') {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
-  }
+  }, [token, location.search]); // Следим за изменением URL параметров
 
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, [status]);
+  useEffect(() => {
+    if (status === 'success') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [status]);
+
   const handleFileAction = (newFiles) => {
     const validFiles = Array.from(newFiles).filter(f => f.size <= 10 * 1024 * 1024);
     setFiles(prev => [...prev, ...validFiles]);
@@ -103,28 +118,24 @@ useEffect(() => {
   const indicatorWeight = selectedIndicator?.weight || selectedIndicator?.points || 0;
   const predictedPoints = indicatorWeight * formData.quantity;
 
-   if (status === 'success') {
+  if (status === 'success') {
     return (
       <div className="fixed inset-0 flex flex-col justify-center items-center bg-[#f8fafc]/90 backdrop-blur-sm z-50 px-6">
         <div className="max-w-[440px] w-full bg-white border border-slate-200 rounded-[2.5rem] p-12 text-center shadow-2xl shadow-slate-200/50 animate-in fade-in zoom-in duration-500">
-          
           <div className="relative mx-auto mb-8">
             <div className="relative w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-200">
               <CheckCircle2 size={40} strokeWidth={2.5} />
             </div>
           </div>
-
           <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Готово к проверке!</h2>
           <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed px-4">
             Достижение успешно отправлено. После одобрения модератором вам будет начислено:
           </p>
-
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-10 flex items-center justify-center gap-3">
             <Zap size={20} className="text-amber-500 fill-amber-500" />
             <span className="text-3xl font-black text-slate-900">+{predictedPoints}</span>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">баллов</span>
           </div>
-          
           <div className="flex flex-col gap-3">
             <button 
               onClick={() => navigate('/archive')} 
@@ -133,12 +144,12 @@ useEffect(() => {
               Перейти в архив
               <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </button>
-            
             <button 
               onClick={() => { 
                 setStatus('idle'); 
                 setFiles([]); 
                 setFormData(prev => ({...prev, title: '', indicator_id: ''})); 
+                navigate('/submit', { replace: true }); // Очищаем URL
               }} 
               className="w-full py-4 bg-white text-slate-500 hover:text-blue-600 font-bold text-sm transition-all"
             >
@@ -153,7 +164,6 @@ useEffect(() => {
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans">
       <div className="flex flex-col lg:flex-row gap-8">
-        
         <div className="lg:col-span-2 flex-1 space-y-8">
           <div className="text-left">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Верификация достижения</h1>
@@ -162,7 +172,6 @@ useEffect(() => {
 
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-8 space-y-8">
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-3 text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Выберите индикатор</label>
@@ -192,6 +201,7 @@ useEffect(() => {
                 </div>
               </div>
 
+              {/* Остальные поля без изменений */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="md:col-span-3 space-y-3 text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Название выполненной работы</label>
@@ -270,7 +280,7 @@ useEffect(() => {
             description={`Формула: ${indicatorWeight} б. × ${formData.quantity} шт.`}
             isPrimary={true}
           />
-
+          {/* Чек-лист без изменений */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-10">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
               <ShieldCheck size={16} className="text-emerald-500" /> Чек-лист готовности
@@ -290,15 +300,8 @@ useEffect(() => {
                 </li>
               ))}
             </ul>
-
-            <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-              <p className="text-[10px] text-blue-600 font-bold leading-relaxed text-left">
-                После отправки модератор проверит документы в течение 3-х рабочих дней.
-              </p>
-            </div>
           </div>
         </div>
-
       </div>
     </main>
   );

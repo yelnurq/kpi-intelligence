@@ -127,6 +127,20 @@ const PlanningPage = () => {
     fetchData();
   }, [navigate, selectedYear]);
   
+// Внутри компонента PlanningPage, рядом с другими useEffect
+useEffect(() => {
+  if (isModalOpen) {
+    // Сохраняем текущий стиль, чтобы не испортить другие скрипты, если они есть
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    
+    // Очистка при закрытии модалки или размонтировании компонента
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }
+}, [isModalOpen]);
+
 const exportToExcel = async () => {
     if (selectedIds.length === 0) {
       alert("Выберите хотя бы один индикатор для экспорта");
@@ -189,15 +203,16 @@ const selectedItemsWithDeadlines = useMemo(() => {
       deadline: deadlines[item.id] || ''
     }));
 }, [indicators, selectedIds, deadlines]);
-  const handleFinalSubmit = async () => {
-  // Проверка: все ли дедлайны заполнены
-  const payload = selectedItemsWithDeadlines.map(item => ({
-    indicator_id: item.id,
-    deadline: item.deadline
+const handleFinalSubmit = async () => {
+  // Подготавливаем данные: берем только те индикаторы, которые выбраны
+  const payload = selectedIds.map(id => ({
+    indicator_id: id,
+    deadline: deadlines[id] || null
   }));
 
+  // Валидация: не пускаем дальше, если хоть одна дата пуста
   if (payload.some(p => !p.deadline)) {
-    alert("Пожалуйста, укажите дедлайны для всех индикаторов");
+    alert("Пожалуйста, укажите дедлайны для всех выбранных индикаторов.");
     return;
   }
 
@@ -209,54 +224,46 @@ const selectedItemsWithDeadlines = useMemo(() => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
-        items: payload, // Отправляем массив объектов {id, deadline}
+        items: payload,
         academic_year: selectedYear
       })
     });
 
     if (response.ok) {
-      setSubmission(prev => ({ ...prev, status: 'submitted' }));
+      const result = await response.json();
+      setSubmission({ status: 'submitted', comment: null });
       setIsModalOpen(false);
-      alert("План успешно отправлен!");
+      alert("План успешно сформирован и отправлен на проверку!");
+    } else {
+      const errorData = await response.json();
+      alert("Ошибка сохранения: " + (errorData.message || "Неизвестная ошибка"));
     }
   } catch (error) {
-    alert("Ошибка: " + error.message);
+    alert("Сетевая ошибка: " + error.message);
   } finally {
     setSaving(false);
   }
 };
+const toggleIndicator = (id) => {
+  if (isReadOnly) return;
 
- const toggleIndicator = async (id) => {
-    if (isReadOnly) return;
-
-    // 1. Сначала обновляем UI (мгновенно)
-    const newIds = selectedIds.includes(id)
-        ? selectedIds.filter(i => i !== id)
-        : [...selectedIds, id];
-    
-    setSelectedIds(newIds);
-
-    // 2. Сразу шлем в базу
-    try {
-        const token = localStorage.getItem("token");
-        await fetch('http://localhost:8000/api/save-kpi-plan', { // Твой новый метод
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                indicator_ids: newIds,
-                academic_year: selectedYear
-            })
-        });
-    } catch (error) {
-        console.error("Ошибка сохранения плана:", error);
-    }
+  const isSelected = selectedIds.includes(id);
+  const newIds = isSelected
+    ? selectedIds.filter(i => i !== id)
+    : [...selectedIds, id];
+  
+  setSelectedIds(newIds);
+  
+  // Если индикатор удаляется, можно почистить и его дедлайн в стейте (опционально)
+  if (isSelected) {
+    const newDeadlines = { ...deadlines };
+    delete newDeadlines[id];
+    setDeadlines(newDeadlines);
+  }
 };
   const removeIndicator = (id) => {
     if (isReadOnly) return;

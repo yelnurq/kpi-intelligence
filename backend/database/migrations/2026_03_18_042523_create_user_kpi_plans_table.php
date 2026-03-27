@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('kpi_indicator_id')->constrained()->onDelete('cascade');
+            $table->date('deadline')->nullable();
             $table->string('academic_year');
             $table->timestamps();
         });

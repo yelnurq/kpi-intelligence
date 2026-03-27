@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class UserKpiPlan extends Model
 {
     protected $fillable = [
-        "kpi_indicator_id","academic_year","user_id"
+        "kpi_indicator_id","academic_year","user_id", "deadline"
     ];
 
     public function user()

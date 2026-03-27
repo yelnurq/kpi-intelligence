@@ -46,31 +46,72 @@ public function getPlanStatus(Request $request)
     ]);
 }
 
-    // 2. Финальная отправка плана декану
-    public function submitPlan(Request $request)
-    {
-        $user = $this->getAuthenticatedUser($request);
-        $year = $request->academic_year;
+ public function submitPlan(Request $request)
+{
+    $user = $this->getAuthenticatedUser($request);
+    $year = $request->academic_year;
 
-        $existing = KpiPlanSubmission::where('user_id', $user)
+    // 1. Валидация входных данных
+    $request->validate([
+        'items' => 'required|array',
+        'academic_year' => 'required|string'
+    ]);
+
+    // 2. Проверка статуса (нельзя менять утвержденный план)
+    $existingSubmission = KpiPlanSubmission::where('user_id', $user->id)
+        ->where('academic_year', $year)
+        ->first();
+
+    if ($existingSubmission && $existingSubmission->status === 'approved') {
+        return response()->json(['message' => 'План уже утвержден и не может быть изменен'], 403);
+    }
+
+    try {
+        \DB::beginTransaction();
+
+        // 3. УДАЛЯЕМ старые индикаторы за этот год и ЗАПИСЫВАЕМ новые с дедлайнами
+        \DB::table('user_kpi_plans')
+            ->where('user_id', $user->id)
             ->where('academic_year', $year)
-            ->first();
+            ->delete();
 
-        if ($existing && $existing->status === 'approved') {
-            return response()->json(['message' => 'План уже утвержден'], 403);
+        $plansToInsert = [];
+        foreach ($request->items as $item) {
+            $plansToInsert[] = [
+                'user_id'          => $user->id,
+                'kpi_indicator_id' => $item['indicator_id'],
+                'academic_year'    => $year,
+                'deadline'         => $item['deadline'], // Теперь записываем дату!
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ];
         }
 
+        if (!empty($plansToInsert)) {
+            \DB::table('user_kpi_plans')->insert($plansToInsert);
+        }
+
+        // 4. Обновляем статус подачи
         KpiPlanSubmission::updateOrCreate(
             ['user_id' => $user->id, 'academic_year' => $year],
             [
                 'status' => 'submitted',
                 'submitted_at' => now(),
-                'comment' => null // Очищаем старые комменты при переподаче
+                'comment' => null 
             ]
         );
 
-        return response()->json(['status' => 'success', 'message' => 'План отправлен на проверку']);
+        \DB::commit();
+        return response()->json(['status' => 'success', 'message' => 'Индикаторы сохранены, план отправлен на проверку']);
+
+    } catch (\Exception $e) {
+        \DB::rollBack();
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Ошибка при сохранении: ' . $e->getMessage()
+        ], 500);
     }
+}
 public function getDeanSubmissions(Request $request)
 {
     try {

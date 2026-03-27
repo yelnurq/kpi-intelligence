@@ -103,34 +103,43 @@ class KpiController extends Controller
             'rating' => $rating
         ]);
     }
+public function savePlan(Request $request)
+{
+    $user = $this->getAuthenticatedUser($request);
 
-    public function savePlan(Request $request)
-    {
-        $user = $this->getAuthenticatedUser($request);
+    $request->validate([
+        'items' => 'required|array',
+        'academic_year' => 'required|string'
+    ]);
 
-        $request->validate([
-            'indicator_ids' => 'required|array',
-            'academic_year' => 'required|string'
-        ]);
+    UserKpiPlan::where('user_id', $user->id)
+        ->where('academic_year', $request->academic_year)
+        ->delete();
 
-        UserKpiPlan::where('user_id', $user->id)
-            ->where('academic_year', $request->academic_year)
-            ->delete();
-
-        $data = collect($request->indicator_ids)->map(function($id) use ($user, $request) {
-            return [
-                'user_id' => $user->id,
-                'kpi_indicator_id' => $id,
-                'academic_year' => $request->academic_year,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        })->toArray();
-
-        UserKpiPlan::insert($data);
-
-        return response()->json(['status' => 'success', 'message' => 'План успешно сохранен']);
+    $data = [];
+    foreach ($request->items as $item) {
+        $data[] = [
+            'user_id'          => $user->id,
+            'kpi_indicator_id' => (int)$item['indicator_id'],
+            'academic_year'    => $request->academic_year,
+            // Явно берем deadline из входящего массива
+            'deadline'         => $item['deadline'] ?? null, 
+            'created_at'       => now(),
+            'updated_at'       => now(),
+        ];
     }
+
+    if (!empty($data)) {
+        // Используем DB фасад или модель для вставки
+        \DB::table('user_kpi_plans')->insert($data);
+    }
+
+    return response()->json([
+        'status' => 'success', 
+        'saved_count' => count($data),
+        'first_item_deadline' => $data[0]['deadline'] // Для теста в ответе
+    ]);
+}
     public function getPlan(Request $request)
     {
         $user = $this->getAuthenticatedUser($request);

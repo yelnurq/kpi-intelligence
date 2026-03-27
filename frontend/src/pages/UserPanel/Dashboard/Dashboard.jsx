@@ -105,52 +105,58 @@ const Dashboard = () => {
   const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { navigate('/login'); return; }
+ useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) { navigate('/login'); return; }
 
-    const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' };
+    const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' };
 
-    Promise.all([
-      axios.get('http://localhost:8000/api/user', { headers }),
-      axios.get('http://localhost:8000/api/user/kpi-activities', { headers }),
-      axios.get('http://localhost:8000/api/get-plan-status?year=2025/2026', { headers })
-    ])
-    .then(([userRes, actRes, planRes]) => {
-      if (userRes.data.status === 'success') setUser(userRes.data.data);
-      setActivities(actRes.data.data || []);
+    Promise.all([
+      axios.get('http://localhost:8000/api/user', { headers }),
+      axios.get('http://localhost:8000/api/user/kpi-activities', { headers }),
+      // Получаем и статус плана, и полный список индикаторов, чтобы вытащить названия
+      axios.get('http://localhost:8000/api/get-plan-status?year=2025/2026', { headers }),
+      axios.get('http://localhost:8000/api/kpi-indicators', { headers }) 
+    ])
+    .then(([userRes, actRes, planRes, allIndsRes]) => {
+      if (userRes.data.status === 'success') setUser(userRes.data.data);
+      setActivities(actRes.data.data || []);
+      
+      // 1. Берем ID выбранных индикаторов и дедлайны
+      const selectedIds = planRes.data.selected_ids || [];
+      const deadlines = planRes.data.deadlines || {};
       
-      // Имена индикаторов обычно лежат в planRes.data.indicators
-      const allPossibleIndicators = planRes.data.indicators || [];
-      const selectedIds = planRes.data.selected_ids || [];
-      const deadlines = planRes.data.deadlines || {};
+      // 2. Берем эталонный список индикаторов (где есть названия и веса)
+      // Проверяем разные уровни вложенности, в зависимости от твоего API
+      const referenceIndicators = allIndsRes.data.data || allIndsRes.data || [];
 
-      // Сборка данных: берем только те индикаторы, которые выбрал пользователь
-      const userPlan = allPossibleIndicators
-        .filter(ind => selectedIds.includes(ind.id))
-        .map(ind => ({
-          ...ind,
-          deadline: deadlines[ind.id] || ind.deadline || null,
-          progress: ind.progress || 0
-        }));
+      // 3. Собираем объекты для отображения
+      const userPlan = referenceIndicators
+        .filter(ind => selectedIds.includes(ind.id))
+        .map(ind => ({
+          id: ind.id,
+          title: ind.title || ind.name_ru || `Индикатор #${ind.id}`,
+          weight: ind.weight || 0,
+          progress: ind.progress || 0,
+          deadline: deadlines[ind.id] || null
+        }));
 
-      // Фильтр: только просроченные или те, где осталось меньше 10 дней
-      const criticalTasks = userPlan.filter(ind => {
-        if (!ind.deadline) return false;
-        const diff = (new Date(ind.deadline) - new Date()) / (1000 * 60 * 60 * 24);
-        return (diff <= 10 || diff < 0) && ind.progress < 100;
-      });
+      // 4. Фильтруем "горящие"
+      const criticalTasks = userPlan.filter(ind => {
+        if (!ind.deadline) return false;
+        const diff = (new Date(ind.deadline) - new Date()) / (1000 * 60 * 60 * 24);
+        return (diff <= 10 || diff < 0) && ind.progress < 100;
+      });
 
-      // Если "горящих" задач нет, показываем первые 4 из плана
-      setIndicators(criticalTasks.length > 0 ? criticalTasks : userPlan);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error(err);
-      setLoading(false);
-    });
-  }, [navigate]);
-
+      // Если критических нет, показываем просто первые 4 из выбранных
+      setIndicators(criticalTasks.length > 0 ? criticalTasks : userPlan);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Ошибка загрузки данных дашборда:", err);
+      setLoading(false);
+    });
+  }, [navigate]);
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans text-slate-900">
       

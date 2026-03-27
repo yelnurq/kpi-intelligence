@@ -150,13 +150,13 @@ const KpiPlanMonitor = () => {
       <div className="space-y-8 text-left">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-               <span className="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded tracking-wider">KPI Monitoring</span>
-               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Личный план</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Дорожная карта баллов</h1>
+             <div className="text-left">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Мой план показателей</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+                Список утвержденных индикаторов эффективности, закрепленных за вашей должностью. 
+            </p>
           </div>
+
           
           <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
             {['all', 'active', 'completed'].map((id) => (

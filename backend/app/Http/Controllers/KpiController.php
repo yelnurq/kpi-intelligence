@@ -229,4 +229,48 @@ public function getMyIndicatorsDeadline(Request $request)
         'data' => $indicators
     ]);
 }
+public function getStaffDeadlineMonitor(Request $request) 
+{
+    $users = User::with(['kpiPlans.indicator', 'kpiPlans.activities', 'faculty'])
+        ->get()
+        ->map(function($user) {
+            
+            $plans = $user->kpiPlans;
+            $totalCount = $plans->count();
+            
+            // Считаем "выполненные" планы. 
+            // План считается выполненным, если по нему есть записи в activities
+            $completedCount = $plans->filter(function($plan) {
+                return $plan->activities->count() > 0;
+            })->count();
+
+            // Считаем прогресс: (Выполненные / Всего) * 100
+            $progress = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 0;
+
+            // Считаем просроченные: дедлайн < сегодня И нет активностей
+            $overdueCount = $plans->filter(function($plan) {
+                return $plan->deadline < now() && $plan->activities->count() === 0;
+            })->count();
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'faculty' => $user->faculty->short_title ?? $user->faculty->title ?? '—',
+                'overdue' => $overdueCount, // Реальное число просрочек
+                'progress' => $progress,    // Реальный % выполнения
+                'indicators' => $plans->map(function($plan) {
+                    $isOverdue = $plan->deadline < now() && $plan->activities->count() === 0;
+                    return [
+                        'id' => $plan->id,
+                        'title' => $plan->indicator->name ?? $plan->indicator->title ?? 'Без названия',
+                        'status' => $isOverdue ? 'overdue' : 'pending',
+                        'date' => $plan->deadline ? $plan->deadline->format('Y-m-d') : '—'
+                    ];
+                })
+            ];
+        });
+
+    return response()->json(['status' => 'success', 'data' => $users]);
+}
 }

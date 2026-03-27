@@ -26,6 +26,7 @@ Route::middleware("token")->group(function(){
     Route::get('/faculty-ranking', [FacultyController::class, 'index']);
 
     Route::get('/admin/users', [UserController::class, 'index']);
+    Route::get('/admin/staff/deadline-monitor', [KpiController::class, 'getStaffDeadlineMonitor']);
     Route::post('/admin/users', [UserController::class, 'store']);
     Route::delete('/admin/users/{id}', [UserController::class, 'destroy']);
     Route::put('/admin/users/{id}', [UserController::class, 'update']);

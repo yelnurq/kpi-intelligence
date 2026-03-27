@@ -7,38 +7,55 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, totalPoints }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, loading, selectedItems, onDeadlineChange }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
-        <div className="p-6 text-center">
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={32} />
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-slate-900">Установка дедлайнов и отправка</h3>
+          <p className="text-sm text-gray-500">Укажите планируемые даты завершения для каждого индикатора</p>
+        </div>
+
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-grow">
+          <div className="space-y-4">
+            {selectedItems.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex-grow">
+                  <h4 className="text-sm font-bold text-slate-800 leading-tight">{item.title}</h4>
+                  <span className="text-[10px] font-black text-blue-600 uppercase">{item.points} баллов</span>
+                </div>
+                <div className="flex flex-col gap-1 min-w-[160px]">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">Дата дедлайна</label>
+                  <input
+                    type="date"
+                    required
+                    value={item.deadline || ''}
+                    onChange={(e) => onDeadlineChange(item.id, e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Отправить на утверждение?</h3>
-          <p className="text-gray-500 mb-6 leading-relaxed">
-            Вы уверены, что хотите зафиксировать план на <span className="font-bold text-blue-600">{totalPoints} баллов</span>? <br/>
-            После отправки редактирование будет приостановлено до проверки деканом.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="flex-1 px-4 py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-            >
-              Отмена
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={loading}
-              className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Да, отправить"}
-            </button>
-          </div>
+        </div>
+
+        <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 px-4 py-3 rounded-xl font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
+          >
+            Отмена
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading || selectedItems.some(i => !i.deadline)}
+            className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : "Подтвердить и отправить"}
+          </button>
         </div>
       </div>
     </div>
@@ -56,6 +73,7 @@ const PlanningPage = () => {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deadlines, setDeadlines] = useState({}); // формат { "id_индикатора": "2026-05-20" }
   
   // Новое состояние для статуса подачи плана
   const [submission, setSubmission] = useState({ status: 'draft', comment: null });
@@ -153,35 +171,63 @@ const exportToExcel = async () => {
       setExporting(false);
     }
   };
-  const handleFinalSubmit = async () => {
-    try {
-      setSaving(true);
-      const token = localStorage.getItem("token");
-      
-      const response = await fetch('http://localhost:8000/api/submit-plan', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          indicator_ids: selectedIds,
-          academic_year: selectedYear
-        })
-      });
 
-      if (response.ok) {
-        setSubmission(prev => ({ ...prev, status: 'submitted' }));
-        setIsModalOpen(false);
-        alert("План успешно отправлен на утверждение!");
-      }
-    } catch (error) {
-      alert("Ошибка: " + error.message);
-    } finally {
-      setSaving(false);
+// 2. Функция для изменения дедлайна (передаем в модалку)
+const handleDeadlineChange = (id, date) => {
+  setDeadlines(prev => ({
+    ...prev,
+    [id]: date
+  }));
+};
+
+// 3. Подготовка данных для модалки (мерджим данные индикатора и дедлайн)
+const selectedItemsWithDeadlines = useMemo(() => {
+  return indicators
+    .filter(item => selectedIds.includes(item.id))
+    .map(item => ({
+      ...item,
+      deadline: deadlines[item.id] || ''
+    }));
+}, [indicators, selectedIds, deadlines]);
+  const handleFinalSubmit = async () => {
+  // Проверка: все ли дедлайны заполнены
+  const payload = selectedItemsWithDeadlines.map(item => ({
+    indicator_id: item.id,
+    deadline: item.deadline
+  }));
+
+  if (payload.some(p => !p.deadline)) {
+    alert("Пожалуйста, укажите дедлайны для всех индикаторов");
+    return;
+  }
+
+  try {
+    setSaving(true);
+    const token = localStorage.getItem("token");
+    
+    const response = await fetch('http://localhost:8000/api/submit-plan', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        items: payload, // Отправляем массив объектов {id, deadline}
+        academic_year: selectedYear
+      })
+    });
+
+    if (response.ok) {
+      setSubmission(prev => ({ ...prev, status: 'submitted' }));
+      setIsModalOpen(false);
+      alert("План успешно отправлен!");
     }
-  };
+  } catch (error) {
+    alert("Ошибка: " + error.message);
+  } finally {
+    setSaving(false);
+  }
+};
 
  const toggleIndicator = async (id) => {
     if (isReadOnly) return;
@@ -277,13 +323,13 @@ const exportToExcel = async () => {
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
       
       <ConfirmModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onConfirm={handleFinalSubmit} 
-        loading={saving}
-        totalPoints={totalPoints}
-      />
-
+  isOpen={isModalOpen} 
+  onClose={() => setIsModalOpen(false)} 
+  onConfirm={handleFinalSubmit} 
+  loading={saving}
+  selectedItems={selectedItemsWithDeadlines} // Передаем данные с дедлайнами
+  onDeadlineChange={handleDeadlineChange}   // Передаем функцию изменения
+/>
       {/* СТАТУС-БАР ПЛАНА */}
       <div className={`mb-8 p-4 rounded-2xl border flex items-center justify-between transition-all ${
         submission.status === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :

@@ -21,7 +21,8 @@ import {
   FileSearch,
   School2Icon,
   Edit,
-  CopyCheckIcon
+  CopyCheckIcon,
+  MonitorDotIcon
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -50,6 +51,7 @@ const AdminLayout = () => {
 
   const adminMenuItems = [
     { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов' },
+    { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов' },
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий' },

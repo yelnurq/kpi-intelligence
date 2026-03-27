@@ -58,7 +58,7 @@ function App() {
           <Route path="audit" element={<VerificationAudit />} />
           
           <Route path="assets" element={<AssetManagement />} />
-          <Route path="staff" element={<StaffDeadlineMonitor />} />
+          <Route path="monitor" element={<StaffDeadlineMonitor />} />
           <Route path="dean" element={<DeanDashboard />} />
           <Route path="logs" element={<AuditLog />} />
           <Route path="settings" element={<TaxonomySettings />} />

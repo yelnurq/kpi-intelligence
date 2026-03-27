@@ -22,9 +22,9 @@ protected $fillable = [
     }
 public function activities()
 {
-    // Связываем план с активностями через индикатор и пользователя
     return $this->hasMany(KpiActivity::class, 'indicator_id', 'kpi_indicator_id')
-                ->where('user_id', $this->user_id);
+                // Используем whereColumn вместо $this->user_id
+                ->whereColumn('user_id', 'user_kpi_plans.user_id');
 }
 protected $casts = [
     'deadline' => 'date',

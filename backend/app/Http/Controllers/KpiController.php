@@ -231,25 +231,28 @@ public function getMyIndicatorsDeadline(Request $request)
 }
 public function getStaffDeadlineMonitor(Request $request) 
 {
-    $users = User::with(['kpiPlans.indicator', 'kpiPlans.activities', 'faculty'])
+    // Загружаем юзеров со всеми планами и всеми их активностями
+    $users = User::with(['kpiPlans.indicator', 'activities', 'faculty'])
         ->get()
         ->map(function($user) {
             
             $plans = $user->kpiPlans;
-            $totalCount = $plans->count();
+            $allUserActivities = $user->activities; // Коллекция всех загрузок юзера
             
-            // Считаем "выполненные" планы. 
-            // План считается выполненным, если по нему есть записи в activities
-            $completedCount = $plans->filter(function($plan) {
-                return $plan->activities->count() > 0;
+            // 1. Считаем выполненные планы
+            // Мы смотрим, есть ли в коллекции активностей записи с нужным indicator_id
+            $completedCount = $plans->filter(function($plan) use ($allUserActivities) {
+                return $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
             })->count();
 
-            // Считаем прогресс: (Выполненные / Всего) * 100
+            // 2. Расчет прогресса
+            $totalCount = $plans->count();
             $progress = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 0;
 
-            // Считаем просроченные: дедлайн < сегодня И нет активностей
-            $overdueCount = $plans->filter(function($plan) {
-                return $plan->deadline < now() && $plan->activities->count() === 0;
+            // 3. Считаем просроченные (Дедлайн прошел И активности нет)
+            $overdueCount = $plans->filter(function($plan) use ($allUserActivities) {
+                $hasActivity = $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
+                return $plan->deadline < now() && !$hasActivity;
             })->count();
 
             return [
@@ -257,14 +260,16 @@ public function getStaffDeadlineMonitor(Request $request)
                 'name' => $user->name,
                 'email' => $user->email,
                 'faculty' => $user->faculty->short_title ?? $user->faculty->title ?? '—',
-                'overdue' => $overdueCount, // Реальное число просрочек
-                'progress' => $progress,    // Реальный % выполнения
-                'indicators' => $plans->map(function($plan) {
-                    $isOverdue = $plan->deadline < now() && $plan->activities->count() === 0;
+                'overdue' => $overdueCount,
+                'progress' => $progress,
+                'indicators' => $plans->map(function($plan) use ($allUserActivities) {
+                    $hasActivity = $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
+                    $isOverdue = $plan->deadline < now() && !$hasActivity;
+                    
                     return [
                         'id' => $plan->id,
                         'title' => $plan->indicator->name ?? $plan->indicator->title ?? 'Без названия',
-                        'status' => $isOverdue ? 'overdue' : 'pending',
+                        'status' => $hasActivity ? 'completed' : ($isOverdue ? 'overdue' : 'pending'),
                         'date' => $plan->deadline ? $plan->deadline->format('Y-m-d') : '—'
                     ];
                 })

@@ -7,11 +7,19 @@ import {
   BarChart3,
   Building2,
   Phone,
-  Search
+  Search,
+  PanelRightCloseIcon
 } from 'lucide-react';
 
 export const sidebarMenuItems = [
   { id: 'dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Личный кабинет', type: 'route' },
+  { 
+  id: 'plan', 
+  path: '/view', 
+  icon: <PanelRightCloseIcon size={20} />, 
+  label: 'Мой план',
+  type: 'route' 
+},
   { id: 'plan', path: '/plan', icon: <PanelsTopLeftIcon size={20} />, label: 'Планирование KPI', type: 'route' },
   { id: 'archive', path: '/archive', icon: <ClipboardList size={20} />, label: 'Архив заявок', type: 'route' },
   { id: 'submit', path: '/submit', icon: <CheckCircle size={20} />, label: 'Подать активность', type: 'route' },

@@ -20,6 +20,7 @@ import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
 import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
 import FacultyRank from './pages/AdminPanel/Faculty/Faculty';
 import DeanDashboard from './pages/AdminPanel/DeanDashboard/DeanDashboard';
+import KpiPlanningView from './pages/UserPanel/KpiPlanningView/KpiPlanningView';
 
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -73,6 +74,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="plan" element={<PlanningPage />} />
+          <Route path="view" element={<KpiPlanningView />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="submit" element={<SubmissionPortal />} />

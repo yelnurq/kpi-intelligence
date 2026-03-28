@@ -275,7 +275,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* ТАБЛИЦА */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mt-8">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight text-left">Журнал последних достижений</h3>

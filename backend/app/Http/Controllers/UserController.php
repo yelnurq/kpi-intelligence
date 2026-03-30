@@ -303,31 +303,47 @@ public function getOptions()
             'повышение квалификации'
         ];
 
-        // Строим конструкцию CASE WHEN для универсальной сортировки
+        // Универсальная сортировка CASE WHEN
         $cases = [];
         foreach ($categoryOrder as $index => $category) {
             $cases[] = "WHEN category = '{$category}' THEN " . ($index + 1);
         }
         $orderRaw = "CASE " . implode(' ', $cases) . " ELSE 999 END";
 
-        $kpi_metrics = \App\Models\KpiIndicator::select('id', 'title as name', 'category')
-            ->orderByRaw($orderRaw) // Универсальная сортировка для SQLite и MySQL
+        // KPI с баллами
+        $kpi_metrics = \App\Models\KpiIndicator::select('id', 'title as name', 'category', 'points')
+            ->orderByRaw($orderRaw)
             ->orderBy('title', 'asc')
             ->get()
             ->groupBy('category');
 
         return response()->json([
             'kpi_metrics' => $kpi_metrics,
-            'faculties' => \App\Models\Faculty::select('id', 'title as name', 'short_name')->orderBy('title')->get(),
-            'departments' => \App\Models\Department::select('id', 'title as name', 'short_name')->orderBy('title')->get(),
-            'positions' => \App\Models\Position::select('id', 'title as name')->orderBy('title')->get(),
-            'degrees' => \App\Models\AcademicDegree::select('id', 'title as name')->orderBy('title')->get(),
+            
+            // Факультеты с деканом и полным заголовком
+            'faculties' => \App\Models\Faculty::select('id', 'title as name', 'short_name', 'short_title', 'dean')
+                ->orderBy('title')
+                ->get(),
+            
+            // Кафедры ОБЯЗАТЕЛЬНО с faculty_id для корректной работы формы
+            'departments' => \App\Models\Department::select('id', 'title as name', 'short_name', 'faculty_id', 'leader')
+                ->orderBy('title')
+                ->get(),
+            
+            // Должности с целевым KPI
+            'positions' => \App\Models\Position::select('id', 'title as name', 'min_kpi_target')
+                ->orderBy('title')
+                ->get(),
+            
+            'degrees' => \App\Models\AcademicDegree::select('id', 'title as name')
+                ->orderBy('title')
+                ->get(),
         ], 200);
 
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка: ' . $e->getMessage()
+            'message' => 'Ошибка при получении справочников: ' . $e->getMessage()
         ], 500);
     }
 }

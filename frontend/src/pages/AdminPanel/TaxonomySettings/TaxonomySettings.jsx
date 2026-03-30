@@ -9,8 +9,8 @@ const TaxonomySettings = () => {
   const [activeSection, setActiveSection] = useState('kpi');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
 
-  // Данные из БД
   const [data, setData] = useState({
     faculties: [],
     departments: [], 
@@ -19,8 +19,7 @@ const TaxonomySettings = () => {
     kpi_metrics: {} 
   });
 
-  // Состояние формы для создания новой записи
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     name: '',
     category: 'учеб.работа',
     short_name: '',
@@ -30,7 +29,9 @@ const TaxonomySettings = () => {
     faculty_id: '',
     points: 10,
     min_kpi_target: 0
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   const fetchOptions = async () => {
     try {
@@ -58,23 +59,60 @@ const TaxonomySettings = () => {
     fetchOptions();
   }, []);
 
-  const handleCreate = async (e) => {
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditId(null);
+    setFormData(initialFormState);
+  };
+
+  const handleEditClick = (item) => {
+    setEditId(item.id);
+    
+    // Динамически заполняем форму данными из item
+    // Используем spread, чтобы сохранить все поля, приходящие с бэкенда
+    setFormData({
+      ...initialFormState, // Сбрасываем к дефолтам
+      ...item,             // Накладываем данные из БД
+      name: item.name || item.title || '', // Обработка разных именований в БД
+      faculty_id: item.faculty_id || '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post('http://localhost:8000/api/admin/helpers/options', {
+      const url = editId 
+        ? `http://localhost:8000/api/admin/helpers/options/${editId}` 
+        : 'http://localhost:8000/api/admin/helpers/options';
+      
+      const method = editId ? 'put' : 'post';
+
+      await axios[method](url, {
         type: activeSection,
         ...formData
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Сброс и обновление
-      setIsModalOpen(false);
-      setFormData({ name: '', category: 'учеб.работа', short_name: '', short_title: '', dean: '', leader: '', faculty_id: '', points: 10, min_kpi_target: 0 });
+      closeModal();
       fetchOptions();
     } catch (error) {
       alert("Ошибка при сохранении: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Вы уверены, что хотите удалить эту запись?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:8000/api/admin/helpers/options/${id}?type=${activeSection}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchOptions();
+    } catch (error) {
+      alert("Ошибка при удалении: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -85,20 +123,20 @@ const TaxonomySettings = () => {
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left relative">
       
-      {/* MODAL FOR ADDING NEW RECORDS */}
+      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-slate-900">Добавить: {activeSection}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <h3 className="text-lg font-bold text-slate-900">{editId ? 'Редактировать' : 'Добавить'}: {activeSection}</h3>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600">
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Наименование (Title)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Наименование</label>
                 <input 
                   required 
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
@@ -117,55 +155,57 @@ const TaxonomySettings = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Баллы (Points)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Баллы</label>
                     <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
                       value={formData.points} onChange={e => setFormData({...formData, points: e.target.value})} />
                   </div>
                 </>
               )}
-{activeSection === 'faculties' && (
-  <>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Короткий заголовок (short_title)</label>
-      <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
-        value={formData.short_title} onChange={e => setFormData({...formData, short_title: e.target.value})} />
-    </div>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Аббревиатура (short_name)</label>
-      <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
-        value={formData.short_name} onChange={e => setFormData({...formData, short_name: e.target.value})} />
-    </div>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Декан</label>
-      <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
-        value={formData.dean} onChange={e => setFormData({...formData, dean: e.target.value})} />
-    </div>
-  </>
-)}
-{activeSection === 'departments' && (
-  <>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Факультет</label>
-      <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm"
-        value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
-        <option value="">Выберите факультет...</option>
-        {data.faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-      </select>
-    </div>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Аббревиатура (short_name)</label>
-      <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
-        value={formData.short_name} onChange={e => setFormData({...formData, short_name: e.target.value})} 
-        placeholder="Напр: ИТ"/>
-    </div>
-    <div>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Заведующий кафедрой (leader)</label>
-      <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
-        value={formData.leader} onChange={e => setFormData({...formData, leader: e.target.value})} 
-        placeholder="ФИО заведующего"/>
-    </div>
-  </>
-)}
+
+              {activeSection === 'faculties' && (
+                <>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Короткий заголовок</label>
+                    <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
+                      value={formData.short_title} onChange={e => setFormData({...formData, short_title: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Аббревиатура</label>
+                    <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
+                      value={formData.short_name} onChange={e => setFormData({...formData, short_name: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Декан</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
+                      value={formData.dean} onChange={e => setFormData({...formData, dean: e.target.value})} />
+                  </div>
+                </>
+              )}
+
+              {activeSection === 'departments' && (
+                <>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Факультет</label>
+                    <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm"
+                      value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
+                      <option value="">Выберите факультет...</option>
+                      {data.faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Аббревиатура</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
+                      value={formData.short_name} onChange={e => setFormData({...formData, short_name: e.target.value})} 
+                      placeholder="Напр: ИТ"/>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Заведующий</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm" 
+                      value={formData.leader} onChange={e => setFormData({...formData, leader: e.target.value})} />
+                  </div>
+                </>
+              )}
+
               {activeSection === 'positions' && (
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Целевой KPI</label>
@@ -175,7 +215,7 @@ const TaxonomySettings = () => {
               )}
 
               <button type="submit" className="w-full bg-blue-600 text-white py-3 mt-4 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                Сохранить запись
+                {editId ? 'Сохранить изменения' : 'Создать запись'}
               </button>
             </form>
           </div>
@@ -186,7 +226,7 @@ const TaxonomySettings = () => {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Настройки системы</h1>
-          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Управление справочниками и структурой университета</p>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Управление структурой университета</p>
         </div>
 
         <div className="flex flex-wrap bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
@@ -216,7 +256,7 @@ const TaxonomySettings = () => {
               Редактирование: {activeSection === 'kpi' ? 'Категории KPI' : activeSection}
             </h2>
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => { setEditId(null); setIsModalOpen(true); }}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md shadow-emerald-100"
             >
               <Plus size={14} /> Добавить запись
@@ -240,63 +280,50 @@ const TaxonomySettings = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {activeSection === 'kpi' ? (
-                    Object.keys(data.kpi_metrics).length > 0 ? (
-                      Object.keys(data.kpi_metrics).map((category) => (
-                        <React.Fragment key={category}>
-                          <tr className="bg-slate-50/80 group">
-                            <td colSpan="3" className="px-6 py-2 border-y border-slate-100">
-                              <div className="flex items-center gap-2">
-                                <ChevronDown size={12} className="text-blue-600" />
-                                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{category || 'Без категории'}</span>
-                                <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">{data.kpi_metrics[category].length}</span>
-                              </div>
-                            </td>
-                          </tr>
-                          {data.kpi_metrics[category].map((item, index) => (
-                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                              <td className="px-6 py-4 text-xs font-bold text-slate-400">{index + 1}</td>
-                              <td className="px-6 py-4">
-                                <span className="text-sm font-bold text-slate-900">{item.name}</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 size={14}/></button>
-                                  <button className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={14}/></button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </React.Fragment>
-                      ))
-                    ) : (
-                      <tr><td colSpan="3" className="py-20 text-center text-slate-400 text-xs uppercase tracking-widest">KPI не найдены</td></tr>
-                    )
-                  ) : (
-                    data[activeSection]?.length > 0 ? (
-                      data[activeSection].map((item, index) => (
-                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="px-6 py-4 text-xs font-bold text-slate-400">{index + 1}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              {activeSection === 'departments' && <Library size={14} className="text-slate-300"/>}
-                              {activeSection === 'faculties' && <School size={14} className="text-slate-300"/>}
-                              {activeSection === 'positions' && <Briefcase size={14} className="text-slate-300"/>}
-                              {activeSection === 'degrees' && <GraduationCap size={14} className="text-slate-300"/>}
-                              <span className="text-sm font-bold text-slate-900">{item.name}</span>
-                              {item.short_name && <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider ml-2 bg-slate-100 px-1 rounded">{item.short_name}</span>}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 size={14}/></button>
-                              <button className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={14}/></button>
+                    Object.keys(data.kpi_metrics).map((category) => (
+                      <React.Fragment key={category}>
+                        <tr className="bg-slate-50/80">
+                          <td colSpan="3" className="px-6 py-2 border-y border-slate-100">
+                            <div className="flex items-center gap-2">
+                              <ChevronDown size={12} className="text-blue-600" />
+                              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{category}</span>
                             </div>
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="3" className="py-20 text-center text-slate-400 text-xs uppercase tracking-widest">Раздел пуст</td></tr>
-                    )
+                        {data.kpi_metrics[category].map((item, index) => (
+                          <tr key={item.id} className="hover:bg-slate-50/50 group">
+                            <td className="px-6 py-4 text-xs font-bold text-slate-400">{index + 1}</td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-bold text-slate-900">{item.name}</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleEditClick(item)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit3 size={14}/></button>
+                                <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg"><Trash2 size={14}/></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    data[activeSection]?.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 group">
+                        <td className="px-6 py-4 text-xs font-bold text-slate-400">{index + 1}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-bold text-slate-900">{item.name}</span>
+                            {item.short_name && <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider ml-2 bg-slate-100 px-1 rounded">{item.short_name}</span>}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEditClick(item)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit3 size={14}/></button>
+                            <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg"><Trash2 size={14}/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -304,24 +331,8 @@ const TaxonomySettings = () => {
           </div>
         </div>
 
-        {/* SIDEBAR */}
+        {/* SIDEBAR STATS */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl transition-colors group-hover:bg-blue-100/50"></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-6 text-blue-600">
-                <Settings2 size={18} />
-                <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Структура данных</h4>
-              </div>
-              <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                {activeSection === 'kpi' 
-                  ? "Индикаторы KPI сгруппированы по направлениям деятельности. Каждая категория влияет на итоговый рейтинг."
-                  : "Справочники используются для корректного распределения пользователей и фильтрации отчетов."
-                }
-              </p>
-            </div>
-          </div>
-          
           <div className="p-6 bg-slate-900 rounded-[24px] shadow-xl shadow-slate-200">
               <h4 className="text-white text-[10px] font-bold uppercase tracking-widest mb-4 opacity-50">Статистика БД</h4>
               <div className="space-y-3">
@@ -339,8 +350,8 @@ const TaxonomySettings = () => {
 };
 
 const StatItem = ({ label, value }) => (
-    <div className="flex justify-between items-end border-b border-white/10 pb-2 text-left">
-        <span className="text-[10px] text-white/70 uppercase tracking-tighter">{label}</span>
+    <div className="flex justify-between items-end border-b border-white/10 pb-2">
+        <span className="text-[10px] text-white/70 uppercase">{label}</span>
         <span className="text-xl font-black text-white">{value}</span>
     </div>
 );

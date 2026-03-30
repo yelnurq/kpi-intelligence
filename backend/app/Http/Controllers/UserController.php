@@ -331,4 +331,121 @@ public function getOptions()
         ], 500);
     }
 }
+public function postOptions(Request $request)
+{
+    try {
+        $type = $request->input('type');
+        $name = $request->input('name'); // Это 'title' в базе
+
+        $models = [
+            'kpi'         => \App\Models\KpiIndicator::class,
+            'faculties'   => \App\Models\Faculty::class,
+            'departments' => \App\Models\Department::class,
+            'positions'   => \App\Models\Position::class,
+            'degrees'     => \App\Models\AcademicDegree::class,
+        ];
+
+        if (!isset($models[$type])) {
+            return response()->json(['message' => 'Неверный тип справочника'], 400);
+        }
+
+        $modelClass = $models[$type];
+        $item = new $modelClass();
+        
+        // Все ваши таблицы используют поле "title" для названия
+        $item->title = $name;
+
+        switch ($type) {
+            case 'kpi':
+                $item->category = $request->input('category');
+                $item->points = $request->input('points', 0);
+                $item->difficulty = $request->input('difficulty', 'easy');
+                $item->year = $request->input('year', date('Y'));
+                break;
+
+            case 'faculties':
+                $item->short_name = $request->input('short_name', '');
+                $item->short_title = $request->input('short_title', ''); // Из вашей миграции
+                $item->dean = $request->input('dean', 'Не назначен');
+                break;
+
+            case 'departments':
+                $item->short_name = $request->input('short_name', '');
+                $item->leader = $request->input('leader', 'Не назначен');
+                $item->faculty_id = $request->input('faculty_id'); // Обязательно для внешнего ключа
+                break;
+
+            case 'positions':
+                $item->min_kpi_target = $request->input('min_kpi_target', 0);
+                break;
+        }
+
+        $item->save();
+
+        return response()->json(['status' => 'success', 'item' => $item], 201);
+
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+}
+// Метод для УДАЛЕНИЯ
+public function deleteOption(Request $request, $id)
+{
+    try {
+        $type = $request->query('type');
+        $models = [
+            'kpi'         => \App\Models\KpiIndicator::class,
+            'faculties'   => \App\Models\Faculty::class,
+            'departments' => \App\Models\Department::class,
+            'positions'   => \App\Models\Position::class,
+            'degrees'     => \App\Models\AcademicDegree::class,
+        ];
+
+        if (!isset($models[$type])) return response()->json(['message' => 'Тип не найден'], 400);
+
+        $item = $models[$type]::findOrFail($id);
+        $item->delete();
+
+        return response()->json(['status' => 'success']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
+}
+
+// Метод для РЕДАКТИРОВАНИЯ (Обновления)
+public function updateOption(Request $request, $id)
+{
+    try {
+        $type = $request->input('type');
+        $models = [
+            'kpi'         => \App\Models\KpiIndicator::class,
+            'faculties'   => \App\Models\Faculty::class,
+            'departments' => \App\Models\Department::class,
+            'positions'   => \App\Models\Position::class,
+            'degrees'     => \App\Models\AcademicDegree::class,
+        ];
+
+        $item = $models[$type]::findOrFail($id);
+        
+        // Универсальное обновление заголовка
+        $item->title = $request->input('name');
+
+        // Специфичные поля
+        if ($type === 'kpi') {
+            $item->category = $request->input('category');
+            $item->points = $request->input('points');
+        } 
+        if (in_array($type, ['faculties', 'departments'])) {
+            $item->short_name = $request->input('short_name') ?? '';
+        }
+        if ($type === 'departments') {
+            $item->faculty_id = $request->input('faculty_id');
+        }
+
+        $item->save();
+        return response()->json(['status' => 'success', 'item' => $item]);
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
+}
 }

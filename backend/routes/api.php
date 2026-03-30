@@ -32,6 +32,9 @@ Route::middleware("token")->group(function(){
     Route::put('/admin/users/{id}', [UserController::class, 'update']);
     Route::get('/admin/users/stats', [UserController::class, 'stats']);   
     Route::get('/admin/helpers/options', [UserController::class, 'getOptions']);
+    Route::post('/admin/helpers/options', [UserController::class, 'postOptions']);
+    Route::put('/admin/helpers/options/{id}', [UserController::class, 'updateOption']);
+    Route::delete('/admin/helpers/options/{id}', [UserController::class, 'deleteOption']);
     Route::get('/admin/kpi-activities', [KpiActivityController::class, 'admin']);
 
     Route::post("/logout", [AuthController::class, "logout"]);

@@ -3,26 +3,19 @@ import {
   Link, 
   useLocation, 
   Outlet, 
-  navigate,
   useNavigate 
 } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Users, 
   Settings, 
-  BarChart3, 
   LogOut,
-  User as UserIcon,
-  Bell,
-  Search,
-  Menu,
-  X,
-  Database,
   FileSearch,
   School2Icon,
-  Edit,
   CopyCheckIcon,
-  MonitorDotIcon
+  MonitorDotIcon,
+  Menu,
+  X
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -31,17 +24,47 @@ const AdminLayout = () => {
   const location = useLocation(); 
   const navigate = useNavigate();
 
+  // 1. Определение всех пунктов меню с привязкой к ролям
+  const allMenuItems = [
+    { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов', roles: ['super_admin', 'dean'] },
+    { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean'] },
+    { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI', roles: ['super_admin', 'academic_office'] },
+    { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи', roles: ['super_admin', 'academic_office','dean'] },
+    { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий', roles: ['super_admin', 'academic_office'] },
+    { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг', roles: ['super_admin', 'academic_office','dean'] },
+    { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки', roles: ['super_admin', 'academic_office','dean'] },
+  ];
+
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
 
     if (!savedUser || !token) {
       navigate('/login');
-    } else {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
+      return;
     }
-  }, [navigate]);
+
+    const parsedUser = JSON.parse(savedUser);
+    setUser(parsedUser);
+
+    // --- ПРОВЕРКА ДОСТУПА ПО URL ---
+    // Находим текущий пункт меню по пути в строке браузера
+    const currentItem = allMenuItems.find(item => item.path === location.pathname);
+    
+    // Если мы на странице, которая требует ролей, и у юзера этой роли нет
+    if (currentItem && !currentItem.roles.includes(parsedUser.role)) {
+      console.warn('Access denied for role:', parsedUser.role);
+      
+      // Ищем первую страницу, на которую этому юзеру МОЖНО
+      const firstAvailablePage = allMenuItems.find(item => item.roles.includes(parsedUser.role));
+      
+      if (firstAvailablePage) {
+        navigate(firstAvailablePage.path);
+      } else {
+        navigate('/login'); // Если ролей вообще нет в списке
+      }
+    }
+  }, [location.pathname, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -49,15 +72,10 @@ const AdminLayout = () => {
     navigate('/login');
   };
 
-  const adminMenuItems = [
-    { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов' },
-    { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов' },
-    { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI' },
-    { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи' },
-    { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий' },
-    { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг' },
-    { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки' },
-  ];
+  // Фильтруем меню для отрисовки в сайдбаре
+  const filteredMenuItems = allMenuItems.filter(item => 
+    user && item.roles.includes(user.role)
+  );
 
   if (!user) return null;
 
@@ -71,7 +89,7 @@ const AdminLayout = () => {
       `}>
         <div className="p-6 flex items-center gap-3 h-20 border-b border-white/5 bg-slate-950/50">
           <div className="min-w-[45px] h-12 flex items-center justify-center">
-            <img src="http://localhost:3000/images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
+            <img src="/images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           {isSidebarOpen && (
             <div className="flex flex-col animate-in fade-in duration-500">
@@ -83,7 +101,7 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 p-4 space-y-1.5 mt-4 overflow-y-auto">
-          {adminMenuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -100,7 +118,6 @@ const AdminLayout = () => {
                   {item.icon}
                 </span>
                 {isSidebarOpen && <span className="font-bold text-sm tracking-tight">{item.label}</span>}
-                
                 {isActive && !isSidebarOpen && (
                   <div className="absolute right-2 w-1.5 h-1.5 bg-blue-400 rounded-full" />
                 )}
@@ -112,8 +129,8 @@ const AdminLayout = () => {
         {/* ADMIN PROFILE */}
         <div className="p-4 mt-auto border-t border-white/5 space-y-4 bg-slate-950/30">
           <div className={`flex items-center gap-3 p-3 rounded-2xl transition-colors ${isSidebarOpen ? 'bg-white/5' : 'bg-transparent justify-center'}`}>
-            <div className="min-w-[40px] h-10 bg-blue-600 rounded-full flex items-center justify-center text-white ring-2 ring-white/10 shadow-sm font-black text-xs">
-              AD
+            <div className="min-w-[40px] h-10 bg-blue-600 rounded-full flex items-center justify-center text-white ring-2 ring-white/10 shadow-sm font-black text-xs uppercase">
+              {user.name?.substring(0, 2) || 'AD'}
             </div>
             {isSidebarOpen && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 text-left">
@@ -121,7 +138,7 @@ const AdminLayout = () => {
                   {user.name}
                 </p>
                 <p className="text-[9px] text-blue-400 font-bold truncate uppercase tracking-widest">
-                  Administrator
+                  {user.role === 'super_admin' ? 'Super Admin' : user.role === 'academic_office' ? 'Academic Office' : 'Faculty Dean'}
                 </p>
               </div>
             )}
@@ -144,13 +161,13 @@ const AdminLayout = () => {
         <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 flex items-center justify-between px-10 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
-              {isSidebarOpen ? <Menu size={20} /> : <X size={20} />}
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div className="h-6 w-[1px] bg-slate-200 mx-2" />
             <div className="flex items-center gap-2">
-               <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded">Admin</span>
+               <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded">Console</span>
                <h1 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                 {adminMenuItems.find(i => i.path === location.pathname)?.label || 'Console'}
+                 {allMenuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
                </h1>
             </div>
           </div>

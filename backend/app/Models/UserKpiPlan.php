@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Добавь этот импорт
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
 class UserKpiPlan extends Model
 {
     use HasFactory;

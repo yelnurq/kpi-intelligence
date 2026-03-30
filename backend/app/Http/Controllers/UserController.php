@@ -135,7 +135,7 @@ public function index(Request $request)
         ];
 
         // 5. Сортировка и пагинация
-        $perPage = $request->get('per_page', 30);
+        $perPage = $request->get('per_page', 20);
         $usersPaginator = $query->orderBy('name', 'asc')->paginate($perPage);
 
         // 6. Трансформация данных (через through, чтобы сохранить структуру пагинатора)

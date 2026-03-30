@@ -231,21 +231,15 @@ public function getMyIndicatorsDeadline(Request $request)
 }
 public function getStaffDeadlineMonitor(Request $request) 
 {
-    // Используем withCount для агрегации данных прямо в SQL (это быстрее и позволяет сортировать)
     $query = User::query()->with(['faculty']);
 
-    // 1. Считаем общее кол-во планов
+    // Базовая агрегация для каждого пользователя
     $query->withCount(['kpiPlans as total_plans_count']);
-
-    // 2. Считаем кол-во выполненных (где есть соответствующая activity)
     $query->withCount(['kpiPlans as completed_plans_count' => function($q) {
         $q->whereHas('indicator.activities', function($sub) {
-            // Фильтруем активности именно этого пользователя
             $sub->whereColumn('user_id', 'users.id');
         });
     }]);
-
-    // 3. Считаем кол-во просроченных (deadline прошел И активности нет)
     $query->withCount(['kpiPlans as overdue_plans_count' => function($q) {
         $q->where('deadline', '<', now())
           ->whereDoesntHave('indicator.activities', function($sub) {
@@ -253,54 +247,51 @@ public function getStaffDeadlineMonitor(Request $request)
           });
     }]);
 
-    // --- ФИЛЬТРАЦИЯ ---
-    
-    // По факультету
+    // --- ФИЛЬТРАЦИЯ (та же, что была) ---
     if ($request->has('faculty') && $request->faculty !== 'all') {
         $query->whereHas('faculty', function($q) use ($request) {
-            $q->where('short_title', $request->faculty)
-              ->orWhere('title', $request->faculty);
+            $q->where('short_title', $request->faculty)->orWhere('title', $request->faculty);
         });
     }
-
-    // По поиску (ФИО или Email)
     if ($request->filled('search')) {
         $search = $request->search;
         $query->where(function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+            $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
         });
     }
 
-    // --- СОРТИРОВКА (Backend) ---
-    $sortBy = $request->get('sort_by', 'overdue'); // дефолт
+    $statsQuery = clone $query;
+    $allFilteredUsers = $statsQuery->get();
 
-    if ($sortBy === 'overdue') {
-        $query->orderBy('overdue_plans_count', 'desc');
-    } elseif ($sortBy === 'progress') {
-        // Сортировка по прогрессу: (completed / total)
-        // Чтобы избежать деления на ноль в SQL, используем логику или просто сортируем по кол-ву выполненных
-        $query->orderByRaw('(CASE WHEN total_plans_count > 0 THEN (completed_plans_count * 100 / total_plans_count) ELSE 0 END) DESC');
-    } elseif ($sortBy === 'name') {
-        $query->orderBy('name', 'asc');
-    }
+    $totalOverdue = $allFilteredUsers->sum('overdue_plans_count');
+    $criticalUsers = $allFilteredUsers->where('overdue_plans_count', '>', 0)->count();
+    
+    // Средний прогресс по всем пользователям
+    $avgProgress = $allFilteredUsers->avg(function($user) {
+        return $user->total_plans_count > 0 
+            ? ($user->completed_plans_count / $user->total_plans_count) * 100 
+            : 0;
+    });
 
-    // --- ПАГИНАЦИЯ ---
+    // --- СОРТИРОВКА И ПАГИНАЦИЯ ---
+    $sortBy = $request->get('sort_by', 'overdue');
+    if ($sortBy === 'overdue') $query->orderBy('overdue_plans_count', 'desc');
+    elseif ($sortBy === 'progress') $query->orderByRaw('(CASE WHEN total_plans_count > 0 THEN (completed_plans_count * 100 / total_plans_count) ELSE 0 END) DESC');
+    else $query->orderBy('name', 'asc');
+
     $usersPaginator = $query->paginate(30);
 
-    // Трансформация для ответа
+    // Трансформация (как в вашем коде)
     $usersPaginator->through(function($user) {
         $total = $user->total_plans_count;
         $completed = $user->completed_plans_count;
-        
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'faculty' => $user->faculty->short_title ?? $user->faculty->title ?? '—',
+            'faculty' => $user->faculty->short_title ?? '—',
             'overdue' => $user->overdue_plans_count,
             'progress' => $total > 0 ? round(($completed / $total) * 100) : 0,
-            // Подгружаем индикаторы только для модалки (ленивая загрузка для 30 человек не убьет БД)
             'indicators' => $user->kpiPlans->map(function($plan) use ($user) {
                 // Проверяем наличие активности для конкретного плана
                 $hasActivity = $user->activities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
@@ -317,13 +308,21 @@ public function getStaffDeadlineMonitor(Request $request)
     });
 
     return response()->json([
-        'status' => 'success', 
+        'status' => 'success',
+        'stats' => [
+            'totalOverdue' => (int)$totalOverdue,
+            'avgProgress' => round($avgProgress, 1),
+            'criticalUsers' => (int)$criticalUsers,
+        ],
         'data' => $usersPaginator->items(),
         'meta' => [
             'current_page' => $usersPaginator->currentPage(),
-            'last_page' => $usersPaginator->lastPage(),
+            'last_page'    => $usersPaginator->lastPage(), 
+            'per_page'    => $usersPaginator->perPage(),
             'total' => $usersPaginator->total(),
         ]
     ]);
 }
+
+
 }

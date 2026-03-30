@@ -24,16 +24,25 @@ import KpiPlanningView from './pages/UserPanel/KpiPlanningView/KpiPlanningView';
 import StaffDeadlineMonitor from './pages/AdminPanel/StaffDeadlineMonitor/StaffDeadlineMonitor';
 
 
+
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  // Список ролей, имеющих доступ к админ-панели (контроль и верификация)
+  const adminRoles = ['super_admin', 'academic_office', 'dean', 'head_of_dept'];
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && Number(user.is_admin) !== 1) {
-    return <Navigate to="/dashboard" replace />;
+  if (adminOnly) {
+    // Проверяем, входит ли роль пользователя в список разрешенных для админки
+    const hasAdminAccess = adminRoles.includes(user.role);
+    
+    if (!hasAdminAccess) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

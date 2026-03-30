@@ -16,7 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            
             $table->enum('role', ['teacher', 'dean', 'head_of_dept', 'academic_office', 'super_admin'])->default('teacher');
+            $table->string('academic_specialization')->nullable();
+
             $table->foreignId("academic_degree_id")->nullable()->constrained()->onDelete("set null");
             $table->foreignId("faculty_id")->nullable()->constrained()->onDelete("set null");
             $table->foreignId("department_id")->nullable()->constrained()->onDelete("set null");

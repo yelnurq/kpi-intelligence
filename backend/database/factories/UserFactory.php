@@ -13,7 +13,7 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'is_admin' => 0,
+            'role' => "teacher",
             'password' => Hash::make('password'), 
             
             'department_id' => fake()->numberBetween(1, 8), 

@@ -67,17 +67,28 @@ private function getAuthenticatedUser(Request $request)
 public function admin(Request $request)
 {
     try {
+        $user = $this->getAuthenticatedUser($request);
+        
         $query = \App\Models\KpiActivity::latest()
             ->with(['user.faculty', 'indicator', 'evidence']);
 
-        // Фильтрация по факультету
+        // --- ЛОГИКА РАЗДЕЛЕНИЯ ПО КАТЕГОРИЯМ (ДЛЯ УЧЕБНОГО ОТДЕЛА) ---
+        if ($user->role === 'academic_office' && $user->academic_specialization) {
+            $query->whereHas('indicator', function($q) use ($user) {
+                // Показываем только активности, категория которых совпадает со специализацией юзера
+                $q->where('category', $user->academic_specialization);
+            });
+        }
+        // -----------------------------------------------------------
+
+        // Фильтрация по факультету (из запроса фронтенда)
         if ($request->has('faculty') && $request->faculty !== 'all') {
-            $query->whereHas('user.faculty', function($q) use ($request) {
-                $q->where('title', $request->faculty); 
+            $query->whereHas('user.faculty', function($q) {
+                $q->where('title', request('faculty')); 
             });
         }
 
-        // Фильтрация по статусу (в зависимости от вкладки на фронте)
+        // Фильтрация по статусу
         if ($request->has('status') && $request->status !== 'all') {
             if ($request->status === 'pending') {
                 $query->where('status', 'pending');
@@ -86,12 +97,9 @@ public function admin(Request $request)
             }
         }
 
-        // Получаем пагинированные данные (по 15 записей)
         $paginatedActivities = $query->paginate(30);
-        
         $allFaculties = \App\Models\Faculty::pluck('title')->toArray();
 
-        // Группируем только текущую страницу
         $groupedData = collect($paginatedActivities->items())->groupBy(function ($activity) {
             return $activity->user->faculty->title ?? 'Общий факультет';
         })->map(function ($facultyActivities, $facultyName) {
@@ -116,19 +124,29 @@ public function admin(Request $request)
             ];
         })->values();
 
-        // Общая статистика (без учета пагинации текущего запроса)
+        // Общая статистика с учетом специализации
         $statsQuery = \App\Models\KpiActivity::query();
-        if ($request->has('faculty') && $request->faculty !== 'all') {
-            $statsQuery->whereHas('user.faculty', function($q) use ($request) {
-                $q->where('title', $request->faculty); 
+        
+        // Повторяем фильтр специализации для корректных цифр в статистике
+        if ($user->role === 'academic_office' && $user->academic_specialization) {
+            $statsQuery->whereHas('indicator', function($q) use ($user) {
+                $q->where('category', $user->academic_specialization);
             });
         }
+
+        if ($request->has('faculty') && $request->faculty !== 'all') {
+            $statsQuery->whereHas('user.faculty', function($q) {
+                $q->where('title', request('faculty')); 
+            });
+        }
+        
         $allResults = $statsQuery->get();
 
         return response()->json([
             'status' => 'success',
             'data' => $groupedData,
             'faculties' => $allFaculties,
+            'specialization' => $user->academic_specialization, // Прокидываем на фронт для заголовка
             'meta' => [
                 'current_page' => $paginatedActivities->currentPage(),
                 'last_page' => $paginatedActivities->lastPage(),

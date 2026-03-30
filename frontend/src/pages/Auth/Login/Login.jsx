@@ -34,12 +34,22 @@ const handleLogin = async (e) => {
         localStorage.setItem('token', data.access_token.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        if (Number(data.user.is_admin) === 1) {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
-        
+        if (response.ok) {
+            localStorage.setItem('token', data.access_token.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            const role = data.user.role;
+
+            // Список ролей, которые имеют доступ к админ-панели
+            const adminRoles = ['super_admin', 'academic_office', 'dean', 'head_of_dept'];
+
+            if (adminRoles.includes(role)) {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
+            
+          }
       } else {
         setError(data.message || 'Ошибка авторизации. Проверьте данные.');
       }

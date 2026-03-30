@@ -91,41 +91,80 @@ class UserController extends Controller
         ]
     ]);
 }
-    public function index()
+public function index(Request $request)
 {
     try {
-        $users = User::with([
-                'faculty:id,title,short_title',     // Берем только id и название факультета
-                'department:id,title,short_title',  // Кафедра
-                'position:id,title',    // Должность
-                'academic_degree:id,title' // Ученая степень
-            ])
-            ->withCount(['activities' => function ($query) {
-                $query->where('status', 'approved');
-            }])
-            // ->where('role', '!=', 'admin') 
-            ->orderBy('name', 'asc')
-            ->get()
-            ->map(function ($user) {
-                // Преобразуем структуру для фронтенда, чтобы не менять React-компонент
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'is_admin' => $user->is_admin,
-                    'faculty' => $user->faculty->title ?? 'Не указан',
-                    'department' => $user->department->title ?? 'Не указана',
-                    'faculty_short' => $user->faculty->short_title ?? 'Не указан',
-                    'department_short' => $user->department->short_title ?? 'Не указана',
-                    'position' => $user->position->title ?? 'Сотрудник',
-                    'academic_degree' => $user->academic_degree->title ?? 'Нет',
-                    'activities_count' => $user->activities_count
-                ];
-            });
+        // 1. Инициализируем запрос с отношениями
+        $query = User::with([
+            'faculty:id,title,short_title',
+            'department:id,title,short_title',
+            'position:id,title',
+            'academic_degree:id,title'
+        ]);
 
+        // 2. Добавляем подсчет активностей (approved)
+        $query->withCount(['activities' => function ($q) {
+            $q->where('status', 'approved');
+        }]);
+
+        // 3. Фильтрация (по аналогии с вашим монитором)
+        if ($request->has('faculty') && $request->faculty !== 'all') {
+            $query->whereHas('faculty', function($q) use ($request) {
+                $q->where('short_title', $request->faculty)
+                  ->orWhere('title', $request->faculty);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // 4. Собираем статистику ДО пагинации, но ПОСЛЕ фильтрации
+        $statsQuery = clone $query;
+        $allFilteredUsers = $statsQuery->get();
+
+        $stats = [
+            'total' => $allFilteredUsers->count(),
+            'active' => $allFilteredUsers->where('activities_count', '>', 0)->count(),
+            'new' => $allFilteredUsers->where('activities_count', '==', 0)->count(),
+            'admins' => $allFilteredUsers->where('is_admin', true)->count(),
+        ];
+
+        // 5. Сортировка и пагинация
+        $perPage = $request->get('per_page', 30);
+        $usersPaginator = $query->orderBy('name', 'asc')->paginate($perPage);
+
+        // 6. Трансформация данных (через through, чтобы сохранить структуру пагинатора)
+        $usersPaginator->through(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'is_admin' => (bool)$user->is_admin,
+                'faculty' => $user->faculty->title ?? 'Не указан',
+                'department' => $user->department->title ?? 'Не указана',
+                'faculty_short' => $user->faculty->short_title ?? '—',
+                'position' => $user->position->title ?? 'Сотрудник',
+                'academic_degree' => $user->academic_degree->title ?? 'Нет',
+                'activities_count' => (int)$user->activities_count
+            ];
+        });
+
+        // 7. Ответ в стиле вашего монитора
         return response()->json([
             'status' => 'success',
-            'data' => $users,
+            'stats' => $stats,
+            'data' => $usersPaginator->items(), // Только элементы текущей страницы
+            'meta' => [
+                'current_page' => $usersPaginator->currentPage(),
+                'last_page'    => $usersPaginator->lastPage(),
+                'per_page'     => $usersPaginator->perPage(),
+                'total'        => $usersPaginator->total(),
+            ],
             'message' => 'Список сотрудников успешно загружен'
         ], 200);
 

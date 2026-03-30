@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   CheckCircle, XCircle, Clock, Search, 
-  User, FileText, ArrowRight, Shield, 
-  Download, Loader2, X, ChevronRight,
+  User, FileText, ArrowLeft, ArrowRight, Shield, 
+  Download, Loader2, X, ChevronRight, ChevronLeft,
   Filter, CheckCircle2, Inbox, Activity, AlertCircle, ArrowUpRight, ShieldCheck
 } from 'lucide-react';
 
@@ -37,7 +37,7 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, is
 );
 
 const StaffManagement = () => {
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' или 'history'
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
@@ -48,6 +48,10 @@ const StaffManagement = () => {
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, rejected: 0 });
   
+  // Состояния пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState({ last_page: 1, total_items: 0 });
+
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -59,6 +63,8 @@ const StaffManagement = () => {
     setLoading(true);
     try {
       const url = new URL(`${API_BASE}/admin/kpi-activities`);
+      url.searchParams.append('page', currentPage);
+      url.searchParams.append('status', activeTab);
       if (selectedFaculty !== 'all') url.searchParams.append('faculty', selectedFaculty);
 
       const res = await fetch(url, {
@@ -69,6 +75,7 @@ const StaffManagement = () => {
       if (result.status === 'success') {
         setGroupedData(result.data || []);
         setStats(result.stats || { total: 0, approved: 0, pending: 0, rejected: 0 });
+        setPaginationMeta(result.meta || { last_page: 1, total_items: 0 });
         if (result.faculties) setFacultiesList(result.faculties);
       }
     } catch (error) {
@@ -76,10 +83,12 @@ const StaffManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedFaculty, token, API_BASE]);
+  }, [selectedFaculty, token, API_BASE, currentPage, activeTab]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
-  useEffect(() => { setSelectedTeacher('all'); }, [selectedFaculty]);
+
+  // Сброс страницы при смене таба или фильтра
+  useEffect(() => { setCurrentPage(1); }, [activeTab, selectedFaculty]);
 
   const teachersList = useMemo(() => {
     const teachers = new Set();
@@ -172,7 +181,7 @@ const StaffManagement = () => {
             onChange={(e) => setSelectedTeacher(e.target.value)}
             className="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold uppercase tracking-wider appearance-none focus:border-blue-500 outline-none shadow-sm cursor-pointer"
           >
-            <option value="all">Все сотрудники</option>
+            <option value="all">Все сотрудники (на этой стр.)</option>
             {teachersList.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 rotate-90" size={14} />
@@ -183,12 +192,11 @@ const StaffManagement = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
           {(() => {
-            // Локальный лоадер вместо полноэкранного
-            if (loading && groupedData.length === 0) {
+            if (loading) {
               return (
                 <div className="bg-white rounded-[32px] border border-slate-100 p-20 flex flex-col items-center justify-center shadow-sm">
                   <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Синхронизация репозитория...</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Синхронизация данных...</span>
                 </div>
               );
             }
@@ -196,88 +204,113 @@ const StaffManagement = () => {
             const visibleData = groupedData.map(group => ({
               ...group,
               items: (group.items || []).filter(item => {
-                const statusMatch = activeTab === 'pending' ? item.status === 'pending' : item.status !== 'pending';
-                const teacherMatch = selectedTeacher === 'all' || item.user_name === selectedTeacher;
-                return statusMatch && teacherMatch;
+                return selectedTeacher === 'all' || item.user_name === selectedTeacher;
               })
             })).filter(group => group.items.length > 0);
 
             if (visibleData.length > 0) {
-              return visibleData.map((group) => (
-                <section key={group.faculty} className="space-y-4 text-left">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                      {group.faculty}
-                    </h2>
-                    <div className="h-px w-full bg-slate-200"></div>
-                    <span className="text-[10px] font-bold text-slate-400">{group.items.length}</span>
-                  </div>
+              return (
+                <>
+                  {visibleData.map((group) => (
+                    <section key={group.faculty} className="space-y-4 text-left">
+                      <div className="flex items-center gap-4">
+                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                          {group.faculty}
+                        </h2>
+                        <div className="h-px w-full bg-slate-200"></div>
+                        <span className="text-[10px] font-bold text-slate-400">{group.items.length}</span>
+                      </div>
 
-                  <div className="space-y-4">
-                    {group.items.map((req) => (
-                      <div key={req.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group relative overflow-hidden text-left">
-                        <div className="flex flex-col md:flex-row justify-between gap-6 relative z-10">
-                          <div className="flex gap-4">
-                            <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
-                              <User size={24} />
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-slate-900 text-sm">{req.user_name}</h3>
-                                <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">{req.category}</span>
-                              </div>
-                              <p className="text-sm font-bold text-slate-700 leading-snug">{req.title}</p>
-                              
-                              <div className="flex flex-wrap items-center gap-3 mt-3">
-                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
-                                  <Clock size={12}/> {req.date}
-                                </span>
-                                <div className="flex gap-2">
-                                  {(req.files || []).map((file, idx) => (
-                                    <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
-                                      <Download size={10}/> Doc #{idx + 1}
-                                    </a>
-                                  ))}
+                      <div className="space-y-4">
+                        {group.items.map((req) => (
+                          <div key={req.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group relative overflow-hidden text-left">
+                            <div className="flex flex-col md:flex-row justify-between gap-6 relative z-10">
+                              <div className="flex gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                                  <User size={24} />
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-slate-900 text-sm">{req.user_name}</h3>
+                                    <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">{req.category}</span>
+                                  </div>
+                                  <p className="text-sm font-bold text-slate-700 leading-snug">{req.title}</p>
+                                  
+                                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
+                                      <Clock size={12}/> {req.date}
+                                    </span>
+                                    <div className="flex gap-2">
+                                      {(req.files || []).map((file, idx) => (
+                                        <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
+                                          <Download size={10}/> Doc #{idx + 1}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
 
-                          <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
-                            <div className="text-right mb-3">
-                              <span className="text-2xl font-bold text-slate-900 tracking-tighter">+{req.total_points}</span>
-                              <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">индекс</p>
+                              <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
+                                <div className="text-right mb-3">
+                                  <span className="text-2xl font-bold text-slate-900 tracking-tighter">+{req.total_points}</span>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">индекс</p>
+                                </div>
+                                
+                                {req.status === 'pending' ? (
+                                  <div className="flex gap-2">
+                                    <button 
+                                      disabled={isSubmitting}
+                                      onClick={() => { setSelectedRequest(req); setShowCommentModal(true); }}
+                                      className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                                    >
+                                      <XCircle size={18} />
+                                    </button>
+                                    <button 
+                                      disabled={isSubmitting}
+                                      onClick={() => handleStatusUpdate(req.id, 'approved')}
+                                      className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[40px]"
+                                    >
+                                      {isSubmitting && processingId === req.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                                    {req.status === 'approved' ? 'Принято' : 'Отклонено'}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            
-                            {req.status === 'pending' ? (
-                              <div className="flex gap-2">
-                                <button 
-                                  disabled={isSubmitting}
-                                  onClick={() => { setSelectedRequest(req); setShowCommentModal(true); }}
-                                  className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-                                >
-                                  <XCircle size={18} />
-                                </button>
-                                <button 
-                                  disabled={isSubmitting}
-                                  onClick={() => handleStatusUpdate(req.id, 'approved')}
-                                  className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center min-w-[40px]"
-                                >
-                                  {isSubmitting && processingId === req.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className={`text-[9px] font-bold uppercase px-3 py-1 rounded border ${req.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
-                                {req.status === 'approved' ? 'Принято' : 'Отклонено'}
-                              </div>
-                            )}
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </section> 
+                  ))}
+
+                  {/* PAGINATION UI */}
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Стр. {currentPage} из {paginationMeta.last_page} ({paginationMeta.total_items} записей)
+                    </p>
+                    <div className="flex gap-2">
+                      <button 
+                        disabled={currentPage === 1 || loading}
+                        onClick={() => setCurrentPage(prev => prev - 1)}
+                        className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button 
+                        disabled={currentPage === paginationMeta.last_page || loading}
+                        onClick={() => setCurrentPage(prev => prev + 1)}
+                        className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
                   </div>
-                </section> 
-              ));
+                </>
+              );
             }
 
             return (
@@ -297,16 +330,6 @@ const StaffManagement = () => {
                         : "Попробуйте изменить параметры фильтрации."}
                     </p>
                   </div>
-                  {(selectedFaculty !== 'all' || selectedTeacher !== 'all') && (
-                    <div className="mt-10 flex justify-center gap-3">
-                      <button 
-                        onClick={() => { setSelectedFaculty('all'); setSelectedTeacher('all'); }}
-                        className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
-                      >
-                        Сбросить фильтры
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -343,7 +366,6 @@ const StaffManagement = () => {
               </div>
             </div>
           </div>
-      
         </div>
       </div>
 
@@ -358,10 +380,7 @@ const StaffManagement = () => {
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Действие требуется</p>
                   <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">Причина отказа</h3>
                 </div>
-                <button 
-                  onClick={() => { setShowCommentModal(false); setRejectionReason(''); }} 
-                  className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-colors"
-                >
+                <button onClick={() => { setShowCommentModal(false); setRejectionReason(''); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-colors">
                   <X size={20}/>
                 </button>
               </div>
@@ -372,37 +391,31 @@ const StaffManagement = () => {
                     <div className="p-1.5 bg-white rounded-md shadow-sm text-slate-400">
                       <User size={14} />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">
-                      {selectedRequest.user_name}
-                    </span>
+                    <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">{selectedRequest.user_name}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed pl-8 line-clamp-1 italic">
-                    «{selectedRequest.title}»
-                  </p>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed pl-8 line-clamp-1 italic">«{selectedRequest.title}»</p>
                 </div>
               )}
 
               <div className="mb-6">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Быстрые шаблоны</p>
-                  <div className="flex flex-wrap gap-2">
-                      {['Недостаточно документов', 'Неверная категория', 'Низкое качество файла', 'Дубликат записи'].map((template) => (
-                          <button
-                              key={template}
-                              onClick={() => setRejectionReason(template)}
-                              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all uppercase tracking-tight ${rejectionReason === template ? 'bg-red-50 border-red-200 text-red-600 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'}`}
-                          >
-                              {template}
-                          </button>
-                      ))}
-                  </div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Быстрые шаблоны</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Недостаточно документов', 'Неверная категория', 'Низкое качество файла', 'Дубликат записи'].map((template) => (
+                    <button
+                      key={template}
+                      onClick={() => setRejectionReason(template)}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all uppercase tracking-tight ${rejectionReason === template ? 'bg-red-50 border-red-200 text-red-600 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'}`}
+                    >
+                      {template}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center ml-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ваш комментарий</label>
-                  <span className={`text-[9px] font-bold uppercase ${rejectionReason.length > 0 ? 'text-blue-500' : 'text-slate-300'}`}>
-                      {rejectionReason.length} символов
-                  </span>
+                  <span className={`text-[9px] font-bold uppercase ${rejectionReason.length > 0 ? 'text-blue-500' : 'text-slate-300'}`}>{rejectionReason.length} символов</span>
                 </div>
                 <textarea 
                   autoFocus
@@ -414,13 +427,7 @@ const StaffManagement = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-8">
-                <button 
-                  onClick={() => { setShowCommentModal(false); setRejectionReason(''); }} 
-                  disabled={isSubmitting}
-                  className="py-4 bg-white border border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] rounded-xl hover:bg-slate-50 transition-all disabled:opacity-50"
-                >
-                  Отмена
-                </button>
+                <button onClick={() => { setShowCommentModal(false); setRejectionReason(''); }} disabled={isSubmitting} className="py-4 bg-white border border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] rounded-xl hover:bg-slate-50 transition-all disabled:opacity-50">Отмена</button>
                 <button 
                   onClick={() => handleStatusUpdate(selectedRequest.id, 'rejected', rejectionReason)}
                   disabled={!rejectionReason.trim() || isSubmitting}

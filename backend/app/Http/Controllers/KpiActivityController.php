@@ -70,28 +70,40 @@ public function admin(Request $request)
         $query = \App\Models\KpiActivity::latest()
             ->with(['user.faculty', 'indicator', 'evidence']);
 
+        // Фильтрация по факультету
         if ($request->has('faculty') && $request->faculty !== 'all') {
             $query->whereHas('user.faculty', function($q) use ($request) {
                 $q->where('title', $request->faculty); 
             });
         }
 
-        $activities = $query->get();
+        // Фильтрация по статусу (в зависимости от вкладки на фронте)
+        if ($request->has('status') && $request->status !== 'all') {
+            if ($request->status === 'pending') {
+                $query->where('status', 'pending');
+            } else {
+                $query->where('status', '!=', 'pending');
+            }
+        }
 
+        // Получаем пагинированные данные (по 15 записей)
+        $paginatedActivities = $query->paginate(30);
+        
         $allFaculties = \App\Models\Faculty::pluck('title')->toArray();
 
-        $groupedByFaculty = $activities->groupBy(function ($activity) {
+        // Группируем только текущую страницу
+        $groupedData = collect($paginatedActivities->items())->groupBy(function ($activity) {
             return $activity->user->faculty->title ?? 'Общий факультет';
         })->map(function ($facultyActivities, $facultyName) {
             return [
                 'faculty' => $facultyName,
-                'items' => $facultyActivities->sortByDesc('created_at')->map(function ($item) {
+                'items' => $facultyActivities->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'user_name' => $item->user->name ?? 'Сотрудник',
                         'title' => $item->title ?? ($item->indicator->title ?? 'Без названия'),
                         'category' => $item->indicator->category ?? 'Общее',
-                        'date' => $item->created_at->format('d.m.Y H:i'), // Добавил время для точности
+                        'date' => $item->created_at->format('d.m.Y H:i'),
                         'total_points' => $item->total_points,
                         'status' => $item->status,
                         'comment' => $item->comment,
@@ -104,15 +116,29 @@ public function admin(Request $request)
             ];
         })->values();
 
+        // Общая статистика (без учета пагинации текущего запроса)
+        $statsQuery = \App\Models\KpiActivity::query();
+        if ($request->has('faculty') && $request->faculty !== 'all') {
+            $statsQuery->whereHas('user.faculty', function($q) use ($request) {
+                $q->where('title', $request->faculty); 
+            });
+        }
+        $allResults = $statsQuery->get();
+
         return response()->json([
             'status' => 'success',
-            'data' => $groupedByFaculty,
+            'data' => $groupedData,
             'faculties' => $allFaculties,
+            'meta' => [
+                'current_page' => $paginatedActivities->currentPage(),
+                'last_page' => $paginatedActivities->lastPage(),
+                'total_items' => $paginatedActivities->total(),
+            ],
             'stats' => [
-                'total' => $activities->count(),
-                'approved' => $activities->where('status', 'approved')->count(),
-                'pending' => $activities->where('status', 'pending')->count(),
-                'rejected' => $activities->where('status', 'rejected')->count(),
+                'total' => $allResults->count(),
+                'approved' => $allResults->where('status', 'approved')->count(),
+                'pending' => $allResults->where('status', 'pending')->count(),
+                'rejected' => $allResults->where('status', 'rejected')->count(),
             ]
         ]);
 

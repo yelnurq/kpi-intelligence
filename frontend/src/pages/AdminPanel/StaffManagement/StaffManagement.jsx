@@ -47,6 +47,11 @@ const StaffManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
+  // Пагинация и статистика
+  const [currentPage, setCurrentPage] = useState(1);
+  const [meta, setMeta] = useState({ last_page: 1, total: 0 });
+  const [apiStats, setApiStats] = useState({ total: 0, active: 0, new: 0, admins: 0 });
+
   const [options, setOptions] = useState({ faculties: [], departments: [], positions: [], degrees: [] });
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', password_confirmation: '',
@@ -57,26 +62,61 @@ const StaffManagement = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
+  // Функция загрузки с учетом фильтров и страницы
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/admin/users`, {
+      const params = new URLSearchParams({
+        page: currentPage,
+        search: searchTerm,
+        faculty: selectedFaculty
+      });
+
+      const res = await fetch(`${API_BASE}/admin/users?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const result = await res.json();
+      
       if (result.status === 'success') {
         setUsers(result.data || []);
-        const uniqueNames = [...new Set((result.data || []).map(u => u.faculty))].filter(Boolean);
-        setFaculties(uniqueNames);
+        setMeta(result.meta);
+        setApiStats(result.stats); // Берем статистику напрямую из ответа Laravel
       }
     } catch (error) {
       console.error("Ошибка загрузки:", error);
     } finally {
       setLoading(false);
     }
-  }, [token, API_BASE]);
+  }, [token, API_BASE, currentPage, searchTerm, selectedFaculty]);
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' 
+    });
+  }, [currentPage]);
+  // Эффект для загрузки данных
+  useEffect(() => { 
+    fetchUsers(); 
+  }, [fetchUsers]);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  // Сброс на 1 страницу при изменении фильтров
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedFaculty]);
+
+  // Загрузка только списка факультетов для фильтра (один раз при старте)
+  useEffect(() => {
+    const loadInitialOptions = async () => {
+        const res = await fetch(`${API_BASE}/admin/helpers/options`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.faculties) {
+            setFaculties(data.faculties.map(f => f.name));
+        }
+    };
+    loadInitialOptions();
+  }, [token, API_BASE]);
 
   const fetchOptions = useCallback(async () => {
     try {
@@ -124,10 +164,10 @@ const StaffManagement = () => {
       if (freshOptions) {
         setFormData(prev => ({
           ...prev,
-          faculty_id: freshOptions.faculties.find(f => f.name === user.faculty)?.id || '',
-          department_id: freshOptions.departments.find(d => d.name === user.department)?.id || '',
-          position_id: freshOptions.positions.find(p => p.name === user.position)?.id || '',
-          academic_degree_id: freshOptions.degrees.find(d => d.name === user.academic_degree)?.id || '',
+          faculty_id: freshOptions.faculties.find(f => (f.short_title === user.faculty_short || f.title === user.faculty))?.id || '',
+          department_id: freshOptions.departments.find(d => d.title === user.department)?.id || '',
+          position_id: freshOptions.positions.find(p => p.title === user.position)?.id || '',
+          academic_degree_id: freshOptions.degrees.find(d => d.title === user.academic_degree)?.id || '',
         }));
       }
     });
@@ -175,32 +215,15 @@ const StaffManagement = () => {
     } finally { setIsSubmitting(false); }
   };
 
-  // ФИЛЬТРАЦИЯ: Все пользователи
-  const filteredUsers = useMemo(() => {
-    return users.filter(user => {
-      const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFaculty = selectedFaculty === 'all' || user.faculty === selectedFaculty;
-      return matchesSearch && matchesFaculty;
-    });
-  }, [users, searchTerm, selectedFaculty]);
-
-  const stats = useMemo(() => ({
-    total: users.length,
-    active: users.filter(u => u.activities_count > 0).length,
-    new: users.filter(u => u.activities_count === 0).length,
-    admins: users.filter(u => u.is_admin).length 
-  }), [users]);
-
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Управление штатом</h1>
-          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Список сотрудников и администраторов системы</p>
-        </div>
+          <div className="text-left">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Управление штатом</h1>
+            <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Список сотрудников и администраторов системы</p>
+          </div>
 
         <button 
           onClick={handleOpenCreateModal}
@@ -213,10 +236,10 @@ const StaffManagement = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Общий штат" value={stats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Всего в системе" />
-        <StatCard label="С активностью" value={stats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="Заполнили KPI" isPrimary={true} />
-        <StatCard label="Без данных" value={stats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Новые профили" />
-        <StatCard label="Админы" value={stats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="Права управления" />
+        <StatCard label="Общий штат" value={apiStats.total} icon={Users} colorClass="bg-slate-100 text-slate-600" description="Всего в системе" />
+        <StatCard label="С активностью" value={apiStats.active} icon={UserCheck} colorClass="bg-emerald-100 text-emerald-600" description="Заполнили KPI" isPrimary={true} />
+        <StatCard label="Без данных" value={apiStats.new} icon={UserMinus} colorClass="bg-amber-100 text-amber-600" description="Новые профили" />
+        <StatCard label="Админы" value={apiStats.admins} icon={ShieldCheck} colorClass="bg-blue-100 text-blue-600" description="Права управления" />
       </div>
 
       {/* FILTERS */}
@@ -259,10 +282,10 @@ const StaffManagement = () => {
 
         {loading && users.length === 0 ? (
           <ListSkeleton />
-        ) : filteredUsers.length > 0 ? (
+        ) : users.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className={`bg-white p-6 rounded-2xl border transition-all group ${user.is_admin ? 'border-blue-100' : 'border-slate-200 shadow-sm'}`}>
+            {users.map((user) => (
+              <div key={user.id} className={`bg-white p-6 rounded-2xl border transition-all group ${user.is_admin ? 'border-blue-100 shadow-sm' : 'border-slate-200 shadow-sm'}`}>
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                   <div className="flex items-center gap-4 w-full md:w-auto text-left">
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all font-bold text-xl shrink-0 ${user.is_admin ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
@@ -308,7 +331,56 @@ const StaffManagement = () => {
         )}
       </div>
 
-      {/* MODAL WINDOW */}
+      {/* PAGINATION UI */}
+      {meta.last_page > 1 && (
+        <div className="mt-10 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-4">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest md:ml-4">
+            Страница {currentPage} из {meta.last_page} (Всего: {meta.total})
+          </p>
+          
+          <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-2 md:pb-0">
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all"
+            >
+              Назад
+            </button>
+
+            {/* Логика сокращенной пагинации для большого кол-ва страниц */}
+            {[...Array(meta.last_page)].map((_, i) => {
+                const pageNum = i + 1;
+                // Показываем первую, последнюю и соседние с текущей
+                if (pageNum === 1 || pageNum === meta.last_page || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+                    return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`min-w-[40px] h-10 rounded-xl text-[10px] font-bold transition-all ${
+                            currentPage === pageNum 
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+                            : 'bg-white text-slate-400 border border-slate-100 hover:border-blue-200'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                    );
+                }
+                return null;
+            })}
+
+            <button 
+              disabled={currentPage === meta.last_page}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all"
+            >
+              Вперед
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL WINDOW (Остался без изменений, только исправил тексты) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
@@ -328,7 +400,6 @@ const StaffManagement = () => {
 
             <div className="px-10 pb-10 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6 text-left">
-                {/* РОЛЬ */}
                 <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${formData.is_admin ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}>

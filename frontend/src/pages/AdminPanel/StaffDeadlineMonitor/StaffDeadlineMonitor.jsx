@@ -93,20 +93,34 @@ const StaffDeadlineMonitor = () => {
       setIsSending(false);
     }
   };
+const filteredAndSorted = useMemo(() => {
+    let result = [...employees];
 
-  // --- ФИЛЬТРАЦИЯ И СОРТИРОВКА (Client-side) ---
-  const filteredAndSorted = useMemo(() => {
-    let result = employees.filter(emp => 
-      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      emp.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // 1. Поиск по имени или Email
+    if (searchTerm) {
+      const lowSearch = searchTerm.toLowerCase();
+      result = result.filter(emp => 
+        emp.name.toLowerCase().includes(lowSearch) || 
+        emp.email.toLowerCase().includes(lowSearch)
+      );
+    }
 
+    // 2. Фильтрация по факультету
+    if (selectedFaculty !== 'all') {
+      result = result.filter(emp => {
+        // Так как PHP возвращает строку, сравниваем напрямую
+        const facultyName = typeof emp.faculty === 'string' ? emp.faculty : emp.faculty?.short_title;
+        return facultyName === selectedFaculty;
+      });
+    }
+
+    // 3. Сортировка
     return result.sort((a, b) => {
       if (sortBy === 'overdue') return b.overdue - a.overdue;
       if (sortBy === 'progress') return a.progress - b.progress;
       return a.name.localeCompare(b.name);
     });
-  }, [employees, searchTerm, sortBy]);
+  }, [employees, searchTerm, sortBy, selectedFaculty]);
 
   const stats = useMemo(() => ({
     totalOverdue: filteredAndSorted.reduce((acc, curr) => acc + curr.overdue, 0),
@@ -177,9 +191,9 @@ const StaffDeadlineMonitor = () => {
                 className="pl-6 pr-10 py-4 bg-slate-50 border-none rounded-[20px] text-[11px] font-black uppercase tracking-wider appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
             >
                 <option value="all">Все факультеты</option>
-                <option value="ФИТ">ФИТ</option>
-                <option value="Экономика">Экономика</option>
-                <option value="Юриспруденция">Юриспруденция</option>
+                <option value="ТФ">Технологический факультет</option>
+                <option value="ФЭиБ">Факультет экономики и бизнеса</option>
+                <option value="ФИиИТ">Факультет инжиниринга и информационных технологий</option>
             </select>
             
             <select 

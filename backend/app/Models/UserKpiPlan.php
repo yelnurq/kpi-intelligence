@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Добавь этот импорт
 class UserKpiPlan extends Model
 {
+    use HasFactory;
 protected $table = 'user_kpi_plans';    
 protected $fillable = [
         "kpi_indicator_id","academic_year","user_id", "deadline"

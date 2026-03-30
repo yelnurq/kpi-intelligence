@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class KpiEvidence extends Model
 {
+    use HasFactory;
     protected $fillable = ['kpi_activity_id', 'file_name', 'file_path', 'file_type'];
 
     // Добавляем виртуальное поле url для фронтенда

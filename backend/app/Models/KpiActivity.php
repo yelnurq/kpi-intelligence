@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Добавь этот импорт
 class KpiActivity extends Model
 {
-    protected $fillable = ['user_id', 'indicator_id', 'quantity', 'total_points', 'status', 'comment'];
+use HasFactory;
+protected $fillable = ['user_id', 'indicator_id', 'quantity', 'total_points', 'status', 'comment'];
 
     public function user() {
         return $this->belongsTo(User::class);

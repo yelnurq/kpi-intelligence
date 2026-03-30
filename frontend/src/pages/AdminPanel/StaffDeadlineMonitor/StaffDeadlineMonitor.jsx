@@ -368,24 +368,28 @@ const StaffDeadlineMonitor = () => {
               <div className="space-y-6">
                 <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-left">Просроченные индикаторы</p>
                 <div className="grid gap-3">
-                  {selectedEmployee.indicators?.filter(ind => ind.status === 'overdue').length > 0 ? (
-                    selectedEmployee.indicators.filter(ind => ind.status === 'overdue').map((ind) => (
-                      <div key={ind.id} className="bg-white border border-red-100 p-5 rounded-2xl flex justify-between items-center shadow-sm">
+           {selectedEmployee.indicators?.filter(ind => ind.status === 'overdue').length > 0 ? (
+                  selectedEmployee.indicators
+                    .filter(ind => ind.status === 'overdue')
+                    // Сортировка: сначала самые ранние даты (просроченные давно)
+                    .sort((a, b) => new Date(a.date) - new Date(b.date)) 
+                    .map((ind) => (
+                      <div key={ind.id} className="bg-white border border-red-100 p-5 rounded-2xl flex justify-between items-center shadow-sm transition-all hover:border-red-200">
                         <div className="space-y-2 text-left">
                           <p className="text-sm font-bold text-slate-800 leading-tight">{ind.title}</p>
                           <span className="text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1.5 uppercase text-red-600 bg-red-50">
-                            <Clock size={12} /> Дедлайн: {ind.date}
+                            <Clock size={12} /> Дедлайн: {new Date(ind.date).toLocaleDateString()}
                           </span>
                         </div>
                         <AlertTriangle size={18} className="text-red-500" />
                       </div>
                     ))
-                  ) : (
-                    <div className="bg-white border border-slate-200 p-10 rounded-3xl text-center border-dashed">
-                      <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-2" />
-                      <p className="text-sm font-bold text-slate-900">Просрочек нет</p>
-                    </div>
-                  )}
+                ) : (
+                  <div className="bg-white border border-slate-200 p-10 rounded-3xl text-center border-dashed">
+                    <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-900">Просрочек нет</p>
+                  </div>
+                )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

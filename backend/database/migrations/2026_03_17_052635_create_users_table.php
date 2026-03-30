@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->boolean('is_admin')->default(0);
-            $table->foreignId("academic_degree_id")->constrained()->onDelete("cascade");
-            $table->foreignId("faculty_id")->constrained()->onDelete("cascade");
-            $table->foreignId("department_id")->constrained()->onDelete("cascade");
-            $table->foreignId("position_id")->constrained()->onDelete("cascade");
+            $table->enum('role', ['teacher', 'dean', 'head_of_dept', 'academic_office', 'super_admin'])->default('teacher');
+            $table->foreignId("academic_degree_id")->nullable()->constrained()->onDelete("set null");
+            $table->foreignId("faculty_id")->nullable()->constrained()->onDelete("set null");
+            $table->foreignId("department_id")->nullable()->constrained()->onDelete("set null");
+            $table->foreignId("position_id")->nullable()->constrained()->onDelete("set null");
             $table->timestamps();
         });
 

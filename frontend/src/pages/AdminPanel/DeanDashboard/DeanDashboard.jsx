@@ -66,7 +66,25 @@ const DeanDashboard = () => {
   }, []);
 
   useEffect(() => { fetchSubmissions(); }, [fetchSubmissions]);
+// Вставьте это рядом с другими useEffect в компоненте DeanDashboard
+useEffect(() => {
+  if (isModalOpen) {
+    // Вычисляем ширину скроллбара, чтобы страница не дергалась
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  } else {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }
 
+  // Чистим стили при размонтировании компонента
+  return () => {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  };
+}, [isModalOpen]);
   // Загрузка детальных индикаторов при клике
   const handleOpenDetails = async (row) => {
     setSelectedPlan(row);

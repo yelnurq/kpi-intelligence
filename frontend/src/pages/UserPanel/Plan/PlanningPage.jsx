@@ -82,7 +82,7 @@ const ReviewModal = ({ isOpen, onClose, onConfirm, loading, selectedItems, total
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-slate-600 truncate mr-4">{item.title}</span>
                 <span className="font-bold text-slate-900 whitespace-nowrap">
-                  {new Date(item.deadline).toLocaleDateString()}
+                  {item.deadline ? new Date(item.deadline).toLocaleDateString() : '—'}
                 </span>
               </div>
             ))}
@@ -123,8 +123,8 @@ const PlanningPage = () => {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deadlines, setDeadlines] = useState({}); // формат { "id_индикатора": "2026-05-20" }
-  const [isReviewOpen, setIsReviewOpen] = useState(false); // Состояние для второго окна
+  const [deadlines, setDeadlines] = useState({});
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [submission, setSubmission] = useState({ status: 'draft', comment: null });
 
   const categories = ['Все', 'учеб.работа', 'учебно-методическая работа', 'организационно-методическая работа',
@@ -132,7 +132,6 @@ const PlanningPage = () => {
   ];
   const years = ['2025/2026', '2026/2027'];
 
-  // Блокируем интерфейс, если план отправлен или утвержден
   const isReadOnly = submission.status === 'submitted' || submission.status === 'approved';
 
   useEffect(() => {
@@ -148,7 +147,6 @@ const PlanningPage = () => {
           'Accept': 'application/json'
         };
 
-        // Загружаем индикаторы и текущий статус плана
         const [resIndicators, resStatus] = await Promise.all([
           fetch('http://localhost:8000/api/kpi-indicators', { headers }),
           fetch(`http://localhost:8000/api/get-plan-status?year=${selectedYear}`, { headers })
@@ -158,17 +156,14 @@ const PlanningPage = () => {
         const dataStatus = await resStatus.json();
 
         if (dataIndicators.status === 'success') setIndicators(dataIndicators.data);
-      if (dataStatus.status === 'success') {
-    setSelectedIds(dataStatus.selected_ids || []);
-    
-    // ВАЖНО: Заполняем стейт дедлайнов из базы
-    setDeadlines(dataStatus.deadlines || {}); 
-    
-    setSubmission({
-      status: dataStatus.plan_status || 'draft',
-      comment: dataStatus.comment
-    });
-  }
+        if (dataStatus.status === 'success') {
+          setSelectedIds(dataStatus.selected_ids || []);
+          setDeadlines(dataStatus.deadlines || {}); 
+          setSubmission({
+            status: dataStatus.plan_status || 'draft',
+            comment: dataStatus.comment
+          });
+        }
       } catch (error) {
         console.error("Ошибка загрузки:", error);
       } finally {
@@ -179,32 +174,32 @@ const PlanningPage = () => {
     fetchData();
   }, [navigate, selectedYear]);
   
-// Внутри компонента PlanningPage, рядом с другими useEffect
+// Добавьте это внутрь компонента PlanningPage
 useEffect(() => {
-  if (isModalOpen) {
-    // Сохраняем текущий стиль, чтобы не испортить другие скрипты, если они есть
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+  
+  if (isModalOpen || isReviewOpen) {
     document.body.style.overflow = 'hidden';
-    
-    // Очистка при закрытии модалки или размонтировании компонента
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
+    // Добавляем padding, чтобы контент не "прыгал" при исчезновении полосы прокрутки
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  } else {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
   }
-}, [isModalOpen]);
 
-const exportToExcel = async () => {
+  return () => {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  };
+}, [isModalOpen, isReviewOpen]);
+  const exportToExcel = async () => {
     if (selectedIds.length === 0) {
       alert("Выберите хотя бы один индикатор для экспорта");
       return;
     }
-
     setExporting(true);
-      try {
-      setExporting(true);
+    try {
       const token = localStorage.getItem("token");
-      const indicatorIds = selectedItems.map(item => item.id);
-
       const response = await fetch("http://localhost:8000/api/export", {
         method: 'POST',
         headers: {
@@ -212,14 +207,9 @@ const exportToExcel = async () => {
           'Content-Type': 'application/json',
           'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
-        body: JSON.stringify({
-          indicator_ids: indicatorIds,
-          year: selectedYear
-        })
+        body: JSON.stringify({ indicator_ids: selectedIds, year: selectedYear })
       });
-
       if (!response.ok) throw new Error("Ошибка сервера");
-
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -229,7 +219,6 @@ const exportToExcel = async () => {
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-
     } catch (err) {
       console.error("Export failed:", err);
       alert("Не удалось подготовить файл.");
@@ -238,90 +227,83 @@ const exportToExcel = async () => {
     }
   };
 
-// 2. Функция для изменения дедлайна (передаем в модалку)
-const handleDeadlineChange = (id, date) => {
-  setDeadlines(prev => ({
-    ...prev,
-    [id]: date
-  }));
-};
-
-// 3. Подготовка данных для модалки (мерджим данные индикатора и дедлайн)
-const selectedItemsWithDeadlines = useMemo(() => {
-  return indicators
-    .filter(item => selectedIds.includes(item.id))
-    .map(item => ({
-      ...item,
-      deadline: deadlines[item.id] || ''
+  const handleDeadlineChange = (id, date) => {
+    setDeadlines(prev => ({
+      ...prev,
+      [String(id)]: date
     }));
-}, [indicators, selectedIds, deadlines]);
-const handlePrepareReview = () => {
-  const payload = selectedIds.map(id => ({
-    indicator_id: id,
-    deadline: deadlines[id] || null
-  }));
+  };
 
-  if (payload.some(p => !p.deadline)) {
-    alert("Пожалуйста, укажите дедлайны для всех выбранных индикаторов.");
-    return;
-  }
+  const selectedItemsWithDeadlines = useMemo(() => {
+    return indicators
+      .filter(item => selectedIds.includes(item.id))
+      .map(item => {
+        // Получаем сырую дату по ID (как строку или число)
+        let rawDate = deadlines[String(item.id)] || deadlines[Number(item.id)] || '';
+        
+        // Преобразуем в YYYY-MM-DD для корректного отображения в <input type="date">
+        if (rawDate && rawDate.includes('T')) {
+          rawDate = rawDate.split('T')[0];
+        } else if (rawDate && rawDate.includes(' ')) {
+          rawDate = rawDate.split(' ')[0];
+        }
 
-  setIsModalOpen(false); // Закрываем ввод дат
-  setIsReviewOpen(true); // Открываем финальную проверку
-};
+        return {
+          ...item,
+          deadline: rawDate
+        };
+      });
+  }, [indicators, selectedIds, deadlines]);
 
-// Реальная функция отправки на сервер
-const handleActualSubmit = async () => {
-  try {
-    setSaving(true);
-    const token = localStorage.getItem("token");
-    
-    // Подготовка payload
-    const payload = selectedIds.map(id => ({
-      indicator_id: id,
-      deadline: deadlines[id]
-    }));
-
-    const response = await fetch('http://localhost:8000/api/submit-plan', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        items: payload,
-        academic_year: selectedYear
-      })
-    });
-
-    if (response.ok) {
-      setSubmission({ status: 'submitted', comment: null });
-      setIsReviewOpen(false);
-      alert("План успешно отправлен!");
+  const handlePrepareReview = () => {
+    const isAnyMissing = selectedIds.some(id => !deadlines[String(id)] && !deadlines[Number(id)]);
+    if (isAnyMissing) {
+      alert("Пожалуйста, укажите дедлайны для всех выбранных индикаторов.");
+      return;
     }
-  } catch (error) {
-    alert("Ошибка: " + error.message);
-  } finally {
-    setSaving(false);
-  }
-};
-const toggleIndicator = (id) => {
-  if (isReadOnly) return;
+    setIsModalOpen(false);
+    setIsReviewOpen(true);
+  };
 
-  const isSelected = selectedIds.includes(id);
-  const newIds = isSelected
-    ? selectedIds.filter(i => i !== id)
-    : [...selectedIds, id];
-  
-  setSelectedIds(newIds);
-  
-  // Если индикатор удаляется, можно почистить и его дедлайн в стейте (опционально)
-  if (isSelected) {
-    const newDeadlines = { ...deadlines };
-    delete newDeadlines[id];
-    setDeadlines(newDeadlines);
-  }
-};
+  const handleActualSubmit = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem("token");
+      const payload = selectedIds.map(id => ({
+        indicator_id: id,
+        deadline: deadlines[String(id)] || deadlines[Number(id)]
+      }));
+      const response = await fetch('http://localhost:8000/api/submit-plan', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: payload, academic_year: selectedYear })
+      });
+      if (response.ok) {
+        setSubmission({ status: 'submitted', comment: null });
+        setIsReviewOpen(false);
+        alert("План успешно отправлен!");
+      }
+    } catch (error) {
+      alert("Ошибка: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleIndicator = (id) => {
+    if (isReadOnly) return;
+    const isSelected = selectedIds.includes(id);
+    if (isSelected) {
+      setSelectedIds(prev => prev.filter(i => i !== id));
+      const newDeadlines = { ...deadlines };
+      delete newDeadlines[String(id)];
+      delete newDeadlines[Number(id)];
+      setDeadlines(newDeadlines);
+    } else {
+      setSelectedIds(prev => [...prev, id]);
+    }
+  };
+
   const removeIndicator = (id) => {
     if (isReadOnly) return;
     setSelectedIds(prev => prev.filter(i => i !== id));
@@ -347,37 +329,24 @@ const toggleIndicator = (id) => {
   const renderIndicatorCard = (item) => {
     const isSelected = selectedIds.includes(item.id);
     const catLower = (item.category || "").toLowerCase();
-    
     return (
       <div 
         key={item.id}
         onClick={() => toggleIndicator(item.id)}
         className={`flex items-center gap-6 p-5 bg-white border rounded-xl transition-all group ${
           isReadOnly ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-        } ${
-          isSelected ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-        }`}
+        } ${isSelected ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'}`}
       >
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
-        }`}>
-          {catLower.includes('наук') ? <Globe size={20} /> : 
-           catLower.includes('метод') ? <BookOpen size={20} /> : 
-           <PenTool size={20} />}
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+          {catLower.includes('наук') ? <Globe size={20} /> : catLower.includes('метод') ? <BookOpen size={20} /> : <PenTool size={20} />}
         </div>
         <div className="flex-grow text-left">
           <h4 className="font-bold text-slate-900 leading-tight">{item.title}</h4>
           <p className="text-sm text-gray-500 leading-snug">{item.desc}</p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <div className="text-lg font-bold text-slate-900">
-            {item.points} <span className="block text-xs text-gray-400 font-normal">баллов</span>
-          </div>
-          <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-            isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-transparent'
-          }`}>
-            <CheckCircle2 size={14} />
-          </div>
+          <div className="text-lg font-bold text-slate-900">{item.points} <span className="block text-xs text-gray-400 font-normal">баллов</span></div>
+          <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-transparent'}`}><CheckCircle2 size={14} /></div>
         </div>
       </div>
     );
@@ -385,30 +354,23 @@ const toggleIndicator = (id) => {
 
   return (
     <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans"> 
-      
-{/* 1. Модалка ввода дат */}
-<ConfirmModal 
-  isOpen={isModalOpen} 
-  onClose={() => setIsModalOpen(false)} 
-  onConfirm={handlePrepareReview} // Теперь ведет на проверку
-  loading={saving}
-  selectedItems={selectedItemsWithDeadlines}
-  onDeadlineChange={handleDeadlineChange}
-/>
+      <ConfirmModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onConfirm={handlePrepareReview} 
+        loading={saving}
+        selectedItems={selectedItemsWithDeadlines}
+        onDeadlineChange={handleDeadlineChange}
+      />
+      <ReviewModal 
+        isOpen={isReviewOpen}
+        onClose={() => { setIsReviewOpen(false); setIsModalOpen(true); }}
+        onConfirm={handleActualSubmit} 
+        loading={saving}
+        selectedItems={selectedItemsWithDeadlines}
+        totalPoints={totalPoints}
+      />
 
-{/* 2. Модалка финального подтверждения */}
-<ReviewModal 
-  isOpen={isReviewOpen}
-  onClose={() => {
-    setIsReviewOpen(false);
-    setIsModalOpen(true); // Возвращаемся к датам, если нажали "Назад"
-  }}
-  onConfirm={handleActualSubmit} // Финальный POST запрос
-  loading={saving}
-  selectedItems={selectedItemsWithDeadlines}
-  totalPoints={totalPoints}
-/>
-      {/* СТАТУС-БАР ПЛАНА */}
       <div className={`mb-8 p-4 rounded-2xl border flex items-center justify-between transition-all ${
         submission.status === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
         submission.status === 'submitted' ? 'bg-amber-50 border-amber-200 text-amber-800' :
@@ -433,32 +395,16 @@ const toggleIndicator = (id) => {
             </h3>
           </div>
         </div>
-        
-        {submission.comment && (
-          <div className="flex-grow mx-10 text-sm italic bg-white/50 p-2 rounded border border-red-100">
-            Замечание: {submission.comment}
-          </div>
-        )}
-
+        {submission.comment && <div className="flex-grow mx-10 text-sm italic bg-white/50 p-2 rounded border border-red-100">Замечание: {submission.comment}</div>}
         <div className="flex items-center gap-3">
           {!isReadOnly && (
-            <button 
-              onClick={() => setIsModalOpen(true)} 
-              disabled={selectedIds.length === 0 || saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
-            >
-              <FileText size={18} />
-              Отправить декану
+            <button onClick={() => setIsModalOpen(true)} disabled={selectedIds.length === 0 || saving} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95">
+              <FileText size={18} /> Отправить декану
             </button>
           )}
-         <button 
-  onClick={exportToExcel}
-  disabled={exporting || selectedIds.length === 0}
-  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95 disabled:opacity-50"
->
-  {exporting ? <Loader2 className="animate-spin" size={18} /> : <FileSpreadsheet size={18} />}
-  Excel
-</button>
+          <button onClick={exportToExcel} disabled={exporting || selectedIds.length === 0} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95 disabled:opacity-50">
+            {exporting ? <Loader2 className="animate-spin" size={18} /> : <FileSpreadsheet size={18} />} Excel
+          </button>
         </div>
       </div>
 
@@ -468,12 +414,7 @@ const toggleIndicator = (id) => {
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
             <Calendar size={14} />
             <span>Учебный год:</span>
-            <select 
-              value={selectedYear} 
-              onChange={(e) => setSelectedYear(e.target.value)} 
-              disabled={isReadOnly}
-              className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0 disabled:opacity-50"
-            >
+            <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} disabled={isReadOnly} className="font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer p-0 disabled:opacity-50">
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
@@ -486,81 +427,48 @@ const toggleIndicator = (id) => {
             <div className="custom-scrollbar flex bg-gray-100 p-1 rounded-xl w-full overflow-x-auto">
               <div className="flex flex-nowrap gap-1">
                 {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveTab(cat)}
-                    className={`px-5 py-2.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap flex-shrink-0 ${
-                      activeTab === cat 
-                        ? 'bg-white shadow-sm text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                    }`}
-                  >
+                  <button key={cat} onClick={() => setActiveTab(cat)} className={`px-5 py-2.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap flex-shrink-0 ${activeTab === cat ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}>
                     {cat.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-
           <div className="grid grid-cols-1 gap-4">
-            {loading ? (
-              <div className="py-20 text-center bg-white rounded-xl border border-dashed">Загрузка...</div>
-            ) : (
-              filteredIndicators.map(item => renderIndicatorCard(item))
-            )}
+            {loading ? <div className="py-20 text-center bg-white rounded-xl border border-dashed">Загрузка...</div> : filteredIndicators.map(item => renderIndicatorCard(item))}
           </div>
         </div>
 
         <div className="lg:col-span-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm sticky top-8 text-left">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-              <h3 className="font-bold text-slate-900">Ваш выбор</h3>
-            </div>
+            <div className="p-6 border-b border-gray-100 bg-gray-50/50"><h3 className="font-bold text-slate-900">Ваш выбор</h3></div>
             <div className="p-6 space-y-4">
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {/* Внутри блока <div className="space-y-3 max-h-[400px] ..."> */}
-{selectedItems.map(item => (
-  <div key={item.id} className="flex justify-between items-start gap-3 border-b border-gray-50 pb-3 group">
-    <div className="flex flex-col max-w-[85%]">
-      <span className="text-sm font-medium text-slate-700 leading-tight mb-1">{item.title}</span>
-      
-      <div className="flex items-center gap-3">
-        <span className="text-[10px] text-blue-500 font-bold uppercase">{item.points} баллов</span>
-        
-        {/* ОТОБРАЖЕНИЕ ДЕДЛАЙНА, ЕСЛИ ОН УСТАНОВЛЕН */}
-        {deadlines[item.id] ? (
-          <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">
-            <Clock size={10} /> {new Date(deadlines[item.id]).toLocaleDateString()}
-          </span>
-        ) : (
-          !isReadOnly && (
-            <span className="text-[9px] font-bold text-amber-500 flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
-              <AlertTriangle size={10} /> Срок не задан
-            </span>
-          )
-        )}
-      </div>
-    </div>
-    
-    {!isReadOnly && (
-      <button 
-        onClick={() => removeIndicator(item.id)} 
-        className="text-gray-300 hover:text-red-500 transition-colors pt-1"
-      >
-        <Trash2 size={16} />
-      </button>
-    )}
-  </div>
-))}
+                {selectedItems.map(item => {
+                   const rawDate = deadlines[String(item.id)] || deadlines[Number(item.id)];
+                   return (
+                  <div key={item.id} className="flex justify-between items-start gap-3 border-b border-gray-50 pb-3 group">
+                    <div className="flex flex-col max-w-[85%]">
+                      <span className="text-sm font-medium text-slate-700 leading-tight mb-1">{item.title}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-blue-500 font-bold uppercase">{item.points} баллов</span>
+                        {rawDate ? (
+                          <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">
+                            <Clock size={10} /> {new Date(rawDate).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          !isReadOnly && <span className="text-[9px] font-bold text-amber-500 flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded uppercase"><AlertTriangle size={10} /> Срок не задан</span>
+                        )}
+                      </div>
+                    </div>
+                    {!isReadOnly && <button onClick={() => removeIndicator(item.id)} className="text-gray-300 hover:text-red-500 transition-colors pt-1"><Trash2 size={16} /></button>}
+                  </div>
+                )})}
               </div>
-              
               <div className="pt-4 border-t border-gray-100">
                 <div className="flex justify-between items-end">
                   <span className="text-sm font-bold text-gray-500 uppercase">Итого:</span>
-                  <div className="text-right">
-                    <span className="text-3xl font-bold text-slate-900">{totalPoints}</span>
-                    <span className="text-sm text-gray-400 font-bold ml-1">/ 600</span>
-                  </div>
+                  <div className="text-right"><span className="text-3xl font-bold text-slate-900">{totalPoints}</span><span className="text-sm text-gray-400 font-bold ml-1">/ 600</span></div>
                 </div>
               </div>
             </div>

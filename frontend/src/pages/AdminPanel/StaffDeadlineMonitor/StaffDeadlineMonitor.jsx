@@ -100,7 +100,12 @@ const StaffDeadlineMonitor = () => {
       setLoading(false);
     }
   }, [selectedFaculty, currentPage, sortBy, searchTerm, token]);
-
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' 
+    });
+  }, [currentPage]);
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -144,20 +149,11 @@ const StaffDeadlineMonitor = () => {
       
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
-        <div className="flex items-center gap-4 group text-left">
-          <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-200/20 group-hover:rotate-6 transition-transform">
-            <Activity size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
-              Контроль <span className="text-blue-600">исполнения</span>
-            </h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">
-              Аналитика соблюдения сроков и дедлайнов
-            </p>
-          </div>
-        </div>
 
+ <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Контроль исполнения</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Аналитика соблюдения сроков и дедлайнов</p>
+        </div>
         <div className="flex items-center gap-3 w-full lg:w-auto">
             <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-slate-50 shadow-sm">
                 <Download size={16} /> Excel

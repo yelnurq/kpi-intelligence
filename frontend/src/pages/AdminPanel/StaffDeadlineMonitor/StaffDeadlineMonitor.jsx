@@ -158,15 +158,8 @@ const StaffDeadlineMonitor = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
         <div className="text-left">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-slate-900 rounded-lg text-white">
-                <LayoutDashboard size={20} />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tighter">KPI Мониторинг</h1>
-          </div>
-          <p className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-            Система контроля дедлайнов • Страница {currentPage} из {paginationMeta.last_page}
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Контроль исполнения</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Проверка активности и временных меток сотрудников</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -234,84 +227,111 @@ const StaffDeadlineMonitor = () => {
 
 
       {/* CONTENT LIST */}
-      <div className="relative space-y-4">
-        {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center space-y-4">
-                <Loader2 className="animate-spin text-blue-600" size={40} />
-                <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Загрузка данных...</p>
-            </div>
-        ) : employees.length > 0 ? (
-          employees.map((user) => (
-            <div key={user.id} className={`bg-white p-6 rounded-[32px] border transition-all group hover:border-blue-200 ${user.overdue > 0 ? 'border-red-100 shadow-sm shadow-red-50/50' : 'border-slate-100 shadow-sm'}`}>
-              <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
-                
-                <div className="flex items-center gap-6 w-full lg:w-auto text-left">
-                  <button 
-                    onClick={() => toggleSelect(user.id)} 
-                    className={`transition-all transform hover:scale-110 ${selectedIds.includes(user.id) ? 'text-blue-600' : 'text-slate-200'}`}
-                  >
-                      {selectedIds.includes(user.id) ? <CheckSquare size={24} fill="currentColor" /> : <Square size={24} />}
-                  </button>
-                  
-                  <div className="relative">
-                    <div className={`w-16 h-16 rounded-[22px] flex items-center justify-center font-black text-xl shrink-0 transition-transform group-hover:rotate-3 ${user.overdue > 3 ? 'bg-red-600 text-white' : user.overdue > 0 ? 'bg-amber-500 text-white' : 'bg-slate-900 text-white'}`}>
-                      {user.name.charAt(0)}
-                    </div>
-                    {user.overdue > 0 && (
-                        <div className="absolute -top-2 -right-2 bg-red-600 text-white w-7 h-7 rounded-full border-4 border-white flex items-center justify-center text-[10px] font-black">
-                            {user.overdue}
-                        </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-black text-slate-900 text-lg tracking-tight group-hover:text-blue-600 transition-colors">{user.name}</h4>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase mt-1 tracking-widest">
-                      <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500"/> {user.faculty}</span>
-                      <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
-                    </div>
-                  </div>
+<div className="relative min-h-[400px] space-y-4">
+  {/* OVERLAY LOADER (когда данные обновляются, но список не пуст) */}
+  {loading && employees.length > 0 && (
+    <div className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] flex items-start justify-center pt-20">
+      <div className="bg-white px-6 py-3 rounded-full shadow-xl border border-slate-100 flex items-center gap-3 animate-in fade-in zoom-in duration-200">
+        <Loader2 className="animate-spin text-blue-600" size={20} />
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Обновление...</span>
+      </div>
+    </div>
+  )}
+
+  {loading && employees.length === 0 ? (
+    <div className="py-20 flex flex-col items-center justify-center space-y-4">
+      <Loader2 className="animate-spin text-blue-600" size={40} />
+      <p className="text-[11px] font-bold uppercase text-slate-400 tracking-widest">Загрузка данных...</p>
+    </div>
+  ) : employees.length > 0 ? (
+    <div className="grid grid-cols-1 gap-4">
+      {employees.map((user) => (
+        <div 
+          key={user.id} 
+          className={`bg-white p-6 rounded-2xl border transition-all group hover:shadow-md ${
+            user.overdue > 0 ? 'border-red-100' : 'border-slate-200 shadow-sm'
+          }`}
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            
+            {/* LEFT SIDE: Selection + Avatar + Info */}
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <button 
+                onClick={() => toggleSelect(user.id)} 
+                className={`transition-all shrink-0 ${selectedIds.includes(user.id) ? 'text-blue-600' : 'text-slate-200 hover:text-slate-400'}`}
+              >
+                {selectedIds.includes(user.id) ? <CheckSquare size={22} fill="currentColor" /> : <Square size={22} />}
+              </button>
+
+              <div className="relative shrink-0">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl transition-all ${
+                  user.overdue > 3 ? 'bg-red-600 text-white' : 
+                  user.overdue > 0 ? 'bg-amber-500 text-white' : 
+                  'bg-slate-900 text-white'
+                }`}>
+                  {user.name.charAt(0)}
                 </div>
-
-                <div className="flex flex-wrap items-center justify-between lg:justify-end gap-12 w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0">
-                  <div className="w-56 space-y-2.5">
-                      <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-tighter">
-                          <span className="text-slate-400">Прогресс выполнения</span>
-                          <span className={`text-sm ${user.progress < 40 ? 'text-red-500' : 'text-emerald-500'}`}>{user.progress}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden p-0.5">
-                          <div 
-                              className={`h-full rounded-full transition-all duration-1000 shadow-sm ${user.progress < 40 ? 'bg-red-500' : 'bg-emerald-500'}`} 
-                              style={{ width: `${user.progress}%` }} 
-                          />
-                      </div>
+                {user.overdue > 0 && (
+                  <div className="absolute -top-1.5 -right-1.5 bg-red-600 text-white w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-black">
+                    {user.overdue}
                   </div>
+                )}
+              </div>
 
-                  <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
-                    <a href={`tel:${user.phone}`} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                        <Phone size={18} />
-                    </a>
-                    <button 
-                      onClick={() => setSelectedEmployee(user)}
-                      className="flex items-center gap-2 px-5 py-3 bg-slate-900 text-white rounded-[18px] text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:shadow-lg transition-all active:scale-95"
-                    >
-                      Детали <ChevronRight size={14} />
-                    </button>
-                  </div>
+              <div className="text-left">
+                <h4 className="font-bold text-slate-900 text-base leading-tight group-hover:text-blue-600 transition-colors">
+                  {user.name}
+                </h4>
+                <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-1 uppercase tracking-tight">
+                  <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500"/> {user.faculty}</span>
+                  <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-20 text-center">
-             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-                <Users size={40} />
-             </div>
-             <h3 className="text-xl font-black text-slate-900">Сотрудники не найдены</h3>
-          </div>
-        )}
-      </div>
 
+            {/* RIGHT SIDE: Progress + Actions */}
+            <div className="flex flex-wrap items-center justify-between md:justify-end gap-8 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0">
+              
+              {/* Progress Section */}
+              <div className="w-full md:w-48 space-y-2">
+                <div className="flex justify-between items-end text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-slate-400 text-[9px]">Прогресс</span>
+                  <span className={user.progress < 40 ? 'text-red-500' : 'text-emerald-500'}>{user.progress}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${user.progress < 40 ? 'bg-red-500' : 'bg-emerald-500'}`} 
+                    style={{ width: `${user.progress}%` }} 
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 border-l border-slate-100 pl-6 ml-auto md:ml-0">
+                <a href={`tel:${user.phone}`} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <Phone size={18} />
+                </a>
+                <button 
+                  onClick={() => setSelectedEmployee(user)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 shadow-sm transition-all active:scale-95"
+                >
+                  Детали <ChevronRight size={14} />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-20 text-center">
+      <Users size={32} className="text-slate-200 mx-auto mb-6" />
+      <h3 className="text-xl font-bold text-slate-900">Сотрудники не найдены</h3>
+      <p className="text-sm text-slate-400 mt-2">Попробуйте изменить параметры поиска или фильтрации</p>
+    </div>
+  )}
+</div>
       {/* --- ПАГИНАЦИЯ --- */}
       {!loading && paginationMeta.last_page > 1 && (
         <div className="flex items-center justify-center gap-3 mt-12 pb-10">

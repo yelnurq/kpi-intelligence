@@ -231,51 +231,99 @@ public function getMyIndicatorsDeadline(Request $request)
 }
 public function getStaffDeadlineMonitor(Request $request) 
 {
-    // Загружаем юзеров со всеми планами и всеми их активностями
-    $users = User::with(['kpiPlans.indicator', 'activities', 'faculty'])
-        ->get()
-        ->map(function($user) {
-            
-            $plans = $user->kpiPlans;
-            $allUserActivities = $user->activities; // Коллекция всех загрузок юзера
-            
-            // 1. Считаем выполненные планы
-            // Мы смотрим, есть ли в коллекции активностей записи с нужным indicator_id
-            $completedCount = $plans->filter(function($plan) use ($allUserActivities) {
-                return $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
-            })->count();
+    // Используем withCount для агрегации данных прямо в SQL (это быстрее и позволяет сортировать)
+    $query = User::query()->with(['faculty']);
 
-            // 2. Расчет прогресса
-            $totalCount = $plans->count();
-            $progress = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 0;
+    // 1. Считаем общее кол-во планов
+    $query->withCount(['kpiPlans as total_plans_count']);
 
-            // 3. Считаем просроченные (Дедлайн прошел И активности нет)
-            $overdueCount = $plans->filter(function($plan) use ($allUserActivities) {
-                $hasActivity = $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
-                return $plan->deadline < now() && !$hasActivity;
-            })->count();
-
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'faculty' => $user->faculty->short_title ?? $user->faculty->title ?? '—',
-                'overdue' => $overdueCount,
-                'progress' => $progress,
-                'indicators' => $plans->map(function($plan) use ($allUserActivities) {
-                    $hasActivity = $allUserActivities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
-                    $isOverdue = $plan->deadline < now() && !$hasActivity;
-                    
-                    return [
-                        'id' => $plan->id,
-                        'title' => $plan->indicator->name ?? $plan->indicator->title ?? 'Без названия',
-                        'status' => $hasActivity ? 'completed' : ($isOverdue ? 'overdue' : 'pending'),
-                        'date' => $plan->deadline ? $plan->deadline->format('Y-m-d') : '—'
-                    ];
-                })
-            ];
+    // 2. Считаем кол-во выполненных (где есть соответствующая activity)
+    $query->withCount(['kpiPlans as completed_plans_count' => function($q) {
+        $q->whereHas('indicator.activities', function($sub) {
+            // Фильтруем активности именно этого пользователя
+            $sub->whereColumn('user_id', 'users.id');
         });
+    }]);
 
-    return response()->json(['status' => 'success', 'data' => $users]);
+    // 3. Считаем кол-во просроченных (deadline прошел И активности нет)
+    $query->withCount(['kpiPlans as overdue_plans_count' => function($q) {
+        $q->where('deadline', '<', now())
+          ->whereDoesntHave('indicator.activities', function($sub) {
+              $sub->whereColumn('user_id', 'users.id');
+          });
+    }]);
+
+    // --- ФИЛЬТРАЦИЯ ---
+    
+    // По факультету
+    if ($request->has('faculty') && $request->faculty !== 'all') {
+        $query->whereHas('faculty', function($q) use ($request) {
+            $q->where('short_title', $request->faculty)
+              ->orWhere('title', $request->faculty);
+        });
+    }
+
+    // По поиску (ФИО или Email)
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+
+    // --- СОРТИРОВКА (Backend) ---
+    $sortBy = $request->get('sort_by', 'overdue'); // дефолт
+
+    if ($sortBy === 'overdue') {
+        $query->orderBy('overdue_plans_count', 'desc');
+    } elseif ($sortBy === 'progress') {
+        // Сортировка по прогрессу: (completed / total)
+        // Чтобы избежать деления на ноль в SQL, используем логику или просто сортируем по кол-ву выполненных
+        $query->orderByRaw('(CASE WHEN total_plans_count > 0 THEN (completed_plans_count * 100 / total_plans_count) ELSE 0 END) DESC');
+    } elseif ($sortBy === 'name') {
+        $query->orderBy('name', 'asc');
+    }
+
+    // --- ПАГИНАЦИЯ ---
+    $usersPaginator = $query->paginate(30);
+
+    // Трансформация для ответа
+    $usersPaginator->through(function($user) {
+        $total = $user->total_plans_count;
+        $completed = $user->completed_plans_count;
+        
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'faculty' => $user->faculty->short_title ?? $user->faculty->title ?? '—',
+            'overdue' => $user->overdue_plans_count,
+            'progress' => $total > 0 ? round(($completed / $total) * 100) : 0,
+            // Подгружаем индикаторы только для модалки (ленивая загрузка для 30 человек не убьет БД)
+            'indicators' => $user->kpiPlans->map(function($plan) use ($user) {
+                // Проверяем наличие активности для конкретного плана
+                $hasActivity = $user->activities->where('indicator_id', $plan->kpi_indicator_id)->isNotEmpty();
+                $isOverdue = $plan->deadline < now() && !$hasActivity;
+
+                return [
+                    'id' => $plan->id,
+                    'title' => $plan->indicator->title ?? 'Без названия',
+                    'status' => $hasActivity ? 'completed' : ($isOverdue ? 'overdue' : 'pending'),
+                    'date' => $plan->deadline ? $plan->deadline->toDateString() : '—'
+                ];
+            })
+        ];
+    });
+
+    return response()->json([
+        'status' => 'success', 
+        'data' => $usersPaginator->items(),
+        'meta' => [
+            'current_page' => $usersPaginator->currentPage(),
+            'last_page' => $usersPaginator->lastPage(),
+            'total' => $usersPaginator->total(),
+        ]
+    ]);
 }
 }

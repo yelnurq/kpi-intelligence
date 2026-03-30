@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Search, Calendar, CheckCircle2, Clock, AlertTriangle, X, 
-  MessageCircle, ChevronRight, Send, CheckSquare, Square, 
+  MessageCircle, ChevronRight, ChevronLeft, Send, CheckSquare, Square, 
   Users, LayoutDashboard, Loader2, Bell, Download, 
-  ExternalLink, Phone, Mail
+  Phone, Mail
 } from 'lucide-react';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
@@ -39,35 +39,66 @@ const StaffDeadlineMonitor = () => {
   const [isSending, setIsSending] = useState(false);
   const [sortBy, setSortBy] = useState('overdue');
 
+  // Состояние пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState({
+    last_page: 1,
+    total: 0,
+    per_page: 30
+  });
+
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // --- ЗАГРУЗКА ДАННЫХ С БЭКЕНДА ---
+  // --- ЗАГРУЗКА ДАННЫХ С БЭКЕНДА (Backend Filtering & Sorting) ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/staff/deadline-monitor?faculty=${selectedFaculty}`, {
+      // Формируем URL с учетом пагинации, факультета, сортировки и поиска
+      const params = new URLSearchParams({
+        faculty: selectedFaculty,
+        page: currentPage,
+        sort_by: sortBy,
+        search: searchTerm
+      });
+
+      const response = await fetch(`${API_BASE}/admin/staff/deadline-monitor?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
         }
       });
       const result = await response.json();
+      
       if (result.status === 'success') {
-        setEmployees(result.data);
+        // Мы ожидаем структуру: result.data (массив) и result.meta
+        setEmployees(result.data || []);
+        if (result.meta) {
+          setPaginationMeta({
+            last_page: result.meta.last_page,
+            total: result.meta.total,
+            per_page: result.meta.per_page
+          });
+        }
       }
     } catch (error) {
       console.error("Ошибка при загрузке сотрудников:", error);
     } finally {
       setLoading(false);
     }
-  }, [selectedFaculty, token]);
+  }, [selectedFaculty, currentPage, sortBy, searchTerm, token]);
 
+  // Вызываем fetchData при изменении любого фильтра
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // --- ЛОГИКА УВЕДОМЛЕНИЙ (GREEN API) ---
+  // Сброс на 1 страницу при изменении фильтров поиска/сортировки
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFaculty, sortBy, searchTerm]);
+
+  // --- ЛОГИКА УВЕДОМЛЕНИЙ ---
   const handleNotify = async (ids) => {
     if (ids.length === 0) return;
     setIsSending(true);
@@ -85,7 +116,7 @@ const StaffDeadlineMonitor = () => {
         alert(`Уведомления успешно отправлены (${ids.length})`);
         setSelectedIds([]);
       } else {
-        alert("Ошибка при отправке через Green API");
+        alert("Ошибка при отправке");
       }
     } catch (e) {
       alert("Сетевая ошибка при отправке");
@@ -93,40 +124,13 @@ const StaffDeadlineMonitor = () => {
       setIsSending(false);
     }
   };
-const filteredAndSorted = useMemo(() => {
-    let result = [...employees];
 
-    // 1. Поиск по имени или Email
-    if (searchTerm) {
-      const lowSearch = searchTerm.toLowerCase();
-      result = result.filter(emp => 
-        emp.name.toLowerCase().includes(lowSearch) || 
-        emp.email.toLowerCase().includes(lowSearch)
-      );
-    }
-
-    // 2. Фильтрация по факультету
-    if (selectedFaculty !== 'all') {
-      result = result.filter(emp => {
-        // Так как PHP возвращает строку, сравниваем напрямую
-        const facultyName = typeof emp.faculty === 'string' ? emp.faculty : emp.faculty?.short_title;
-        return facultyName === selectedFaculty;
-      });
-    }
-
-    // 3. Сортировка
-    return result.sort((a, b) => {
-      if (sortBy === 'overdue') return b.overdue - a.overdue;
-      if (sortBy === 'progress') return a.progress - b.progress;
-      return a.name.localeCompare(b.name);
-    });
-  }, [employees, searchTerm, sortBy, selectedFaculty]);
-
+  // Статистика (считается на основе текущей страницы)
   const stats = useMemo(() => ({
-    totalOverdue: filteredAndSorted.reduce((acc, curr) => acc + curr.overdue, 0),
-    avgProgress: Math.round(filteredAndSorted.reduce((acc, curr) => acc + curr.progress, 0) / (filteredAndSorted.length || 1)),
-    criticalUsers: filteredAndSorted.filter(u => u.overdue > 0).length
-  }), [filteredAndSorted]);
+    totalOverdue: employees.reduce((acc, curr) => acc + curr.overdue, 0),
+    avgProgress: Math.round(employees.reduce((acc, curr) => acc + curr.progress, 0) / (employees.length || 1)),
+    criticalUsers: employees.filter(u => u.overdue > 0).length
+  }), [employees]);
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -145,7 +149,7 @@ const filteredAndSorted = useMemo(() => {
             <h1 className="text-2xl font-black text-slate-900 tracking-tighter">KPI Мониторинг</h1>
           </div>
           <p className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-            Система контроля дедлайнов для Staff Management
+            Система контроля дедлайнов • Страница {currentPage} из {paginationMeta.last_page}
           </p>
         </div>
 
@@ -166,8 +170,8 @@ const filteredAndSorted = useMemo(() => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-        <StatCard label="Критические дедлайны" value={stats.totalOverdue} icon={AlertTriangle} colorClass="bg-red-50 text-red-600" description="Общее число просрочек" isPrimary={true} />
-        <StatCard label="Средний прогресс" value={stats.avgProgress} icon={CheckCircle2} colorClass="bg-blue-50 text-blue-600" description="По всем показателям" unit="%" />
+        <StatCard label="Критические дедлайны" value={stats.totalOverdue} icon={AlertTriangle} colorClass="bg-red-50 text-red-600" description="На текущей странице" isPrimary={true} />
+        <StatCard label="Средний прогресс" value={stats.avgProgress} icon={CheckCircle2} colorClass="bg-blue-50 text-blue-600" description="По текущим данным" unit="%" />
         <StatCard label="В зоне риска" value={stats.criticalUsers} icon={Bell} colorClass="bg-amber-50 text-amber-600" description="Нуждаются в уведомлении" unit="чел." />
       </div>
 
@@ -177,7 +181,7 @@ const filteredAndSorted = useMemo(() => {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input 
             type="text" 
-            placeholder="Поиск по ФИО или Email..."
+            placeholder="Поиск по ФИО и Email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
@@ -193,7 +197,7 @@ const filteredAndSorted = useMemo(() => {
                 <option value="all">Все факультеты</option>
                 <option value="ТФ">Технологический факультет</option>
                 <option value="ФЭиБ">Факультет экономики и бизнеса</option>
-                <option value="ФИиИТ">Факультет инжиниринга и информационных технологий</option>
+                <option value="ФИиИТ">Факультет инжиниринга и ИТ</option>
             </select>
             
             <select 
@@ -213,10 +217,10 @@ const filteredAndSorted = useMemo(() => {
         {loading ? (
             <div className="py-20 flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-blue-600" size={40} />
-                <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Синхронизация данных...</p>
+                <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Загрузка данных...</p>
             </div>
-        ) : filteredAndSorted.length > 0 ? (
-          filteredAndSorted.map((user) => (
+        ) : employees.length > 0 ? (
+          employees.map((user) => (
             <div key={user.id} className={`bg-white p-6 rounded-[32px] border transition-all group hover:border-blue-200 ${user.overdue > 0 ? 'border-red-100 shadow-sm shadow-red-50/50' : 'border-slate-100 shadow-sm'}`}>
               <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
                 
@@ -242,8 +246,7 @@ const filteredAndSorted = useMemo(() => {
                   <div>
                     <h4 className="font-black text-slate-900 text-lg tracking-tight group-hover:text-blue-600 transition-colors">{user.name}</h4>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase mt-1 tracking-widest">
-                      <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500"/> {user.department?.short_title || user.faculty?.short_title}</span>
-
+                      <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500"/> {user.faculty}</span>
                       <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
                     </div>
                   </div>
@@ -288,23 +291,72 @@ const filteredAndSorted = useMemo(() => {
         )}
       </div>
 
+      {/* --- ПАГИНАЦИЯ --- */}
+      {!loading && paginationMeta.last_page > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-12 pb-10">
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:text-blue-600 hover:border-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            {[...Array(paginationMeta.last_page)].map((_, i) => {
+              const pageNum = i + 1;
+              if (
+                pageNum === 1 || 
+                pageNum === paginationMeta.last_page || 
+                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-12 h-12 rounded-2xl text-[11px] font-black transition-all ${
+                      currentPage === pageNum 
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 scale-110' 
+                      : 'bg-white border border-slate-200 text-slate-400 hover:border-blue-200'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              }
+              if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                return <span key={pageNum} className="text-slate-300 font-bold px-1">...</span>;
+              }
+              return null;
+            })}
+          </div>
+
+          <button 
+            disabled={currentPage === paginationMeta.last_page}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:text-blue-600 hover:border-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
+
       {/* DETAILED MODAL */}
       {selectedEmployee && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl relative overflow-hidden text-left border border-slate-200 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 text-left">
+          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
             <div className={`absolute top-0 left-0 w-2 h-full ${selectedEmployee.overdue > 0 ? 'bg-red-600' : 'bg-blue-600'}`} />
             
             <div className="p-8 border-b border-slate-100 bg-white">
               <div className="flex justify-between items-start">
-                <div className="space-y-1">
+                <div className="space-y-1 text-left">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-md tracking-widest ${selectedEmployee.overdue > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
                       {selectedEmployee.overdue > 0 ? 'Внимание: Долги' : 'Стабильно'}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">{selectedEmployee.faculty?.short_title}</span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">{selectedEmployee.faculty}</span>
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{selectedEmployee.name}</h3>
-                  <p className="text-sm text-slate-500 font-medium">{selectedEmployee.department}</p>
                 </div>
                 <button onClick={() => setSelectedEmployee(null)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-all">
                   <X size={24} />
@@ -314,13 +366,13 @@ const filteredAndSorted = useMemo(() => {
 
             <div className="p-8 overflow-y-auto bg-slate-50/50 flex-1">
               <div className="space-y-6">
-                <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Просроченные индикаторы</p>
+                <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-left">Просроченные индикаторы</p>
                 <div className="grid gap-3">
                   {selectedEmployee.indicators?.filter(ind => ind.status === 'overdue').length > 0 ? (
                     selectedEmployee.indicators.filter(ind => ind.status === 'overdue').map((ind) => (
                       <div key={ind.id} className="bg-white border border-red-100 p-5 rounded-2xl flex justify-between items-center shadow-sm">
-                        <div className="space-y-2">
-                          <p className="text-sm font-bold text-slate-800 leading-tight">{ind.name || ind.title}</p>
+                        <div className="space-y-2 text-left">
+                          <p className="text-sm font-bold text-slate-800 leading-tight">{ind.title}</p>
                           <span className="text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1.5 uppercase text-red-600 bg-red-50">
                             <Clock size={12} /> Дедлайн: {ind.date}
                           </span>
@@ -339,14 +391,14 @@ const filteredAndSorted = useMemo(() => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
                     <Phone size={14} className="text-blue-500" />
-                    <div>
+                    <div className="text-left">
                       <p className="text-[8px] font-black text-slate-400 uppercase">Телефон</p>
-                      <p className="text-xs font-bold text-slate-700">{selectedEmployee.phone}</p>
+                      <p className="text-xs font-bold text-slate-700">{selectedEmployee.phone || '—'}</p>
                     </div>
                   </div>
                   <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
                     <Mail size={14} className="text-slate-500" />
-                    <div>
+                    <div className="text-left">
                       <p className="text-[8px] font-black text-slate-400 uppercase">Email</p>
                       <p className="text-xs font-bold text-slate-700">{selectedEmployee.email}</p>
                     </div>
@@ -368,15 +420,6 @@ const filteredAndSorted = useMemo(() => {
           </div>
         </div>
       )}
-
-      {/* FOOTER */}
-      <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
-          <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span>Система активна • Green API подключен</span>
-          </div>
-          <span>Kpi Intelligence • {new Date().getFullYear()}</span>
-      </div>
     </main>
   );
 };

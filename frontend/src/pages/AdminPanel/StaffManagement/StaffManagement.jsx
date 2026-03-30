@@ -146,32 +146,47 @@ const StaffManagement = () => {
     fetchOptions();
   };
 
-  const handleEditClick = (user) => {
-    setEditingId(user.id);
-    setIsModalOpen(true);
-    
-    const initialFormData = {
+const handleEditClick = async (user) => {
+  setEditingId(user.id);
+  setIsModalOpen(true);
+  
+  // 1. Сначала загружаем свежие опции, если их еще нет
+  const freshOptions = await fetchOptions(); 
+
+  if (freshOptions) {
+    // 2. Ищем совпадения. 
+    // ВАЖНО: используем опциональную цепочку ?. и приведение к нижнему регистру для надежности
+    const foundFaculty = freshOptions.faculties.find(f => 
+      f.name?.toLowerCase() === user.faculty?.toLowerCase() || 
+      f.short_name?.toLowerCase() === user.faculty_short?.toLowerCase()
+    );
+
+    const foundDept = freshOptions.departments.find(d => 
+      d.name?.toLowerCase() === user.department?.toLowerCase()
+    );
+
+    const foundPos = freshOptions.positions.find(p => 
+      p.name?.toLowerCase() === user.position?.toLowerCase()
+    );
+
+    const foundDeg = freshOptions.degrees.find(d => 
+      d.name?.toLowerCase() === user.academic_degree?.toLowerCase()
+    );
+
+    setFormData({
       name: user.name || '',
       email: user.email || '',
       password: '', 
       password_confirmation: '',
       is_admin: user.is_admin ? 1 : 0,
-      faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-    };
-    setFormData(initialFormData);
-
-    fetchOptions().then(freshOptions => {
-      if (freshOptions) {
-        setFormData(prev => ({
-          ...prev,
-          faculty_id: freshOptions.faculties.find(f => (f.short_title === user.faculty_short || f.title === user.faculty))?.id || '',
-          department_id: freshOptions.departments.find(d => d.title === user.department)?.id || '',
-          position_id: freshOptions.positions.find(p => p.title === user.position)?.id || '',
-          academic_degree_id: freshOptions.degrees.find(d => d.title === user.academic_degree)?.id || '',
-        }));
-      }
+      // Приводим к строке, так как <select> работает со строковыми значениями
+      faculty_id: foundFaculty ? foundFaculty.id.toString() : '',
+      department_id: foundDept ? foundDept.id.toString() : '',
+      position_id: foundPos ? foundPos.id.toString() : '',
+      academic_degree_id: foundDeg ? foundDeg.id.toString() : '',
     });
-  };
+  }
+};
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Удалить пользователя?")) return;

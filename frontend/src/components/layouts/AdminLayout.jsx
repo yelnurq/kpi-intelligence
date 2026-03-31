@@ -26,13 +26,13 @@ const AdminLayout = () => {
 
   // 1. Определение всех пунктов меню с привязкой к ролям
   const allMenuItems = [
-    { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов', roles: ['super_admin', 'dean'] },
-    { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean'] },
+    { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов', roles: ['super_admin', 'dean', 'head_of_dept'] },
+    { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI', roles: ['super_admin', 'academic_office'] },
-    { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи', roles: ['super_admin', 'academic_office','dean'] },
+    { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий', roles: ['super_admin', 'academic_office'] },
-    { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг', roles: ['super_admin', 'academic_office','dean'] },
-    { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки', roles: ['super_admin', 'academic_office','dean'] },
+    { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
+    { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
   ];
 
   useEffect(() => {
@@ -137,13 +137,24 @@ const AdminLayout = () => {
                 <p className="text-[10px] font-black text-white truncate uppercase tracking-tighter">
                   {user.name}
                 </p>
-                <p className="text-[9px] text-blue-400 font-bold truncate uppercase tracking-widest">
-                  {user.role === 'super_admin' 
-                    ? 'Администратор' 
-                    : (user.role === 'academic_office' || user.role === 'dean')
-                      ? user.academic_specialization 
-                      : 'Faculty Dean'}
-                </p>
+            <p className="text-[9px] text-blue-400 font-bold truncate uppercase tracking-widest">
+              {(() => {
+                if (user.role === 'super_admin') {
+                  return 'Администратор';
+                }
+                
+                if (user.role === 'head_of_dept') {
+                  // Если есть название кафедры в объекте, выводим его, иначе общую специализацию
+                  return user.department?.title || user.department || 'Заведующий кафедрой';
+                }
+                
+                if (user.role === 'academic_office' || user.role === 'dean') {
+                  return user.academic_specialization || (user.role === 'dean' ? 'Декан факультета' : 'Академический офис');
+                }
+                
+                return 'Faculty Dean';
+              })()}
+            </p>
               </div>
             )}
           </div>

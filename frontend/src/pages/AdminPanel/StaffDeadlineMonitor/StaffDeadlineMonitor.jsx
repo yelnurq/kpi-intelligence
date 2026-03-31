@@ -294,6 +294,7 @@ const StaffDeadlineMonitor = () => {
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-1 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500"/> {user.faculty}</span>
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
+                        <span className="flex items-center gap-1.5"><Mail size={12} /> {user.department}</span>
                       </div>
                     </div>
                   </div>

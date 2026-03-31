@@ -301,6 +301,7 @@ public function getStaffDeadlineMonitor(Request $request)
             'name' => $user->name,
             'email' => $user->email,
             'faculty' => $user->faculty->short_title ?? '—',
+            'department' => $user->department->title ?? '—',
             'overdue' => $user->overdue_plans_count,
             'progress' => $total > 0 ? round(($completed / $total) * 100) : 0,
             'indicators' => $user->kpiPlans->map(function($plan) use ($user) {

@@ -122,7 +122,9 @@ public function getDeanSubmissions(Request $request)
 {
     try {
         $user = $this->getAuthenticatedUser($request);
-        $allowedRoles = ['dean', 'super_admin'];
+        
+        // 1. Добавляем роль head_of_dept в разрешенные
+        $allowedRoles = ['dean', 'head_of_dept', 'super_admin'];
         if (!$user || !in_array($user->role, $allowedRoles)) {
             return response()->json(['status' => 'error', 'message' => 'Доступ запрещен'], 403);
         }
@@ -131,18 +133,21 @@ public function getDeanSubmissions(Request $request)
         $deptId = $request->query('department_id');
         $perPage = $request->query('per_page', 10);
 
-        // Создаем базовый запрос для статистики (без пагинации и селекта)
         $baseQuery = \App\Models\User::query()
             ->join('kpi_plan_submissions', 'users.id', '=', 'kpi_plan_submissions.user_id')
             ->where('kpi_plan_submissions.academic_year', $year);
 
+        // 2. Логика ограничений в зависимости от роли
         if ($user->role === 'dean') {
+            // Декан видит весь свой факультет
             $baseQuery->where('users.faculty_id', $user->faculty_id);
+        } elseif ($user->role === 'head_of_dept') {
+            // Завкафедрой видит ТОЛЬКО свою кафедру (игнорируем входящий department_id из запроса для безопасности)
+            $baseQuery->where('users.department_id', $user->department_id);
+            $deptId = $user->department_id; // Перезаписываем для корректности дальнейших фильтров
         }
 
-        // РАСЧЕТ СТАТИСТИКИ ПО ВСЕЙ БАЗЕ
-        // Копируем запрос, чтобы фильтры по кафедрам/статусам не ломали общую статистику 
-        // (или наоборот, если статистика должна зависеть от фильтра кафедры - уберите/оставьте условия ниже)
+        // РАСЧЕТ СТАТИСТИКИ ПО ВСЕЙ ДОСТУПНОЙ ОБЛАСТИ (Факультет или Кафедра)
         $statsData = [
             'total' => (clone $baseQuery)->count(),
             'pending' => (clone $baseQuery)->where('kpi_plan_submissions.status', 'submitted')->count(),
@@ -150,12 +155,12 @@ public function getDeanSubmissions(Request $request)
             'rejected' => (clone $baseQuery)->where('kpi_plan_submissions.status', 'rejected')->count(),
         ];
 
-        // ПРИМЕНЯЕМ ФИЛЬТРЫ ДЛЯ ОСНОВНОГО СПИСКА
         $query = (clone $baseQuery)
             ->leftJoin('faculties', 'users.faculty_id', '=', 'faculties.id')
             ->leftJoin('departments', 'users.department_id', '=', 'departments.id');
 
-        if ($deptId && $deptId !== 'all') {
+        // 3. Дополнительная фильтрация (только для декана или админа, завкафедрой уже ограничен выше)
+        if ($user->role !== 'head_of_dept' && $deptId && $deptId !== 'all') {
             $query->where('users.department_id', $deptId);
         }
 
@@ -187,11 +192,11 @@ public function getDeanSubmissions(Request $request)
         return response()->json([
             'status' => 'success',
             'data' => $submissionsPaginator->items(),
-            'stats' => $statsData, // Передаем статистику всей базы
+            'stats' => $statsData,
             'meta' => [
                 'current_page' => $submissionsPaginator->currentPage(),
                 'last_page' => $submissionsPaginator->lastPage(),
-                'total' => $submissionsPaginator->total(), // Всего записей с учетом текущих фильтров
+                'total' => $submissionsPaginator->total(),
                 'per_page' => $submissionsPaginator->perPage(),
             ]
         ]);

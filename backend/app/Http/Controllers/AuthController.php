@@ -135,7 +135,6 @@ class AuthController extends Controller
 
 public function login(Request $request)
 {
-    // 1. Валидация: меняем 'email' на 'string', чтобы проходил UPN (логин@домен)
     $rules = [
         "email"    => "required|string", 
         "password" => "required|string",
@@ -146,22 +145,12 @@ public function login(Request $request)
         return response()->json(["status" => "error", "errors" => $validator->errors()], 422);
     }
 
-    // Ищем пользователя в локальной БД (UPN должен быть сохранен в колонке email)
-    $user = User::where("email", $request->email)->first();
-
-    if (!$user) {
-        return response()->json([
-            "status" => "error",
-            "message" => "Пользователь не найден в системе",
-        ], 401);
-    }
-
     $authenticated = false;
+    $ldapData = null;
     $ldapError = null;
 
-    // --- 2. ПРОВЕРКА ЧЕРЕЗ LDAP (Аналогично вашему рабочему методу) ---
+    // --- 1. ПРОВЕРКА В ACTIVE DIRECTORY ---
     try {
-        // Используем LDAPS (порт 636), так как сервер требует Strong Authentication
         $ldapHost = "ldaps://10.0.1.30"; 
         $ldapPort = 636;
         $ldapConn = @ldap_connect($ldapHost, $ldapPort);
@@ -170,15 +159,27 @@ public function login(Request $request)
             ldap_set_option($ldapConn, LDAP_OPT_PROTOCOL_VERSION, 3);
             ldap_set_option($ldapConn, LDAP_OPT_REFERRALS, 0);
             ldap_set_option($ldapConn, LDAP_OPT_NETWORK_TIMEOUT, 2);
-            
-            // Игнорируем проверку SSL сертификата (частая проблема в локальных сетях)
             putenv('LDAPTLS_REQCERT=never'); 
 
-            // Bind по userPrincipalName (логин из запроса)
+            // Пытаемся забиндиться под данными пользователя
             if (@ldap_bind($ldapConn, $request->email, $request->password)) {
                 $authenticated = true;
-                // Синхронизируем пароль в локальной БД (хэшируем)
-                $user->update(['password' => Hash::make($request->password)]);
+
+                // Если бинд успешен, вытаскиваем данные этого пользователя из AD
+                $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
+                $filter = "(userPrincipalName=" . $request->email . ")";
+                $attributes = ["displayname", "userprincipalname", "title", "department"];
+                $search = ldap_search($ldapConn, $baseDn, $filter, $attributes);
+                $entries = ldap_get_entries($ldapConn, $search);
+
+                if ($entries['count'] > 0) {
+                    $ldapData = [
+                        'name' => $entries[0]['displayname'][0] ?? $entries[0]['cn'][0] ?? 'User',
+                        'email' => $entries[0]['userprincipalname'][0],
+                        'position' => $entries[0]['title'][0] ?? 'N/A',
+                        'department' => $entries[0]['department'][0] ?? 'N/A',
+                    ];
+                }
             } else {
                 $ldapError = ldap_error($ldapConn);
             }
@@ -188,26 +189,48 @@ public function login(Request $request)
         $ldapError = $e->getMessage();
     }
 
-    // --- 3. ЛОКАЛЬНАЯ ПРОВЕРКА (Если AD недоступен или пароль не подошел) ---
-    if (!$authenticated) {
-        if (Hash::check($request->password, $user->password)) {
+    // --- 2. СИНХРОНИЗАЦИЯ С ЛОКАЛЬНОЙ БАЗОЙ ---
+    // Ищем пользователя в БД (по UPN)
+    $user = User::where("email", $request->email)->first();
+
+    if ($authenticated && $ldapData) {
+        // Если в AD всё ок, а в БД пользователя нет — создаем его
+        if (!$user) {
+            $user = User::create([
+                'name' => $ldapData['name'],
+                'email' => $ldapData['email'], // Сохраняем UPN как email
+                'password' => Hash::make($request->password),
+                'role' => 'user', // Роль по умолчанию
+                'position' => $ldapData['position'],
+                'department' => $ldapData['department'],
+            ]);
+        } else {
+            // Если пользователь уже есть, обновляем ему пароль и данные
+            $user->update([
+                'password' => Hash::make($request->password),
+                'name' => $ldapData['name'],
+                'position' => $ldapData['position']
+            ]);
+        }
+    } else {
+        // Если LDAP не сработал (например, нет сети), пробуем локальный вход
+        if ($user && Hash::check($request->password, $user->password)) {
             $authenticated = true;
         }
     }
 
-    // --- 4. РЕЗУЛЬТАТ ---
-    if (!$authenticated) {
+    // --- 3. ПРОВЕРКА РЕЗУЛЬТАТА ---
+    if (!$authenticated || !$user) {
         return response()->json([
             "status"  => "error",
             "message" => "Неверный логин или пароль",
-            "debug"   => $ldapError // Оставь для тестов в Postman, потом удалишь
+            "debug"   => $ldapError
         ], 401);
     }
 
-    // --- 5. ТОКЕН (Как в твоем React) ---
+    // --- 4. ГЕНЕРАЦИЯ ТОКЕНА ---
     try {
         Token::where('user_id', $user->id)->delete(); 
-        
         $tokenValue = Str::random(60);
         $token = Token::create([
             "token"   => $tokenValue,
@@ -216,12 +239,11 @@ public function login(Request $request)
 
         return response()->json([
             "status"       => "success",
-            "access_token" => $token, // Возвращаем объект, как просит фронт
-            "token_type"   => "Bearer",
+            "access_token" => $token,
             "user"         => $user
         ]);
     } catch (\Exception $e) {
-        return response()->json(["status" => "error", "message" => "Ошибка токена"], 500);
+        return response()->json(["status" => "error", "message" => "Ошибка авторизации"], 500);
     }
 }
     public function logout(Request $request)

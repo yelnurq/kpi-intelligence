@@ -168,38 +168,38 @@ public function run(): void
 
 
 
-    // --- 2. ГЕНЕРАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ---
-    // Убедись, что в UserFactory роль установлена как 'teacher'
-    \App\Models\User::factory(50)->create();
+    // // --- 2. ГЕНЕРАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ---
+    // // Убедись, что в UserFactory роль установлена как 'teacher'
+    // \App\Models\User::factory(50)->create();
 
-    // Выбираем всех преподавателей для создания KPI данных
-    $teachers = \App\Models\User::where('role', 'teacher')->get();
+    // // Выбираем всех преподавателей для создания KPI данных
+    // $teachers = \App\Models\User::where('role', 'teacher')->get();
 
-    // --- 3. ПЛАНЫ KPI ---
-    \App\Models\UserKpiPlan::factory(40)->create();
+    // // --- 3. ПЛАНЫ KPI ---
+    // \App\Models\UserKpiPlan::factory(40)->create();
 
-    // --- 4. АКТИВНОСТИ И ДОКАЗАТЕЛЬСТВА ---
-    \App\Models\KpiActivity::factory(25)
-        ->create()
-        ->each(function ($activity) {
-            \App\Models\KpiEvidence::factory(rand(1, 3))->create([
-                'kpi_activity_id' => $activity->id
-            ]);
-        });
+    // // --- 4. АКТИВНОСТИ И ДОКАЗАТЕЛЬСТВА ---
+    // \App\Models\KpiActivity::factory(25)
+    //     ->create()
+    //     ->each(function ($activity) {
+    //         \App\Models\KpiEvidence::factory(rand(1, 3))->create([
+    //             'kpi_activity_id' => $activity->id
+    //         ]);
+    //     });
 
-    // --- 5. ПОДАЧА ПЛАНОВ (SUBMISSIONS) ---
-    foreach ($teachers as $teacher) {
-        \App\Models\KpiPlanSubmission::updateOrCreate(
-            [
-                'user_id' => $teacher->id,
-                'academic_year' => '2025/2026',
-            ],
-            [
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'comment' => 'Генерация тестовых данных',
-            ]
-        );
-    }
+    // // --- 5. ПОДАЧА ПЛАНОВ (SUBMISSIONS) ---
+    // foreach ($teachers as $teacher) {
+    //     \App\Models\KpiPlanSubmission::updateOrCreate(
+    //         [
+    //             'user_id' => $teacher->id,
+    //             'academic_year' => '2025/2026',
+    //         ],
+    //         [
+    //             'status' => 'submitted',
+    //             'submitted_at' => now(),
+    //             'comment' => 'Генерация тестовых данных',
+    //         ]
+    //     );
+    // }
 }
 }

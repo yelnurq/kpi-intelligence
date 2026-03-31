@@ -231,8 +231,19 @@ public function getMyIndicatorsDeadline(Request $request)
 }
 public function getStaffDeadlineMonitor(Request $request) 
 {
+    $currentUser = $this->getAuthenticatedUser($request);
     $query = User::query()->with(['faculty']);
 
+    // --- ОГРАНИЧЕНИЕ ПРАВ ДОСТУПА ---
+    
+    // Если Декан — видит только свой факультет
+    if ($currentUser->role === 'dean') {
+        $query->where('faculty_id', $currentUser->faculty_id);
+    } 
+    // Если Зав. кафедрой — видит только свою кафедру
+    elseif ($currentUser->role === 'head_of_dept') {
+        $query->where('department_id', $currentUser->department_id);
+    }
     // Базовая агрегация для каждого пользователя
     $query->withCount(['kpiPlans as total_plans_count']);
     $query->withCount(['kpiPlans as completed_plans_count' => function($q) {

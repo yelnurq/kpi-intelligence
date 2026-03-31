@@ -53,7 +53,7 @@ class LdapController extends Controller
 
         $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
         $filter = "(&(objectCategory=person)(objectClass=user))";
-        $attributes = ["cn", "mail", "position", "department", "displayname", "company"];
+        $attributes = ["cn", "userPrincipalName", "position", "department", "displayname", "company"];
         
         $users = [];
         $pageSize = 500; 
@@ -69,14 +69,21 @@ class LdapController extends Controller
             $entries = ldap_get_entries($ldapConn, $search);
 
             for ($i = 0; $i < $entries["count"]; $i++) {
-                $users[] = [
-                    'name'       => $entries[$i]["displayname"][0] ?? ($entries[$i]["cn"][0] ?? 'N/A'),
-                    'email'      => $entries[$i]["mail"][0] ?? 'N/A',
-                    'company'    => $entries[$i]["company"][0] ?? 'N/A',
-                    'position'   => $entries[$i]["position"][0] ?? 'N/A',
-                    'department' => $entries[$i]["department"][0] ?? 'N/A',
-                ];
-            }
+    $users[] = [
+        'name' => $entries[$i]["displayname"][0] ?? ($entries[$i]["cn"][0] ?? 'N/A'),
+        
+        // Ключ ОБЯЗАТЕЛЬНО должен быть в нижнем регистре
+        'userPrincipalName' => $entries[$i]["userprincipalname"][0] ?? 'N/A', 
+        
+        'company'    => $entries[$i]["company"][0] ?? 'N/A',
+        
+        // В AD атрибут должности обычно называется 'title', а не 'position'
+        // Проверьте, какой атрибут используется у вас. Если 'title', то:
+        'position'   => $entries[$i]["title"][0] ?? 'N/A', 
+        
+        'department' => $entries[$i]["department"][0] ?? 'N/A',
+    ];
+}
             $cookie = $controls_response[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
 
         } while ($cookie !== null && $cookie != '');

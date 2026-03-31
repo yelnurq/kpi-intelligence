@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\KPIPlanController;
 
-Route::post("/login", [AuthController::class, "login"]);
-Route::post("/register", [AuthController::class, "register"]);
+Route::middleware("logs")->group(function() {
+    Route::post("/login", [AuthController::class, "login"]);
+    Route::post("/register", [AuthController::class, "register"]);   
+    });
 
-Route::middleware("token")->group(function(){
+use App\Http\Controllers\ApiLogController;
+
+Route::middleware(["token", "logs"])->group(function(){
+
+    Route::get('/admin/logs', [ApiLogController::class, 'index']);
+    Route::get('/admin/logs/{id}', [ApiLogController::class, 'show']);
+
     Route::get('/dean/user-plan/{userId}', [KPIPlanController::class, 'getUserPlanDetails']);
     Route::post('/dean/update-status', [KPIPlanController::class, 'updatePlanStatus']);
     Route::get('/get-plan-status', [KPIPlanController::class, 'getPlanStatus']);

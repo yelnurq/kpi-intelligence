@@ -15,7 +15,8 @@ import {
   CopyCheckIcon,
   MonitorDotIcon,
   Menu,
-  X
+  X,
+  Logs
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -31,11 +32,12 @@ const AdminLayout = () => {
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI', roles: ['super_admin', 'academic_office'] },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий', roles: ['super_admin', 'academic_office'] },
+    { id: 'logs', path: '/admin/logs', icon: <Logs size={20} />, label: 'Логи', roles: ['super_admin'] },
     { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
     { id: 'settings', path: '/admin/settings', icon: <Settings size={20} />, label: 'Настройки', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
   ];
 
-  useEffect(() => {
+ useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
 
@@ -45,27 +47,33 @@ const AdminLayout = () => {
     }
 
     const parsedUser = JSON.parse(savedUser);
+    // Приводим роль к нижнему регистру для надежности сравнения
+    const userRole = parsedUser.role?.toLowerCase(); 
     setUser(parsedUser);
 
-    // --- ПРОВЕРКА ДОСТУПА ПО URL ---
-    // Находим текущий пункт меню по пути в строке браузера
+    // Находим текущий пункт меню
     const currentItem = allMenuItems.find(item => item.path === location.pathname);
     
-    // Если мы на странице, которая требует ролей, и у юзера этой роли нет
-    if (currentItem && !currentItem.roles.includes(parsedUser.role)) {
-      console.warn('Access denied for role:', parsedUser.role);
-      
-      // Ищем первую страницу, на которую этому юзеру МОЖНО
-      const firstAvailablePage = allMenuItems.find(item => item.roles.includes(parsedUser.role));
-      
-      if (firstAvailablePage) {
-        navigate(firstAvailablePage.path);
-      } else {
-        navigate('/login'); // Если ролей вообще нет в списке
+    if (currentItem) {
+      // Проверяем наличие роли в массиве (тоже в нижнем регистре)
+      const hasAccess = currentItem.roles.some(role => role.toLowerCase() === userRole);
+
+      if (!hasAccess) {
+        console.warn(`Access denied. User role: [${userRole}], Required roles:`, currentItem.roles);
+        
+        // Редирект на первую доступную страницу
+        const firstAvailablePage = allMenuItems.find(item => 
+          item.roles.some(role => role.toLowerCase() === userRole)
+        );
+        
+        if (firstAvailablePage) {
+          navigate(firstAvailablePage.path);
+        } else {
+          navigate('/login');
+        }
       }
     }
   }, [location.pathname, navigate]);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

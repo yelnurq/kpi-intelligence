@@ -16,12 +16,12 @@ import VerificationAudit from './pages/AdminPanel/Verification/VerificationPage'
 import StaffManagement from './pages/AdminPanel/StaffManagement/StaffManagement';
 import AdminLayout from './components/layouts/AdminLayout';
 import TaxonomySettings from './pages/AdminPanel/TaxonomySettings/TaxonomySettings';
-import AuditLog from './pages/AdminPanel/AuditLog/AuditLog';
 import AssetManagement from './pages/AdminPanel/AssetManagement/AssetManagement';
 import FacultyRank from './pages/AdminPanel/Faculty/Faculty';
 import DeanDashboard from './pages/AdminPanel/DeanDashboard/DeanDashboard';
 import KpiPlanningView from './pages/UserPanel/KpiPlanningView/KpiPlanningView';
 import StaffDeadlineMonitor from './pages/AdminPanel/StaffDeadlineMonitor/StaffDeadlineMonitor';
+import ApiLogsMonitor from './pages/AdminPanel/Logs/ApiLogsMonitor';
 
 
 
@@ -69,7 +69,7 @@ function App() {
           <Route path="assets" element={<AssetManagement />} />
           <Route path="monitor" element={<StaffDeadlineMonitor />} />
           <Route path="dean" element={<DeanDashboard />} />
-          <Route path="logs" element={<AuditLog />} />
+          <Route path="logs" element={<ApiLogsMonitor />} />
           <Route path="settings" element={<TaxonomySettings />} />
           <Route path="faculties" element={<FacultyRank />} />
           <Route path="users" element={<StaffManagement />} />

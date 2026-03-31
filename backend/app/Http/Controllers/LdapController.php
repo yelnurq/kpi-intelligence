@@ -53,7 +53,7 @@ class LdapController extends Controller
 
         $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
         $filter = "(&(objectCategory=person)(objectClass=user))";
-        $attributes = ["cn", "mail", "title", "department", "displayname", "company"];
+        $attributes = ["cn", "mail", "position", "department", "displayname", "company"];
         
         $users = [];
         $pageSize = 500; 
@@ -73,7 +73,7 @@ class LdapController extends Controller
                     'name'       => $entries[$i]["displayname"][0] ?? ($entries[$i]["cn"][0] ?? 'N/A'),
                     'email'      => $entries[$i]["mail"][0] ?? 'N/A',
                     'company'    => $entries[$i]["company"][0] ?? 'N/A',
-                    'position'   => $entries[$i]["title"][0] ?? 'N/A',
+                    'position'   => $entries[$i]["position"][0] ?? 'N/A',
                     'department' => $entries[$i]["department"][0] ?? 'N/A',
                 ];
             }

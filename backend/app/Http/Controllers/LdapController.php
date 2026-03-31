@@ -53,7 +53,7 @@ class LdapController extends Controller
 
         $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
         $filter = "(&(objectCategory=person)(objectClass=user))";
-        $attributes = ["cn", "userPrincipalName", "position", "department", "displayname", "company"];
+        $attributes = ["cn", "userPrincipalName", "position", "department", "displayname", "company", "mobile"];
         
         $users = [];
         $pageSize = 500; 
@@ -81,7 +81,7 @@ class LdapController extends Controller
         // Проверьте, какой атрибут используется у вас. Если 'title', то:
         'position'   => $entries[$i]["title"][0] ?? 'N/A', 
         
-        'department' => $entries[$i]["department"][0] ?? 'N/A',
+        'mobile' => $entries[$i]["mobile"][0] ?? 'N/A',
     ];
 }
             $cookie = $controls_response[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';

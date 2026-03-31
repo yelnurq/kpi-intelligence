@@ -225,6 +225,7 @@ useEffect(() => {
                           {row.status === 'submitted' ? 'Ожидает' : 'Обработан'}
                         </span>
                       </div>
+                      <p className="text-xs font-medium text-slate-500">{row.faculty}</p>
                       <p className="text-xs font-medium text-slate-500">{row.department}</p>
                       <div className="flex items-center gap-3 mt-3">
                         <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">

@@ -129,7 +129,7 @@ public function getDeanSubmissions(Request $request)
 
         $year = $request->query('year', '2025/2026');
         $deptId = $request->query('department_id');
-        $perPage = $request->query('per_page', 1);
+        $perPage = $request->query('per_page', 10);
 
         // Создаем базовый запрос для статистики (без пагинации и селекта)
         $baseQuery = \App\Models\User::query()

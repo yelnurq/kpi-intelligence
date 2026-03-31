@@ -195,23 +195,29 @@ public function login(Request $request)
 
     if ($authenticated && $ldapData) {
         // Если в AD всё ок, а в БД пользователя нет — создаем его
-        if (!$user) {
-            $user = User::create([
-                'name' => $ldapData['name'],
-                'email' => $ldapData['email'], // Сохраняем UPN как email
-                'password' => Hash::make($request->password),
-                'role' => 'user', // Роль по умолчанию
-                'position' => $ldapData['position'],
-                'department' => $ldapData['department'],
-            ]);
-        } else {
-            // Если пользователь уже есть, обновляем ему пароль и данные
-            $user->update([
-                'password' => Hash::make($request->password),
-                'name' => $ldapData['name'],
-                'position' => $ldapData['position']
-            ]);
-        }
+            if (!$user) {
+                // 1. Сопоставляем роль. В AD нет ролей вашего приложения, 
+                // поэтому по умолчанию ставим 'teacher' (как в миграции)
+                $role = 'teacher'; 
+
+                $user = User::create([
+                    'name'     => $ldapData['name'],
+                    'email'    => $ldapData['email'],
+                    'password' => Hash::make($request->password),
+                    'role'     => $role, // Теперь это 'teacher', что разрешено в enum
+                    
+                    // ВАЖНО: В вашей базе это ID (внешние ключи), а не строки.
+                    // Пока оставляем их null, либо нужно искать ID в таблице departments/positions
+                    'department_id' => null, 
+                    'position_id'   => null,
+                    'faculty_id'    => null,
+                ]);
+            } else {
+                // Если пользователь уже есть, просто обновляем пароль
+                $user->update([
+                    'password' => Hash::make($request->password),
+                ]);
+            }
     } else {
         // Если LDAP не сработал (например, нет сети), пробуем локальный вход
         if ($user && Hash::check($request->password, $user->password)) {

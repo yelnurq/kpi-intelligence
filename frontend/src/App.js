@@ -22,6 +22,7 @@ import DeanDashboard from './pages/AdminPanel/DeanDashboard/DeanDashboard';
 import KpiPlanningView from './pages/UserPanel/KpiPlanningView/KpiPlanningView';
 import StaffDeadlineMonitor from './pages/AdminPanel/StaffDeadlineMonitor/StaffDeadlineMonitor';
 import ApiLogsMonitor from './pages/AdminPanel/Logs/ApiLogsMonitor';
+import LdapManagement from './pages/AdminPanel/LdapManagement/LdapManagement';
 
 
 
@@ -73,6 +74,7 @@ function App() {
           <Route path="settings" element={<TaxonomySettings />} />
           <Route path="faculties" element={<FacultyRank />} />
           <Route path="users" element={<StaffManagement />} />
+          <Route path="users/ldap" element={<LdapManagement />} />
         </Route>
 
         <Route 

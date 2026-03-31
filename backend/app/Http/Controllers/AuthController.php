@@ -11,6 +11,65 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    public function ldapLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $ldapHost = "ldaps://10.0.1.30"; // ldaps:// для SSL порта 636
+        $ldapPort = 636;
+        $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
+        putenv("LDAPTLS_CACERT=C:\\Users\\User\\Documents\\GitHub\\kpi-intelligence\\kaztbu.cer");
+        // 1. Инициализация соединения
+        $ldapConn = ldap_connect($ldapHost, $ldapPort);
+
+        if (!$ldapConn) {
+            return response()->json(['message' => 'Не удалось связаться с сервером AD'], 500);
+        }
+
+        // 2. Опции протокола
+        ldap_set_option($ldapConn, LDAP_OPT_PROTOCOL_VERSION, 3);
+        ldap_set_option($ldapConn, LDAP_OPT_REFERRALS, 0);
+
+        try {
+            // 3. Попытка входа (Bind)
+            // В Active Directory обычно логин — это полный email
+            $isAuthenticated = @ldap_bind($ldapConn, $request->email, $request->password);
+
+            if ($isAuthenticated) {
+                // 4. Поиск или создание пользователя в вашей БД (MySQL)
+                $user = User::where('email', $request->email)->first();
+
+                if (!$user) {
+                    // Автоматическая регистрация, если пользователя еще нет в системе KPI
+                    $user = User::create([
+                        'name' => explode('@', $request->email)[0], // берем часть до @
+                        'email' => $request->email,
+                        'password' => Hash::make(Str::random(24)), // пароль в БД не важен
+                        'role' => 'teacher', // роль по умолчанию
+                        'faculty_id' => null, // позже назначим через админку или логику AD
+                    ]);
+                }
+
+                // 5. Генерация токена (Sanctum)
+                $token = $user->createToken('kpi_access_token')->plainTextToken;
+
+                return response()->json([
+                    'status' => 'success',
+                    'token' => $token,
+                    'user' => $user
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Ошибка сервера авторизации: ' . $e->getMessage()], 500);
+        } finally {
+            ldap_unbind($ldapConn);
+        }
+
+        return response()->json(['message' => 'Неверный логин или пароль университета'], 401);
+    }
     public function register(Request $request)
     {
         $rules = [

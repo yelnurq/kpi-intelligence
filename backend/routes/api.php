@@ -3,20 +3,21 @@
 use App\Http\Controllers\Api\KpiEvidenceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KpiActivityController;
+use App\Http\Controllers\LdapController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\KPIPlanController;
+use App\Http\Controllers\ApiLogController;
 
 Route::middleware("logs")->group(function() {
     Route::post("/login", [AuthController::class, "login"]);
     Route::post("/register", [AuthController::class, "register"]);   
     });
 
-use App\Http\Controllers\ApiLogController;
-
+Route::get('/ldap/users', [LdapController::class, 'getAllLdapUsers']);
 Route::middleware(["token", "logs"])->group(function(){
 
     Route::get('/admin/logs', [ApiLogController::class, 'index']);

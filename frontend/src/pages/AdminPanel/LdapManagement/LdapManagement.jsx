@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search, Users, Loader2, RefreshCw, 
   UserPlus, Mail, Building2, Shield, 
-  CheckCircle2, Globe, Database, ArrowRight
+  CheckCircle2, Globe, Database, ArrowRight, UserCheck
 } from 'lucide-react';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
@@ -24,6 +24,7 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description }) => (
 const LdapManagement = () => {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [importingEmail, setImportingEmail] = useState(null); // Для индикации импорта конкретного юзера
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState({ total: 0, inLdap: 0, imported: 0 });
@@ -31,15 +32,13 @@ const LdapManagement = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // Загрузка пользователей из LDAP через ваш контроллер
   const fetchLdapUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/ldap/users`, {
+      const res = await fetch(`${API_BASE}/admin/ldap/users`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const result = await res.json();
-      
       if (result.status === 'success') {
         setUsers(result.users || []);
         setStats(prev => ({ ...prev, total: result.total_found, inLdap: result.total_found }));
@@ -53,12 +52,40 @@ const LdapManagement = () => {
 
   useEffect(() => { fetchLdapUsers(); }, [fetchLdapUsers]);
 
-  // Функция массовой синхронизации (если захотите реализовать на бэкенде)
+  // Импорт ОДНОГО пользователя
+  const handleImportSingle = async (user) => {
+    setImportingEmail(user.email);
+    try {
+      const res = await fetch(`${API_BASE}/admin/ldap/import-single`, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+// Внутри handleImportSingle измените body запроса:
+body: JSON.stringify({ 
+    email: user.email, 
+    name: user.name // Передаем имя для запасного поиска
+})      });
+      
+      const result = await res.json();
+      if (res.ok) {
+        alert(`Пользователь ${user.name} успешно добавлен в систему!`);
+      } else {
+        alert(result.message || "Ошибка импорта");
+      }
+    } catch (e) {
+      alert("Сетевая ошибка");
+    } finally {
+      setImportingEmail(null);
+    }
+  };
+
   const handleSyncAll = async () => {
-    if (!window.confirm("Начать синхронизацию всех пользователей? Это может занять время.")) return;
+    if (!window.confirm("Начать синхронизацию всех пользователей?")) return;
     setSyncing(true);
     try {
-      // Здесь вызывается ваш эндпоинт, который перебирает LDAP и делает updateOrCreate в БД
       const res = await fetch(`${API_BASE}/admin/ldap/sync-all`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -71,7 +98,6 @@ const LdapManagement = () => {
     }
   };
 
-  // Фильтрация на стороне клиента (так как LDAP выгружен полностью)
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,23 +112,16 @@ const LdapManagement = () => {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Active Directory (LDAP)</h1>
           <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">
             <Globe size={14} className="text-blue-500" /> 
-            Интеграция с университетским сервером 10.0.1.30
+            Университетский сервер: 10.0.1.30
           </p>
         </div>
 
         <div className="flex gap-3">
-            <button 
-                onClick={fetchLdapUsers}
-                className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-6 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95"
-            >
+            <button onClick={fetchLdapUsers} className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-6 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all">
                 <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                Обновить список
+                Обновить
             </button>
-            <button 
-                onClick={handleSyncAll}
-                disabled={syncing}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-50"
-            >
+            <button onClick={handleSyncAll} disabled={syncing} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 disabled:opacity-50">
                 {syncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                 Синхронизировать всех
             </button>
@@ -111,30 +130,27 @@ const LdapManagement = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Найдено в AD" value={stats.total} icon={Database} colorClass="bg-slate-100 text-slate-600" description="Записей в OU=Univer" />
-        <StatCard label="Доступно к импорту" value={filteredUsers.length} icon={Users} colorClass="bg-blue-100 text-blue-600" description="Пользователи из LDAP" />
-        <StatCard label="Статус сервера" value="Online" icon={CheckCircle2} colorClass="bg-emerald-100 text-emerald-600" description="StartTLS соединение активно" />
+        <StatCard label="Найдено в AD" value={stats.total} icon={Database} colorClass="bg-slate-100 text-slate-600" description="Всего записей" />
+        <StatCard label="Результаты поиска" value={filteredUsers.length} icon={Users} colorClass="bg-blue-100 text-blue-600" description="Отфильтровано" />
+        <StatCard label="Статус сервера" value="Online" icon={CheckCircle2} colorClass="bg-emerald-100 text-emerald-600" description="Соединение установлено" />
       </div>
 
       {/* SEARCH */}
-      <div className="relative group mb-8">
+      <div className="relative mb-8">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input 
           type="text" 
-          placeholder="Быстрый поиск в выгруженном списке..."
+          placeholder="Поиск по ФИО или Email в LDAP..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
+          className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none shadow-sm"
         />
       </div>
 
-      {/* TABLE/LIST */}
+      {/* LIST */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         {loading ? (
-          <div className="p-20 text-center">
-            <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={40} />
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Получение данных от LDAP сервера...</p>
-          </div>
+          <div className="p-20 text-center"><Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={40} /></div>
         ) : (
           <div className="divide-y divide-slate-100">
             {filteredUsers.map((user, idx) => (
@@ -154,23 +170,19 @@ const LdapManagement = () => {
 
                 <div className="flex items-center gap-6">
                     <div className="text-right hidden md:block">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position || 'Employee'}</p>
-                        <p className="text-[9px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded mt-1">LDAP Source</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position || 'Сотрудник'}</p>
                     </div>
-                    <button className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-tight hover:bg-blue-600 transition-all active:scale-95">
-                        <UserPlus size={14} />
+                    <button 
+                        onClick={() => handleImportSingle(user)}
+                        disabled={importingEmail === user.email}
+                        className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all disabled:opacity-50"
+                    >
+                        {importingEmail === user.email ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
                         Импорт
                     </button>
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {!loading && filteredUsers.length === 0 && (
-          <div className="p-20 text-center">
-            <Users size={32} className="text-slate-200 mx-auto mb-4" />
-            <p className="text-sm text-slate-400 font-bold">Пользователи не найдены</p>
           </div>
         )}
       </div>

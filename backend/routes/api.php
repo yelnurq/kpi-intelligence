@@ -17,7 +17,16 @@ Route::middleware("logs")->group(function() {
     Route::post("/register", [AuthController::class, "register"]);   
     });
 
-Route::get('/ldap/users', [LdapController::class, 'getAllLdapUsers']);
+
+Route::prefix('admin/ldap')->group(function () {
+        Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
+        
+        // Импорт одного конкретного пользователя
+        Route::post('/import-single', [LdapController::class, 'importSingleUser']);
+        
+        Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
+    });
+
 Route::middleware(["token", "logs"])->group(function(){
 
     Route::get('/admin/logs', [ApiLogController::class, 'index']);

@@ -133,60 +133,91 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
-    {
-        $rules = [
-            "email" => "required|email",
-            "password" => "required",
-        ];  
+ public function login(Request $request)
+{
+    $rules = [
+        "email" => "required|email",
+        "password" => "required",
+    ];  
 
-        $messages = [
-            "email.required" => "Введите ваш Email",
-            "email.email"    => "Введите корректный адрес электронной почты",
-            "password.required" => "Введите пароль",
-        ];
+    $validator = Validator::make($request->all(), $rules);
+    if ($validator->fails()) {
+        return response()->json(["status" => "error", "errors" => $validator->errors()], 422);
+    }
 
-        $validator = Validator::make($request->all(), $rules, $messages);
+    $user = User::where("email", $request->email)->first();
 
-        if ($validator->fails()) {
-            return response()->json([
-                "status" => "error",
-                "errors" => $validator->errors(),
-            ], 422);
+    if (!$user) {
+        return response()->json([
+            "status" => "error",
+            "message" => "Пользователь не найден в системе",
+        ], 401);
+    }
+
+    $authenticated = false;
+
+    // --- 1. ПРОВЕРКА ЧЕРЕЗ LDAP ---
+    // Пробуем только если это не тестовые/локальные аккаунты (опционально)
+    try {
+        $ldapHost = "ldap://10.0.1.30";
+        $ldapConn = @ldap_connect($ldapHost, 389);
+        
+        if ($ldapConn) {
+            ldap_set_option($ldapConn, LDAP_OPT_PROTOCOL_VERSION, 3);
+            ldap_set_option($ldapConn, LDAP_OPT_REFERRALS, 0);
+            ldap_set_option($ldapConn, LDAP_OPT_NETWORK_TIMEOUT, 1); // Уменьшим до 1 сек
+
+            // Пытаемся привязаться (Bind)
+            if (@ldap_bind($ldapConn, $request->email, $request->password)) {
+                $authenticated = true;
+                // Синхронизируем хэш, чтобы зайти локально в след. раз если AD упадет
+                $user->update(['password' => Hash::make($request->password)]);
+            }
+            @ldap_unbind($ldapConn);
         }
+    } catch (\Exception $e) {
+        // Ошибка LDAP игнорируется, идем к локальной проверке
+    }
 
-        $user = User::where("email", $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                "status" => "error",
-                "message" => "Неверное имя пользователя или пароль",
-            ], 401);
-        }
-
-        try {
-            $user->tokens()->delete();
-            $tokenValue = Str::random(60);
-            $token = Token::create([
-                "token"=>$tokenValue,
-                "user_id"=>$user->id,    
-            ]);
-
-            return response()->json([
-                "status" => "success",
-                "access_token" => $token,
-                "token_type" => "Bearer",
-                "user" => $user
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "status" => "error",
-                "message" => "Ошибка сервера при создании токена",
-                "debug"=>$e->getMessage(),
-            ], 500);
+    // --- 2. ПРОВЕРКА ЧЕРЕЗ ЛОКАЛЬНУЮ БАЗУ (Если LDAP не прошел) ---
+    if (!$authenticated) {
+        if (Hash::check($request->password, $user->password)) {
+            $authenticated = true;
         }
     }
 
+    // --- 3. ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ---
+    if (!$authenticated) {
+        return response()->json([
+            "status" => "error",
+            "message" => "Неверный логин или пароль",
+        ], 401);
+    }
+
+    // --- 4. ГЕНЕРАЦИЯ ТОКЕНА ---
+    try {
+        // Очищаем старые токены
+        Token::where('user_id', $user->id)->delete(); 
+        
+        $tokenValue = Str::random(60);
+        $token = Token::create([
+            "token" => $tokenValue,
+            "user_id" => $user->id,    
+        ]);
+
+        return response()->json([
+            "status" => "success",
+            "access_token" => $token, // Возвращаем объект токена (как ожидает ваш React)
+            "token_type" => "Bearer",
+            "user" => $user
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            "status" => "error",
+            "message" => "Ошибка авторизации: " . $e->getMessage(),
+        ], 500);
+    }
+}
     public function logout(Request $request)
     {
         try {

@@ -16,7 +16,8 @@ import {
   MonitorDotIcon,
   Menu,
   X,
-  Logs
+  Logs,
+  Users2
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -31,6 +32,7 @@ const AdminLayout = () => {
     { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI', roles: ['super_admin', 'academic_office'] },
     { id: 'users', path: '/admin/users', icon: <Users size={20} />, label: 'Пользователи', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },
+    { id: 'ldap', path: '/admin/users/ldap', icon: <Users2 size={20} />, label: 'LDAP Пользователи', roles: ['super_admin'] },
     { id: 'assets', path: '/admin/assets', icon: <FileSearch size={20} />, label: 'Репозиторий', roles: ['super_admin', 'academic_office'] },
     { id: 'logs', path: '/admin/logs', icon: <Logs size={20} />, label: 'Логи', roles: ['super_admin'] },
     { id: 'faculties', path: '/admin/faculties', icon: <School2Icon size={20} />, label: 'Рейтинг', roles: ['super_admin', 'academic_office','dean', 'head_of_dept'] },

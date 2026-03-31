@@ -138,7 +138,11 @@ const AdminLayout = () => {
                   {user.name}
                 </p>
                 <p className="text-[9px] text-blue-400 font-bold truncate uppercase tracking-widest">
-                  {user.role === 'super_admin' ? 'Super Admin' : user.role === 'academic_office' ? 'Academic Office' : 'Faculty Dean'}
+                  {user.role === 'super_admin' 
+                    ? 'Админстратор' 
+                    : user.role === 'academic_office' 
+                      ? user.academic_specialization 
+                      : 'Faculty Dean'}
                 </p>
               </div>
             )}

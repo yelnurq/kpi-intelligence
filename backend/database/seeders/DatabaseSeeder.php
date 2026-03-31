@@ -48,31 +48,7 @@ class DatabaseSeeder extends Seeder
     //         'position_id' => 1,
     //     ]);
         
-//     //     User::create([
-//     //         'name' => 'Академический отдел (Учебная работа)',
-//     //         'email' => 'academic.study@kpi.test',
-//     //         'password' => Hash::make('password123'),
-//     //         'role' => 'academic_office',
-//     //         'academic_specialization' => 'учеб.работа',
-            
-//     //         'department_id' => null, 
-//     //         'academic_degree_id' => 1,
-//     //         'faculty_id' => null,
-//     //         'position_id' => 1,
-//     //     ]);
-//     //  User::create([
-//     //         'name' => 'организационно-методическая работа',
-//     //         'email' => 'academic.study@kpi.test1',
-//     //         'password' => Hash::make('password123'),
-//     //         'role' => 'academic_office',
-//     //         'academic_specialization' => 'организационно-методическая работа',
-            
-//     //         'department_id' => null, 
-//     //         'academic_degree_id' => 1,
-//     //         'faculty_id' => null,
-//     //         'position_id' => 1,
-//     //     ]);
-    
+
 
 //         User::factory(50)->create();
 

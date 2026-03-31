@@ -3,7 +3,7 @@ import {
   Users, CheckCircle2, Clock, AlertCircle, 
   ExternalLink, Check, X, MessageSquare, 
   Filter, ChevronRight, Inbox, Loader2, 
-  ArrowUpRight, User, ShieldCheck
+  ArrowUpRight, User, ShieldCheck, ChevronLeft
 } from 'lucide-react';
 
 // Компонент карточки статистики
@@ -39,53 +39,67 @@ const DeanDashboard = () => {
   const [activeTab, setActiveTab] = useState('submitted');
   const [selectedDept, setSelectedDept] = useState('all');
   
+  // Состояния для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ last_page: 1, total: 0 });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comment, setComment] = useState('');
-
+  const [globalStats, setGlobalStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const API_BASE = 'http://localhost:8000/api';
   const ACADEMIC_YEAR = '2025/2026';
 
-  // Загрузка общего списка
+  // Загрузка списка с учетом пагинации и фильтров
   const fetchSubmissions = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/dean/submissions?year=${ACADEMIC_YEAR}`, {
+      const params = new URLSearchParams({
+        year: ACADEMIC_YEAR,
+        page: currentPage,
+        status: activeTab,
+        department_id: selectedDept
+      });
+
+      const res = await fetch(`${API_BASE}/dean/submissions?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await res.json();
-      if (result.status === 'success') setSubmissions(result.data);
+      if (result.status === 'success') {
+        setSubmissions(result.data);
+        setPagination(result.meta);
+        if (result.stats) setGlobalStats(result.stats); // Сохраняем статистику всей БД
+    }
     } catch (error) {
       console.error("Ошибка загрузки:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, activeTab, selectedDept]);
 
   useEffect(() => { fetchSubmissions(); }, [fetchSubmissions]);
-// Вставьте это рядом с другими useEffect в компоненте DeanDashboard
-useEffect(() => {
-  if (isModalOpen) {
-    // Вычисляем ширину скроллбара, чтобы страница не дергалась
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-    
-    document.body.style.overflow = 'hidden';
-    document.body.style.paddingRight = `${scrollBarWidth}px`;
-  } else {
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-  }
 
-  // Чистим стили при размонтировании компонента
-  return () => {
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-  };
-}, [isModalOpen]);
-  // Загрузка детальных индикаторов при клике
+  // Сброс страницы при смене фильтров
+  useEffect(() => { setCurrentPage(1); }, [activeTab, selectedDept]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isModalOpen]);
+
   const handleOpenDetails = async (row) => {
     setSelectedPlan(row);
     setIsModalOpen(true);
@@ -98,7 +112,6 @@ useEffect(() => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      // Мержим полученные индикаторы в объект выбранного плана
       setSelectedPlan(prev => ({ ...prev, indicators: data.indicators || [] }));
     } catch (error) {
       console.error("Ошибка загрузки индикаторов:", error);
@@ -106,8 +119,32 @@ useEffect(() => {
       setLoadingDetails(false);
     }
   };
+const getPaginationRange = (current, last) => {
+  const delta = 2; // Сколько страниц показывать по бокам от текущей
+  const range = [];
+  const rangeWithDots = [];
+  let l;
 
-  // Обновление статуса (Утвердить/Отклонить)
+  for (let i = 1; i <= last; i++) {
+    if (i === 1 || i === last || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    }
+  }
+
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...');
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+
+  return rangeWithDots;
+};
   const handleUpdateStatus = async (newStatus) => {
     setIsSubmitting(true);
     try {
@@ -137,23 +174,12 @@ useEffect(() => {
       setIsSubmitting(false);
     }
   };
+const stats = useMemo(() => globalStats, [globalStats]);
 
-  const stats = useMemo(() => ({
-    total: submissions.length,
-    pending: submissions.filter(s => s.status === 'submitted').length,
-    approved: submissions.filter(s => s.status === 'approved').length,
-    rejected: submissions.filter(s => s.status === 'rejected').length
-  }), [submissions]);
 
   const departments = useMemo(() => 
     ['all', ...new Set(submissions.map(s => s.department))].sort(), 
   [submissions]);
-
-  const filteredSubmissions = submissions.filter(s => {
-    const statusMatch = activeTab === 'all' ? true : s.status === activeTab;
-    const deptMatch = selectedDept === 'all' ? true : s.department === selectedDept;
-    return statusMatch && deptMatch;
-  });
 
   return (
     <main className="mx-auto px-4 md:px-10 py-10 bg-[#f8fafc] min-h-screen font-sans border rounded-lg">
@@ -210,47 +236,91 @@ useEffect(() => {
                 <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Загрузка данных...</span>
              </div>
-          ) : filteredSubmissions.length > 0 ? (
-            filteredSubmissions.map((row) => (
-              <div key={row.user_id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group text-left">
-                <div className="flex flex-col md:flex-row justify-between gap-6">
-                  <div className="flex gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
-                      <User size={24} />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-900 text-sm">{row.name}</h3>
-                        <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${row.status === 'submitted' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
-                          {row.status === 'submitted' ? 'Ожидает' : 'Обработан'}
-                        </span>
+          ) : submissions.length > 0 ? (
+            <>
+              {submissions.map((row) => (
+                <div key={row.user_id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all group text-left">
+                  <div className="flex flex-col md:flex-row justify-between gap-6">
+                    <div className="flex gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                        <User size={24} />
                       </div>
-                      <p className="text-xs font-medium text-slate-500">{row.faculty}</p>
-                      <p className="text-xs font-medium text-slate-500">{row.department}</p>
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
-                          <Clock size={12}/> {row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '—'}
-                        </span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-slate-900 text-sm">{row.name}</h3>
+                          <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${row.status === 'submitted' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {row.status === 'submitted' ? 'Ожидает' : 'Обработан'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500">{row.faculty}</p>
+                        <p className="text-xs font-medium text-slate-500">{row.department}</p>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
+                            <Clock size={12}/> {row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '—'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
-                    <div className="text-right mb-3">
-                      <span className="text-2xl font-bold text-slate-900 tracking-tighter">{row.total_points || 0}</span>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">баллов в плане</p>
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
+                      <div className="text-right mb-3">
+                        <span className="text-2xl font-bold text-slate-900 tracking-tighter">{row.total_points || 0}</span>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">баллов в плане</p>
+                      </div>
+                      
+                      <button 
+                        onClick={() => handleOpenDetails(row)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-all shadow-md active:scale-95"
+                      >
+                        Ревизия <ExternalLink size={12} />
+                      </button>
                     </div>
-                    
-                    <button 
-                      onClick={() => handleOpenDetails(row)}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-all shadow-md active:scale-95"
-                    >
-                      Ревизия <ExternalLink size={12} />
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+             {/* PAGINATION UI */}
+{pagination.last_page > 1 && (
+  <div className="flex justify-center items-center gap-2 mt-12 pb-10">
+    <button 
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+    >
+      <ChevronLeft size={16} className="text-slate-600" />
+    </button>
+
+    <div className="flex items-center gap-1.5">
+      {getPaginationRange(currentPage, pagination.last_page).map((page, i) => (
+        <React.Fragment key={i}>
+          {page === '...' ? (
+            <span className="px-2 text-slate-400 font-bold">...</span>
+          ) : (
+            <button
+              onClick={() => setCurrentPage(page)}
+              className={`w-10 h-10 rounded-xl text-[11px] font-bold transition-all ${
+                currentPage === page 
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 ring-2 ring-blue-600/20' 
+                : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-300 hover:text-blue-600'
+              }`}
+            >
+              {page}
+            </button>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+
+    <button 
+      disabled={currentPage === pagination.last_page}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+    >
+      <ChevronRight size={16} className="text-slate-600" />
+    </button>
+  </div>
+)}
+            </>
           ) : (
             <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-16 text-center">
                <Inbox size={32} className="text-slate-200 mx-auto mb-4" />
@@ -309,7 +379,6 @@ useEffect(() => {
 
             <div className="p-8 overflow-y-auto bg-slate-50/50 flex-1">
               <div className="space-y-6">
-                
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Выбранные индикаторы</p>
                   <div className="grid gap-2">
@@ -320,31 +389,30 @@ useEffect(() => {
                       </div>
                     ) : (selectedPlan.indicators && selectedPlan.indicators.length > 0) ? (
                       selectedPlan.indicators.map((item, idx) => (
-<div key={idx} className="group bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-blue-200 shadow-sm">
-  <div className="space-y-1 pr-4 text-left"> {/* Добавил text-left для надежности */}
-    <div className="flex items-start gap-2">
-      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-      <p className="text-xs font-bold text-slate-800 leading-tight">
-        {item.title || item.name}
-      </p>
-    </div>
-    <div className="flex items-center gap-3 ml-3.5">
-      <p className="text-[9px] text-slate-400 uppercase font-medium">
-        {item.category || 'Показатель'}
-      </p>
-      {/* ОТОБРАЖЕНИЕ ДЕДЛАЙНА */}
-      {item.deadline && (
-        <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-1 uppercase">
-          <Clock size={10} /> До {new Date(item.deadline).toLocaleDateString()}
-        </span>
-      )}
-    </div>
-  </div>
-  <div className="text-right shrink-0">
-    <span className="text-lg font-black text-slate-900 tracking-tighter">{item.points}</span>
-    <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">баллов</p>
-  </div>
-</div>
+                        <div key={idx} className="group bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-blue-200 shadow-sm">
+                          <div className="space-y-1 pr-4 text-left">
+                            <div className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                              <p className="text-xs font-bold text-slate-800 leading-tight">
+                                {item.title || item.name}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 ml-3.5">
+                              <p className="text-[9px] text-slate-400 uppercase font-medium">
+                                {item.category || 'Показатель'}
+                              </p>
+                              {item.deadline && (
+                                <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-1 uppercase">
+                                  <Clock size={10} /> До {new Date(item.deadline).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-lg font-black text-slate-900 tracking-tighter">{item.points}</span>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">баллов</p>
+                          </div>
+                        </div>
                       ))
                     ) : (
                       <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400">

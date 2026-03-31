@@ -121,82 +121,83 @@ public function getPlanStatus(Request $request)
 public function getDeanSubmissions(Request $request)
 {
     try {
-        // 1. Получаем текущего пользователя через Sanctum/JWT
-    $user = $this->getAuthenticatedUser($request);
-        
-        // 2. Проверка доступа: разрешаем только Декану и Супер-админу
+        $user = $this->getAuthenticatedUser($request);
         $allowedRoles = ['dean', 'super_admin'];
         if (!$user || !in_array($user->role, $allowedRoles)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Доступ запрещен: недостаточно прав'
-            ], 403);
+            return response()->json(['status' => 'error', 'message' => 'Доступ запрещен'], 403);
         }
 
-        // 3. Получаем параметры фильтрации из запроса
         $year = $request->query('year', '2025/2026');
-        $deptId = $request->query('department_id'); // Если захочешь фильтровать по конкретной кафедре
+        $deptId = $request->query('department_id');
+        $perPage = $request->query('per_page', 1);
 
-        // 4. Строим запрос
-        $query = \App\Models\User::query()
-            // Присоединяем таблицу заявок (submissions)
+        // Создаем базовый запрос для статистики (без пагинации и селекта)
+        $baseQuery = \App\Models\User::query()
             ->join('kpi_plan_submissions', 'users.id', '=', 'kpi_plan_submissions.user_id')
-            // Присоединяем факультеты и кафедры для отображения названий
-            ->leftJoin('faculties', 'users.faculty_id', '=', 'faculties.id')
-            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
-            // Фильтр по учебному году
             ->where('kpi_plan_submissions.academic_year', $year);
 
-        // --- ЛОГИКА ОГРАНИЧЕНИЯ ДЛЯ ДЕКАНА ---
         if ($user->role === 'dean') {
-            if (!$user->faculty_id) {
-                return response()->json(['message' => 'Ошибка: Декан не привязан к факультету'], 400);
-            }
-            // Декан видит ТОЛЬКО сотрудников своего факультета (и их кафедры)
-            $query->where('users.faculty_id', $user->faculty_id);
+            $baseQuery->where('users.faculty_id', $user->faculty_id);
         }
 
-        // --- ДОПОЛНИТЕЛЬНЫЙ ФИЛЬТР ПО КАФЕДРЕ (если выбран на фронте) ---
+        // РАСЧЕТ СТАТИСТИКИ ПО ВСЕЙ БАЗЕ
+        // Копируем запрос, чтобы фильтры по кафедрам/статусам не ломали общую статистику 
+        // (или наоборот, если статистика должна зависеть от фильтра кафедры - уберите/оставьте условия ниже)
+        $statsData = [
+            'total' => (clone $baseQuery)->count(),
+            'pending' => (clone $baseQuery)->where('kpi_plan_submissions.status', 'submitted')->count(),
+            'approved' => (clone $baseQuery)->where('kpi_plan_submissions.status', 'approved')->count(),
+            'rejected' => (clone $baseQuery)->where('kpi_plan_submissions.status', 'rejected')->count(),
+        ];
+
+        // ПРИМЕНЯЕМ ФИЛЬТРЫ ДЛЯ ОСНОВНОГО СПИСКА
+        $query = (clone $baseQuery)
+            ->leftJoin('faculties', 'users.faculty_id', '=', 'faculties.id')
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id');
+
         if ($deptId && $deptId !== 'all') {
             $query->where('users.department_id', $deptId);
         }
 
-        // 5. Выбираем нужные поля
-        $submissions = $query->select(
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('kpi_plan_submissions.status', $request->status);
+        }
+
+        $submissionsPaginator = $query->select(
                 'users.id as user_id',
                 'users.name',
-                'faculties.title as faculty_name',      // Полное название
-                'faculties.short_title as faculty',     // Сокращение (ФИТ, ФЭ...)
-                'departments.title as department', // Сокращение (ИТ, Экономика...)
+                'faculties.short_title as faculty',
+                'departments.title as department',
                 'kpi_plan_submissions.status',
                 'kpi_plan_submissions.academic_year',
                 'kpi_plan_submissions.submitted_at',
                 'kpi_plan_submissions.comment'
             )
             ->orderBy('kpi_plan_submissions.submitted_at', 'desc')
-            ->get()
-            ->map(function($item) {
-                // 6. Считаем сумму баллов по каждому плану
-                // Соединяем таблицу планов пользователя с таблицей эталонных индикаторов
-                $item->total_points = \App\Models\UserKpiPlan::where('user_id', $item->user_id)
-                    ->where('academic_year', $item->academic_year)
-                    ->join('kpi_indicators', 'user_kpi_plans.kpi_indicator_id', '=', 'kpi_indicators.id')
-                    ->sum('kpi_indicators.points');
-                
-                return $item;
-            });
+            ->paginate($perPage);
+
+        $submissionsPaginator->through(function($item) {
+            $item->total_points = \App\Models\UserKpiPlan::where('user_id', $item->user_id)
+                ->where('academic_year', $item->academic_year)
+                ->join('kpi_indicators', 'user_kpi_plans.kpi_indicator_id', '=', 'kpi_indicators.id')
+                ->sum('kpi_indicators.points');
+            return $item;
+        });
 
         return response()->json([
             'status' => 'success',
-            'count' => $submissions->count(),
-            'data' => $submissions
+            'data' => $submissionsPaginator->items(),
+            'stats' => $statsData, // Передаем статистику всей базы
+            'meta' => [
+                'current_page' => $submissionsPaginator->currentPage(),
+                'last_page' => $submissionsPaginator->lastPage(),
+                'total' => $submissionsPaginator->total(), // Всего записей с учетом текущих фильтров
+                'per_page' => $submissionsPaginator->perPage(),
+            ]
         ]);
 
     } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Ошибка сервера: ' . $e->getMessage()
-        ], 500);
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 }
 public function getUserPlanDetails(Request $request, $userId)

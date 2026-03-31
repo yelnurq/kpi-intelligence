@@ -176,7 +176,14 @@ class AuthController extends Controller
     } catch (\Exception $e) {
         // Ошибка LDAP игнорируется, идем к локальной проверке
     }
-
+// ВРЕМЕННЫЙ ДЕБАГ (удалить потом)
+if (!@ldap_bind($ldapConn, $request->email, $request->password)) {
+    $error = ldap_error($ldapConn);
+    return response()->json([
+        "debug_ldap_error" => $error,
+        "trying_login_with" => $request->email
+    ], 401);
+}
     // --- 2. ПРОВЕРКА ЧЕРЕЗ ЛОКАЛЬНУЮ БАЗУ (Если LDAP не прошел) ---
     if (!$authenticated) {
         if (Hash::check($request->password, $user->password)) {

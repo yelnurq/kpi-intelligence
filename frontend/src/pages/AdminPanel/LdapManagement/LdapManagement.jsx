@@ -162,8 +162,9 @@ body: JSON.stringify({
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">{user.name}</h4>
                     <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase mt-0.5">
-                      <span className="flex items-center gap-1"><Mail size={12}/> {user.email}</span>
-                      <span className="flex items-center gap-1"><Building2 size={12}/> {user.department}</span>
+                      <span className="flex items-center gap-1"><Mail size={12}/> {user.userPrincipalName}</span>
+                      <span className="flex items-center gap-1"><Building2 size={12}/> {user.company}</span>
+                      <span className="flex items-center gap-1"><Building2 size={12}/> {user.mobile}</span>
                     </div>
                   </div>
                 </div>

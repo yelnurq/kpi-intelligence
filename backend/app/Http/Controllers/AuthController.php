@@ -156,8 +156,6 @@ class AuthController extends Controller
 
     $authenticated = false;
 
-    // --- 1. ПРОВЕРКА ЧЕРЕЗ LDAP ---
-    // Пробуем только если это не тестовые/локальные аккаунты (опционально)
     try {
         $ldapHost = "ldap://10.0.1.30";
         $ldapConn = @ldap_connect($ldapHost, 389);

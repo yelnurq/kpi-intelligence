@@ -185,7 +185,6 @@ class AuthController extends Controller
             $authenticated = true;
         }
     }
-
     // --- 3. ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ---
     if (!$authenticated) {
         return response()->json([

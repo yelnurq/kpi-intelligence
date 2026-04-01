@@ -290,7 +290,15 @@ const AdminDashboard = () => {
             stroke="#10b981" 
             fill="none" // Чтобы не перекрывать основной график
             strokeDasharray="5 5" // Сделаем пунктиром для отличия
-            name="Отработано"
+            name="Успешно закрыты"
+          />
+           <Area 
+            type="monotone" 
+            dataKey="rejected" // Отработанные
+            stroke="#a10f0f" 
+            fill="none" // Чтобы не перекрывать основной график
+            strokeDasharray="5 5" // Сделаем пунктиром для отличия
+            name="Отказано"
           />
           </AreaChart>
         </ResponsiveContainer>

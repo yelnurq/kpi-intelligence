@@ -99,6 +99,7 @@ class DashboardController extends Controller
                     // Сколько всего поступило (все статусы)
                     'received' => $dayKpis->count(), 
                     // Сколько из них уже отработано (статус approved)
+                    'rejected' => $dayKpis->where('status', 'rejected')->count(), 
                     'processed' => $dayKpis->where('status', 'approved')->count(), 
                 ];
             }

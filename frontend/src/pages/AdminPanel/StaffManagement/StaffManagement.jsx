@@ -324,8 +324,16 @@ const handleEditClick = async (user) => {
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
                         <span className="flex items-center gap-1.5"><Building2 size={12} /> {user.faculty_short}</span>
-                        {user.role !== 'teacher' && <span className="text-blue-500 font-bold">[{user.role}]</span>}
-                      </div>
+                        {user.role !== 'teacher' && user.role !== 'super_admin' && (
+                          <span className="text-blue-500 font-bold uppercase tracking-tight">
+                            [
+                            {user.role === 'academic_office' 
+                              ? (user.academic_specialization || 'Офис-регистратор') 
+                              : user.role
+                            }
+                            ]
+                          </span>
+                        )}                      </div>
                     </div>
                   </div>
 
@@ -461,41 +469,41 @@ const handleEditClick = async (user) => {
                       {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
                     </select>
                   </div>
-<div className="space-y-1.5 md:col-span-2">
-  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5">
-    <GraduationCap size={12}/> Тип деятельности (Специализация)
-  </label>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5">
+                      <GraduationCap size={12}/> Тип деятельности (Специализация)
+                    </label>
 
-  {formData.role === 'academic_office' ? (
-    /* Если Офис-регистратор — показываем СЕЛЕКТ */
-    <select 
-      required
-      className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
-      value={formData.academic_specialization} 
-      onChange={e => setFormData({...formData, academic_specialization: e.target.value})} 
-    >
-      <option value="">Выберите категорию...</option>
-      {SPECIALIZATION_CATEGORIES.map(category => (
-        <option key={category} value={category}>
-          {category}
-        </option>
-      ))}
-    </select>
-  ) : (
-    /* Для всех остальных ролей — показываем ИНПУТ */
-    <input 
-      type="text"
-      placeholder={getSpecializationPlaceholder()}
-      className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all"
-      value={formData.academic_specialization}
-      onChange={e => setFormData({...formData, academic_specialization: e.target.value})}
-    />
-  )}
-  
-  <p className="text-[9px] text-slate-400 mt-1 ml-1 italic">
-    {getSpecializationPlaceholder()}
-  </p>
-</div>
+                    {formData.role === 'academic_office' ? (
+                      /* Если Офис-регистратор — показываем СЕЛЕКТ */
+                      <select 
+                        required
+                        className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
+                        value={formData.academic_specialization} 
+                        onChange={e => setFormData({...formData, academic_specialization: e.target.value})} 
+                      >
+                        <option value="">Выберите категорию...</option>
+                        {SPECIALIZATION_CATEGORIES.map(category => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      /* Для всех остальных ролей — показываем ИНПУТ */
+                      <input 
+                        type="text"
+                        placeholder={getSpecializationPlaceholder()}
+                        className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all"
+                        value={formData.academic_specialization}
+                        onChange={e => setFormData({...formData, academic_specialization: e.target.value})}
+                      />
+                    )}
+                    
+                    <p className="text-[9px] text-slate-400 mt-1 ml-1 italic">
+                      {getSpecializationPlaceholder()}
+                    </p>
+                  </div>
                 </div>
 
                 {/* PASSWORD */}

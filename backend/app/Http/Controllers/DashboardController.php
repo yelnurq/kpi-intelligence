@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Token;
+use App\Models\Faculty;
 use App\Models\KpiActivity;
+use App\Models\UserKpiPlan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
-    // Твой метод подключения (оставляем без изменений)
     private function connectLdap()
     {
         $ldapHost = "ldap://10.0.1.30";
@@ -45,44 +46,47 @@ class DashboardController extends Controller
     {
         $bearerToken = $request->bearerToken();
         if (!$bearerToken) return null;
-
         $tokenRecord = Token::where("token", $bearerToken)->first();
         if (!$tokenRecord) return null;
-
         return User::find($tokenRecord->user_id);
     }
 
+    /**
+     * Основной метод Dashboard для Админа
+     */
     public function admin(Request $request)
     {
         try {
             $user = $this->getAuthenticatedUser($request);
             if (!$user) return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
 
-            // --- 1. ПАГИНАЦИЯ ТАБЛИЦЫ KPI (БД) ---
-            $query = KpiActivity::latest()->with(['user.faculty', 'indicator']);
+            $facultyId = $request->query('faculty_id');
+            $year = $request->query('year', '2025/2026');
 
-            if ($user->role === 'academic_office' && $user->academic_specialization) {
-                $query->whereHas('indicator', fn($q) => $q->where('category', $user->academic_specialization));
-            }
-
-            if ($request->filled('faculty') && $request->faculty !== 'all') {
-                $query->whereHas('user.faculty', fn($q) => $q->where('short_title', $request->faculty));
-            }
-
-            if ($request->filled('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
-            $paginated = $query->paginate(15);
-
-            // --- 2. СТАТИСТИКА KPI (ДЛЯ ГРАФИКА) ---
+            // --- 1. СТАТИСТИКА KPI (АКТИВНОСТЬ) ---
             $allKpiQuery = KpiActivity::query();
-            if ($user->role === 'academic_office') {
-                $allKpiQuery->whereHas('indicator', fn($q) => $q->where('category', $user->academic_specialization));
+            if ($facultyId && $facultyId !== 'all') {
+                $allKpiQuery->whereHas('user', fn($q) => $q->where('faculty_id', $facultyId));
             }
             $allKpi = $allKpiQuery->get();
 
-            // --- 3. ТАЙМЛАЙН (14 ДНЕЙ) ---
+            // --- 2. МОНИТОРИНГ ПОДГОТОВКИ ПЛАНОВ ---
+            $planQuery = User::query()
+                ->join('kpi_plan_submissions', 'users.id', '=', 'kpi_plan_submissions.user_id')
+                ->where('kpi_plan_submissions.academic_year', $year);
+
+            if ($facultyId && $facultyId !== 'all') {
+                $planQuery->where('users.faculty_id', $facultyId);
+            }
+
+            $planStats = [
+                'total' => (clone $planQuery)->count(),
+                'pending' => (clone $planQuery)->where('kpi_plan_submissions.status', 'submitted')->count(),
+                'approved' => (clone $planQuery)->where('kpi_plan_submissions.status', 'approved')->count(),
+                'rejected' => (clone $planQuery)->where('kpi_plan_submissions.status', 'rejected')->count(),
+            ];
+
+            // --- 3. ТАЙМЛАЙН (14 дней) ---
             $timeline = [];
             for ($i = 14; $i >= 0; $i--) {
                 $date = now()->subDays($i)->format('Y-m-d');
@@ -90,113 +94,115 @@ class DashboardController extends Controller
                 $timeline[] = [
                     'date' => $label,
                     'received' => $allKpi->filter(fn($x) => Carbon::parse($x->created_at)->format('Y-m-d') === $date)->count(),
-                    'verified' => $allKpi->filter(fn($x) => $x->status === 'approved' && Carbon::parse($x->updated_at)->format('Y-m-d') === $date)->count(),
                 ];
             }
 
-            // --- 4. СИСТЕМНАЯ СТАТИСТИКА (LDAP С ПАГИНАЦИЕЙ) ---
-            $ldapData = Cache::remember('ldap_full_sync_stats', 600, function() {
+            // --- 4. LDAP СТАТИСТИКА (Кэшируем на 10 минут) ---
+            $ldapStats = Cache::remember('ldap_admin_count', 600, function() {
                 $ldapConn = $this->connectLdap();
                 if (!$ldapConn) return ['count' => 0, 'online' => false];
-
+                
                 $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
                 $filter = "(&(objectCategory=person)(objectClass=user))";
-                $totalFound = 0;
-                $pageSize = 500; 
-                $cookie = '';
+                $total = 0; $cookie = '';
 
                 do {
-                    $controls = [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'iscritical' => true, 'value' => ['size' => $pageSize, 'cookie' => $cookie]]];
-                    $search = @ldap_search($ldapConn, $baseDn, $filter, ["cn"], 0, 0, 0, LDAP_DEREF_NEVER, $controls);
-
+                    $controls = [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => 1000, 'cookie' => $cookie]]];
+                    $search = @ldap_search($ldapConn, $baseDn, $filter, ['cn'], 0, 0, 0, LDAP_DEREF_NEVER, $controls);
                     if (!$search) break;
-
-                    ldap_parse_result($ldapConn, $search, $errcode, $matcheddn, $errmsg, $referrals, $controls_response);
-                    $entries = ldap_get_entries($ldapConn, $search);
-                    
-                    $totalFound += $entries["count"];
-                    $cookie = $controls_response[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
-
-                } while ($cookie !== null && $cookie != '');
+                    ldap_parse_result($ldapConn, $search, $err, $dn_m, $msg, $ref, $servControls);
+                    $total += ldap_count_entries($ldapConn, $search);
+                    $cookie = $servControls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+                } while ($cookie !== null && $cookie !== '');
 
                 @ldap_unbind($ldapConn);
-
-                return [
-                    'count' => $totalFound,
-                    'online' => true
-                ];
+                return ['count' => $total, 'online' => true];
             });
-            $facultyStats = $this->getFacultyDeadlineComparison()->getData()->data;
+
             return response()->json([
                 'status' => 'success',
-                'specialization' => $user->academic_specialization,
-                'data' => $paginated->items(),
                 'stats' => [
+                    'plan_monitoring' => $planStats,
                     'total' => $allKpi->count(),
                     'approved' => $allKpi->where('status', 'approved')->count(),
-                    'pending' => $allKpi->where('status', 'pending')->count(),
-                    'rejected' => $allKpi->where('status', 'rejected')->count(),
                     'timeline' => $timeline,
                     'users_db' => User::count(),
-                    'users_ldap' => $ldapData['count'],
-                    'ldap' => $ldapData['online'],
-                    'faculty_analysis' => $facultyStats // Передаем сюда
+                    'users_ldap' => $ldapStats['count'],
+                    'ldap' => $ldapStats['online'],
+                    'faculty_analysis' => $this->getFacultyDeadlineComparisonInternal(),
+                    'faculties' => Faculty::select('id', 'short_title', 'title')->get()
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-    public function getFacultyDeadlineComparison()
-{
-    try {
-        // Получаем список всех факультетов с подсчетом планов
-        // Мы считаем планы (KpiPlan) через связь с пользователями
-        $faculties = \App\Models\Faculty::with(['users' => function($q) {
+
+    /**
+     * Вспомогательный метод для получения анализа по факультетам
+     */
+    private function getFacultyDeadlineComparisonInternal()
+    {
+        $faculties = Faculty::with(['users' => function($q) {
             $q->withCount([
-                // Все планы факультета
                 'kpiPlans as total',
-                // Выполненные (есть запись в activities)
                 'kpiPlans as approved' => function($q) {
-                    $q->whereHas('indicator.activities', function($sub) {
-                        $sub->whereColumn('user_id', 'users.id');
-                    });
+                    $q->whereHas('indicator.activities', fn($sub) => $sub->whereColumn('user_id', 'users.id'));
                 },
-                // Просроченные (дедлайн прошел, активности нет)
                 'kpiPlans as overdue' => function($q) {
                     $q->where('deadline', '<', now())
-                      ->whereDoesntHave('indicator.activities', function($sub) {
-                          $sub->whereColumn('user_id', 'users.id');
-                      });
+                      ->whereDoesntHave('indicator.activities', fn($sub) => $sub->whereColumn('user_id', 'users.id'));
                 }
             ]);
         }])->get();
 
-        // Форматируем данные специально под Recharts (для фронтенда)
-        $chartData = $faculties->map(function($faculty) {
-            $approved = $faculty->users->sum('approved');
-            $overdue = $faculty->users->sum('overdue');
-            $total = $faculty->users->sum('total');
-            
-            // "В ожидании" — это те, что не выполнены и еще не просрочены
-            $pending = $total - ($approved + $overdue);
-
+        return $faculties->map(function($faculty) {
+            $app = $faculty->users->sum('approved');
+            $ovr = $faculty->users->sum('overdue');
+            $ttl = $faculty->users->sum('total');
             return [
                 'name' => $faculty->short_title ?? $faculty->title,
-                'approved' => (int)$approved,
-                'pending' => (int)max(0, $pending),
-                'rejected' => (int)$overdue, 
+                'approved' => (int)$app,
+                'pending' => (int)max(0, $ttl - ($app + $ovr)),
+                'rejected' => (int)$ovr, 
             ];
         });
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $chartData
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
-}
+
+    /**
+     * Полный список пользователей из LDAP (для таблицы в React)
+     */
+    public function getAllLdapUsers()
+    {
+        $ldapConn = $this->connectLdap();
+        if (!$ldapConn) return response()->json(['status' => 'error', 'message' => 'LDAP connection failed'], 500);
+
+        $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
+        $filter = "(&(objectCategory=person)(objectClass=user))";
+        $attributes = ["cn", "userPrincipalName", "title", "department", "displayname", "company", "mobile"];
+        
+        $users = []; $cookie = '';
+        do {
+            $controls = [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'iscritical' => true, 'value' => ['size' => 500, 'cookie' => $cookie]]];
+            $search = @ldap_search($ldapConn, $baseDn, $filter, $attributes, 0, 0, 0, LDAP_DEREF_NEVER, $controls);
+            if (!$search) break;
+
+            ldap_parse_result($ldapConn, $search, $err, $dn_m, $msg, $ref, $resp_controls);
+            $entries = ldap_get_entries($ldapConn, $search);
+
+            for ($i = 0; $i < $entries["count"]; $i++) {
+                $users[] = [
+                    'name' => $entries[$i]["displayname"][0] ?? ($entries[$i]["cn"][0] ?? 'N/A'),
+                    'userPrincipalName' => $entries[$i]["userprincipalname"][0] ?? 'N/A', 
+                    'company'  => $entries[$i]["company"][0] ?? 'N/A',
+                    'position' => $entries[$i]["title"][0] ?? 'N/A', 
+                    'mobile'   => $entries[$i]["mobile"][0] ?? 'N/A',
+                ];
+            }
+            $cookie = $resp_controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+        } while ($cookie !== null && $cookie != '');
+
+        ldap_unbind($ldapConn);
+        return response()->json(['status' => 'success', 'total_found' => count($users), 'users' => $users]);
+    }
 }

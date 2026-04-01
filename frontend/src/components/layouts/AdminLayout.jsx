@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   Logs,
-  Users2
+  Users2,
+  LayoutDashboard
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -28,6 +29,7 @@ const AdminLayout = () => {
 
   // 1. Определение всех пунктов меню с привязкой к ролям
   const allMenuItems = [
+    { id: 'dashboard', path: '/admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Дэшборд', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'audit', path: '/admin/audit', icon: <ShieldCheck size={20} />, label: 'Верификация KPI', roles: ['super_admin', 'academic_office'] },

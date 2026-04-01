@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\KpiEvidenceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KpiActivityController;
 use App\Http\Controllers\LdapController;
 use Illuminate\Http\Request;
@@ -24,9 +25,10 @@ Route::prefix('admin/ldap')->group(function () {
         
         Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
     });
-
-Route::middleware(["token", "logs"])->group(function(){
-
+    
+    Route::middleware(["token", "logs"])->group(function(){
+        
+        Route::get('/admin/dashboard', [DashboardController::class, 'admin']);
     Route::get('/admin/logs', [ApiLogController::class, 'index']);
     Route::get('/admin/logs/{id}', [ApiLogController::class, 'show']);
 

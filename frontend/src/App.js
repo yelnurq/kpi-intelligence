@@ -69,6 +69,7 @@ function App() {
           
           <Route path="assets" element={<AssetManagement />} />
           <Route path="monitor" element={<StaffDeadlineMonitor />} />
+          <Route path="dashboard" element={<AdminPanel />} />
           <Route path="dean" element={<DeanDashboard />} />
           <Route path="logs" element={<ApiLogsMonitor />} />
           <Route path="settings" element={<TaxonomySettings />} />

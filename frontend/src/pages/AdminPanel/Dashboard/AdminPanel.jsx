@@ -4,11 +4,26 @@ import {
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  RefreshCw, Calendar, ShieldCheck, Activity, 
-  ChevronDown, ClipboardCheck, TrendingUp, Users, 
-  Globe, CheckCircle2, Terminal, History, Database,
-  Layers, ChevronRight, Server
+  RefreshCw, Calendar, Activity, ChevronDown, ChevronRight, ClipboardCheck, 
+  TrendingUp, Users, Globe, CheckCircle2, Terminal, 
+  History, Database, LayoutDashboard, Mail, Search, Loader2
 } from 'lucide-react';
+
+// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ (в твоем стиле) ---
+const StatCard = ({ icon: Icon, label, value, colorClass, description }) => (
+  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+    <div className="flex justify-between items-start mb-4">
+      <div className="space-y-1 text-left">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+        <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">{value}</h3>
+      </div>
+      <div className={`p-2.5 rounded-lg ${colorClass}`}>
+        <Icon size={18} />
+      </div>
+    </div>
+    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-left">{description}</p>
+  </div>
+);
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -42,245 +57,269 @@ const AdminDashboard = () => {
   }, [fetchDashboard]);
 
   if (!stats) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0F172A] gap-6 font-sans">
-      <div className="w-12 h-12 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-      <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-blue-400/60">System Booting...</span>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] gap-6 font-sans text-left">
+      <Loader2 className="animate-spin text-blue-600" size={40} />
+      <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-slate-400">Lumina Intelligence</span>
     </div>
   );
 
   const planData = [
-    { name: 'Утверждено', value: stats.plan_monitoring.approved, color: '#0F172A' }, // Темный для серьезности
-    { name: 'Проверка', value: stats.plan_monitoring.pending, color: '#334155' },
-    { name: 'Отклонено', value: stats.plan_monitoring.rejected, color: '#94A3B8' },
+    { name: 'Утверждено', value: stats.plan_monitoring.approved, color: '#2563eb' },
+    { name: 'Проверка', value: stats.plan_monitoring.pending, color: '#f59e0b' },
+    { name: 'Отклонено', value: stats.plan_monitoring.rejected, color: '#ef4444' },
   ];
 
   const completionRate = Math.round((stats.plan_monitoring.approved / stats.plan_monitoring.total) * 100) || 0;
 
   return (
-    <main className="mx-auto min-h-screen bg-[#F1F5F9] font-sans text-slate-900 border-x border-slate-200">
+    <main className="mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
       
-      {/* TOP SYSTEM BAR */}
-      <div className="bg-[#0F172A] text-white px-8 py-3 flex justify-between items-center border-b border-white/10">
-        <div className="flex items-center gap-6">
-          <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-blue-400">Control Panel v4.0</span>
-          <div className="h-4 w-[1px] bg-white/20"></div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[10px] font-bold uppercase text-slate-400">Server: Active</span>
-          </div>
+      {/* HEADER (Как в LdapManagement) */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">KPI Intelligence System</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <Globe size={14} className="text-blue-500" /> 
+            Панель глобального мониторинга университета
+          </p>
         </div>
-        <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-          Auth: {stats.ldap ? 'LDAP_PROT_SECURED' : 'LOCAL_STORAGE_ONLY'}
+
+        <div className="flex gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:flex-none">
+            <select 
+              value={selectedFaculty}
+              onChange={(e) => setSelectedFaculty(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 text-slate-700 px-6 py-3.5 pr-12 rounded-2xl text-[11px] font-bold uppercase tracking-widest focus:outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer w-full md:min-w-[280px]"
+            >
+              <option value="all">Все подразделения</option>
+              {stats.faculties?.map(f => (
+                <option key={f.id} value={f.id}>{f.short_title || f.title}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400" />
+          </div>
+
+          <button 
+            onClick={fetchDashboard} 
+            disabled={loading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            Обновить
+          </button>
         </div>
       </div>
 
-      <div className="px-6 md:px-12 py-10">
-        {/* HEADER SECTION */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12 border-b border-slate-300 pb-10">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Layers size={28} className="text-slate-900" strokeWidth={2.5} />
-              <h1 className="text-4xl font-black tracking-tighter uppercase text-slate-900">Intelligence <span className="text-blue-600">.</span></h1>
-            </div>
-            <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-widest leading-none">
-              Аналитический департамент мониторинга KPI
-            </p>
+      {/* STATS ROW (StatCards как в твоем примере) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <StatCard 
+          label="Всего пользователей" 
+          value={stats.users_db + stats.users_ldap} 
+          icon={Users} 
+          colorClass="bg-slate-100 text-slate-600" 
+          description="Общая база сотрудников" 
+        />
+        <StatCard 
+          label="Синхронизация LDAP" 
+          value={stats.ldap ? 'Активна' : 'Отключена'} 
+          icon={CheckCircle2} 
+          colorClass="bg-emerald-100 text-emerald-600" 
+          description="Статус AD соединения" 
+        />
+        <StatCard 
+          label="Системный аудит" 
+          value={stats.api_logs_total?.toLocaleString()} 
+          icon={Database} 
+          colorClass="bg-blue-100 text-blue-600" 
+          description="Записей в логах" 
+        />
+        <StatCard 
+          label="Выполнение плана" 
+          value={`${completionRate}%`} 
+          icon={TrendingUp} 
+          colorClass="bg-amber-100 text-amber-600" 
+          description="Средний KPI" 
+        />
+      </div>
+
+      {/* CHARTS GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        
+        {/* DONUT CHART */}
+        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="mb-6">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <ClipboardCheck size={14} className="text-blue-500" /> Статус планов
+            </h3>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative">
-              <select 
-                value={selectedFaculty}
-                onChange={(e) => setSelectedFaculty(e.target.value)}
-                className="appearance-none bg-white border border-slate-300 text-slate-700 px-5 py-3 pr-12 rounded-sm text-[11px] font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-blue-600 transition-all cursor-pointer w-full sm:min-w-[300px]"
-              >
-                <option value="all">Глобальный сектор</option>
-                {stats.faculties?.map(f => (
-                  <option key={f.id} value={f.id}>{f.short_title || f.title}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            </div>
-
-            <button 
-              onClick={fetchDashboard} 
-              className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-blue-700 text-white px-6 py-3 rounded-sm text-[11px] font-bold uppercase tracking-widest transition-all active:scale-[0.98]"
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              {loading ? 'Processing' : 'Update Data'}
-            </button>
-          </div>
-        </header>
-
-        {/* ANALYTICS GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           
-          {/* DONUT CHART: PLAN STATUS */}
-          <div className="lg:col-span-1 bg-white p-6 rounded-sm border border-slate-200 shadow-sm flex flex-col">
-            <div className="mb-8 border-l-4 border-slate-900 pl-4">
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Статус выполнения</h3>
-              <p className="text-lg font-black uppercase tracking-tight">Core Monitoring</p>
+          <div className="h-[220px] w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={planData}
+                  innerRadius={65}
+                  outerRadius={85}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {planData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-3xl font-bold text-slate-900 tracking-tighter">{completionRate}%</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Готово</span>
             </div>
-            
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={planData}
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="#fff"
-                    strokeWidth={2}
-                  >
-                    {planData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+          </div>
+
+          <div className="space-y-2 mt-6">
+             {planData.map((item, i) => (
+               <div key={i} className="flex justify-between items-center px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.name}</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-900">{item.value}</span>
+               </div>
+             ))}
+          </div>
+        </div>
+
+        {/* AREA CHART */}
+        <div className="lg:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-start mb-8">
+            <div className="space-y-1">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Calendar size={14} className="text-blue-500" /> Хронология активности
+              </h3>
+              <p className="text-sm font-bold text-slate-900">Динамика входящих заявок (14 дней)</p>
+            </div>
+            <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold uppercase border border-emerald-100">
+              Active Monitoring
+            </div>
+          </div>
+
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.timeline}>
+                <defs>
+                  <linearGradient id="colorBlue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="received" 
+                  stroke="#2563eb" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#colorBlue)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        
+        {/* FACULTY DISCIPLINE (Список или BarChart) */}
+        <div className="lg:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Activity size={14} className="text-blue-500" /> Исполнительская дисциплина
+            </h3>
+          </div>
+
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.faculty_analysis} layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 11, fontWeight: 700, fill: '#64748b'}} 
+                  width={100} 
+                />
+                <Tooltip cursor={{fill: '#f8fafc'}} />
+                <Bar dataKey="approved" stackId="a" fill="#2563eb" radius={[0, 0, 0, 0]} barSize={14} />
+                <Bar dataKey="pending" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} barSize={14} />
+                <Bar dataKey="rejected" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={14} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* SYSTEM AUDIT & LOGS */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-slate-900 p-8 rounded-2xl text-white relative overflow-hidden group shadow-xl">
+             <div className="relative z-10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-6">User Directory Details</p>
+                <div className="flex items-end justify-between mb-8">
+                  <div>
+                    <h4 className="text-4xl font-bold tracking-tighter">{(stats.users_db + stats.users_ldap).toLocaleString()}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total System Users</p>
+                  </div>
+                  <div className="flex -space-x-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="w-9 h-9 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold uppercase">U{i}</div>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-slate-900 tracking-tighter">{completionRate}%</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Passed</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 mt-8">
-               {planData.map((item, i) => (
-                 <div key={i} className="flex justify-between items-center px-3 py-2 border-b border-slate-50">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-none" style={{ backgroundColor: item.color }} />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">{item.name}</span>
-                    </div>
-                    <span className="text-[11px] font-black text-slate-900">{item.value}</span>
-                 </div>
-               ))}
-            </div>
-          </div>
-
-          {/* AREA CHART: TIMELINE */}
-          <div className="lg:col-span-3 bg-white p-8 rounded-sm border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-start mb-8">
-              <div className="border-l-4 border-blue-600 pl-4">
-                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest tracking-[0.2em]">Активность заявок</h3>
-                <p className="text-lg font-black uppercase tracking-tight">Timeline Analytics</p>
-              </div>
-              <div className="text-[10px] font-bold bg-slate-100 px-3 py-1 border border-slate-200 uppercase">Period: 14D</div>
-            </div>
-
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.timeline}>
-                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="#E2E8F0" />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 9, fontWeight: 700, fill: '#94A3B8'}} 
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 9, fontWeight: 700, fill: '#94A3B8'}} 
-                  />
-                  <Tooltip 
-                    contentStyle={{ background: '#0F172A', border: 'none', color: '#fff', borderRadius: '0px' }}
-                    itemStyle={{ fontSize: '10px', textTransform: 'uppercase' }}
-                  />
-                  <Area 
-                    type="stepAfter" 
-                    dataKey="received" 
-                    stroke="#2563EB" 
-                    strokeWidth={2} 
-                    fill="#EFF6FF" 
-                    animationDuration={1000}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* BOTTOM SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          
-          {/* PERFORMANCE BAR */}
-          <div className="lg:col-span-3 bg-white p-8 rounded-sm border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-              <div className="border-l-4 border-slate-900 pl-4">
-                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Дисциплина подразделений</h3>
-                <p className="text-lg font-black uppercase tracking-tight">Faculty Rankings</p>
-              </div>
-            </div>
-
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.faculty_analysis} layout="vertical">
-                  <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fontWeight: 800, fill: '#1E293B'}} 
-                    width={100} 
-                  />
-                  <Tooltip cursor={{fill: '#F8FAFC'}} />
-                  <Bar dataKey="approved" stackId="a" fill="#0F172A" barSize={12} />
-                  <Bar dataKey="pending" stackId="a" fill="#475569" barSize={12} />
-                  <Bar dataKey="rejected" stackId="a" fill="#CBD5E1" barSize={12} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* SYSTEM INFO */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#0F172A] p-8 rounded-sm text-white relative overflow-hidden">
-               <div className="relative z-10">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-400 mb-6">User Infrastructure</p>
-                  <div className="flex items-end gap-4 mb-8">
-                    <span className="text-5xl font-black tracking-tighter italic">{(stats.users_db + stats.users_ldap).toLocaleString()}</span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase pb-2 underline decoration-blue-500 underline-offset-4">Database Active</span>
+                    <div className="w-9 h-9 rounded-full border-2 border-slate-900 bg-blue-600 flex items-center justify-center text-[10px] font-bold">+</div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">LDAP Sync</p>
-                      <p className="text-xl font-bold">{stats.users_ldap}</p>
-                    </div>
-                    <div className="p-4 bg-white/5 border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">Local Users</p>
-                      <p className="text-xl font-bold">{stats.users_db}</p>
-                    </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/10">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">LDAP Sync Users</span>
+                    <span className="text-sm font-bold text-blue-400">{stats.users_ldap}</span>
                   </div>
-               </div>
-               <Server size={120} className="absolute -right-8 -bottom-8 opacity-5" />
-            </div>
+                  <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/10">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Local DB Users</span>
+                    <span className="text-sm font-bold text-white">{stats.users_db}</span>
+                  </div>
+                </div>
+             </div>
+          </div>
 
-            <div className="bg-white border border-slate-200 p-6 flex justify-between items-center group cursor-pointer hover:bg-slate-50 transition-colors">
-               <div className="flex items-center gap-4">
-                 <div className="p-3 bg-slate-100 text-slate-900 border border-slate-200">
-                    <History size={20} />
-                 </div>
-                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">System Audit</p>
-                    <p className="text-sm font-bold uppercase">{stats.api_logs_total?.toLocaleString()} Logs Recorded</p>
-                 </div>
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl flex justify-between items-center group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+             <div className="flex items-center gap-4">
+               <div className="p-3 bg-slate-100 text-slate-600 rounded-xl">
+                  <Terminal size={20} />
                </div>
-               <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-900 transition-colors" />
-            </div>
-
-            <div className="bg-emerald-50 border border-emerald-100 p-6 flex items-center gap-4">
-               <CheckCircle2 className="text-emerald-600" size={24} />
                <div>
-                  <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Security Protocol</p>
-                  <p className="text-xs font-bold text-emerald-800 uppercase">Data Integrity Verified via SHA-256</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Всего событий (логов)</p>
+                  <p className="text-md font-bold text-slate-900">{stats.api_logs_total} запросов</p>
                </div>
-            </div>
+             </div>
+             <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-900 transition-colors" />
           </div>
         </div>
+
       </div>
     </main>
   );

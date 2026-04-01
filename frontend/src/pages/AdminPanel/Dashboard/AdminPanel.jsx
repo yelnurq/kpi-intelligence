@@ -8,10 +8,12 @@ import {
   RefreshCw, Calendar, Activity, ChevronDown, ChevronRight, ClipboardCheck, 
   TrendingUp, Users, Globe, CheckCircle2, Terminal, 
   History, Database, LayoutDashboard, Mail, Search, Loader2,
-  AlertCircle, Timer,
+  AlertCircle, Timer, ArrowUpRight,
   CheckCircle,
   Info,
-  Zap
+  Zap,
+  XOctagon,
+  BarChart3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -227,110 +229,120 @@ const AdminDashboard = () => {
       </div>
     </div>
 
-        <div className="lg:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-      <div className="flex justify-between items-start mb-8">
-        <div className="space-y-1">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Calendar size={14} className="text-blue-500" /> Хронология активности
-          </h3>
-          <p className="text-sm font-bold text-slate-900">Динамика подачи заявок на проверку (14 дней)</p>
-        </div>
-        <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold uppercase border border-emerald-100 flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          Active Monitoring
-        </div>
+ <div className="lg:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+  <div className="flex justify-between items-start mb-8">
+    <div className="space-y-1">
+      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <Calendar size={14} className="text-blue-500" /> Хронология активности
+      </h3>
+      <p className="text-sm font-bold text-slate-900">Динамика подачи заявок работ учителей на проверку (14 дней)</p>
+    </div>
+    <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold uppercase border border-emerald-100 flex items-center gap-2">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      Активный мониторинг 
+    </div>
+  </div>
+
+  {/* Контейнер графика */}
+  <div className="h-[300px] w-full">
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={stats.timeline}>
+        <defs>
+          <linearGradient id="colorBlue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+        <XAxis 
+          dataKey="date" 
+          axisLine={false} 
+          tickLine={false} 
+          tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+          dy={10}
+        />
+        <YAxis 
+          axisLine={false} 
+          tickLine={false} 
+          tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+        />
+        <Tooltip 
+          contentStyle={{ 
+            borderRadius: '12px', 
+            border: 'none', 
+            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+            padding: '12px'
+          }}
+          labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+        />
+
+        {/* Задний фон - синяя область (общий поток) */}
+        <Area 
+          type="monotone" 
+          dataKey="received" 
+          stroke="#2563eb" 
+          strokeWidth={3}
+          fillOpacity={1}
+          fill="url(#colorBlue)" 
+          name="Поступило заявок"
+          isAnimationActive={true}
+        />
+        
+        {/* Пунктир - Успешно закрытые */}
+        <Area 
+          type="monotone" 
+          dataKey="processed" 
+          stroke="#10b981" 
+          fill="none" 
+          strokeWidth={2}
+          strokeDasharray="6 6" 
+          name="Успешно закрыты"
+        />
+        
+        {/* Пунктир - Отказано */}
+        <Area 
+          type="monotone" 
+          dataKey="rejected" 
+          stroke="#ef4444" // Сделал чуть ярче красный для контраста
+          fill="none" 
+          strokeWidth={2}
+          strokeDasharray="6 6" 
+          name="Отказано"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+
+  {/* НОВЫЙ Аналитический блок под графиком */}
+  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-50 pt-6">
+    <div className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+      <div className="p-3 bg-emerald-100 rounded-xl h-fit border border-emerald-200">
+        <BarChart3 size={20} className="text-emerald-700" />
       </div>
-
-      {/* Контейнер графика */}
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={stats.timeline}>
-            <defs>
-              <linearGradient id="colorBlue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis 
-              dataKey="date" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
-              dy={10}
-            />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
-            />
-            <Tooltip 
-              contentStyle={{ 
-                borderRadius: '12px', 
-                border: 'none', 
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                padding: '12px'
-              }}
-              labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-            />
-
-          <Area 
-            type="monotone" 
-            dataKey="received" // Общий поток
-            stroke="#2563eb" 
-            fill="url(#colorBlue)" 
-            name="Поступило заявок"
-          />
-          <Area 
-            type="monotone" 
-            dataKey="processed" // Отработанные
-            stroke="#10b981" 
-            fill="none" // Чтобы не перекрывать основной график
-            strokeDasharray="5 5" // Сделаем пунктиром для отличия
-            name="Успешно закрыты"
-          />
-           <Area 
-            type="monotone" 
-            dataKey="rejected" // Отработанные
-            stroke="#a10f0f" 
-            fill="none" // Чтобы не перекрывать основной график
-            strokeDasharray="5 5" // Сделаем пунктиром для отличия
-            name="Отказано"
-          />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Аналитический блок под графиком */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-50 pt-6">
-        <div className="flex gap-4">
-          <div className="p-3 bg-blue-50 rounded-xl h-fit">
-            <TrendingUp size={20} className="text-blue-600" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-800 uppercase mb-1">Пики активности</h4>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              График фиксирует моменты массовой сдачи планов на проверку. Резкие скачки обычно сигнализируют о приближении внутренних дедлайнов.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="p-3 bg-amber-50 rounded-xl h-fit">
-            <Zap size={20} className="text-amber-600" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-800 uppercase mb-1">Нагрузка на проверяющих</h4>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Позволяет прогнозировать нагрузку на администрацию. Чем выше область графика, тем больше заявок поступило в систему для верификации.
-            </p>
-          </div>
-        </div>
+      <div>
+        <h4 className="text-xs font-bold text-slate-800 uppercase mb-1">Скорость обработки потока</h4>
+        <p className="text-[11px] text-slate-600 leading-relaxed">
+          Сравните синюю область с пунктирными линиями. <span className="font-semibold text-emerald-700">Зеленый пунктир</span> показывает, сколько заявок администрация успевает утвердить. Если разрыв между синей и пунктирными линиями растет, значит, формируется очередь на проверку.
+        </p>
       </div>
     </div>
+
+    <div className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+      <div className="p-3 bg-red-100 rounded-xl h-fit border border-red-200">
+        <XOctagon size={20} className="text-red-700" />
+      </div>
+      <div>
+        <h4 className="text-xs font-bold text-slate-800 uppercase mb-1">Анализ качества заявок</h4>
+        <p className="text-[11px] text-slate-600 leading-relaxed">
+          <span className="font-semibold text-red-700">Красный пунктир</span> фиксирует количество отклоненных работ. Резкий рост красной линии при стабильном синем потоке может сигнализировать о системных ошибках в заполнении планов учителями.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
 
       {/* BOTTOM SECTION */}
@@ -343,7 +355,8 @@ const AdminDashboard = () => {
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-1">
             <Activity size={14} className="text-blue-500" /> Исполнительская дисциплина
           </h3>
-          <p className="text-sm text-slate-500">Контроль соблюдения дедлайнов по факультетам</p>
+          <p className="text-sm font-bold text-slate-900">Контроль соблюдения дедлайнов по факультетам</p>
+
         </div>
       </div>
 
@@ -432,33 +445,71 @@ const AdminDashboard = () => {
     </div>
 
         {/* SYSTEM AUDIT & LOGS */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900 p-8 rounded-2xl text-white relative overflow-hidden group shadow-xl">
-             <div className="relative z-10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-6">User Directory Details</p>
-                <div className="flex items-end justify-between mb-8">
-                  <div>
-                    <h4 className="text-4xl font-bold tracking-tighter">{(stats.users_db + stats.users_ldap).toLocaleString()}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total System Users</p>
-                  </div>
-                  <div className="flex -space-x-3">
-                    <div className="border-b flex items-center justify-center text-[10px] font-bold">
-                      <Link to={'/admin/users'}>Смотреть подробно</Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/10">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">LDAP Sync Users</span>
-                    <span className="text-sm font-bold text-blue-400">{stats.users_ldap}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/10">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Local DB Users</span>
-                    <span className="text-sm font-bold text-white">{stats.users_db}</span>
-                  </div>
-                </div>
-             </div>
+        <div className="lg:col-span-2  bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      {/* Заголовок секции */}
+      <div className="flex justify-between items-start mb-8">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Users size={14} className="text-blue-500" /> Справочник пользователей
+          </h3>
+          <p className="text-sm font-bold text-slate-900 leading-tight">Общая база сотрудников</p>
+        </div>
+        <Link 
+          to="/admin/users" 
+          className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors group"
+          title="Смотреть подробно"
+        >
+          <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        </Link>
+      </div>
+
+      {/* Главный показатель */}
+      <div className="mb-8">
+        <div className="flex items-baseline gap-1">
+          <h4 className="text-4xl font-bold tracking-tighter text-slate-900">
+            {(stats.users_db + stats.users_ldap).toLocaleString()}
+          </h4>
+          <span className="text-xs font-bold text-slate-400 uppercase">чел.</span>
+        </div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Всего в системе</p>
+      </div>
+
+      {/* Карточки источников данных */}
+      <div className="space-y-3 flex-grow">
+        {/* LDAP */}
+        <div className="group flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <Globe size={16} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase block leading-none mb-1">LDAP Директория</span>
+              <span className="text-[9px] text-slate-400 italic">Синхронизировано из KazTBU</span>
+            </div>
           </div>
+          <span className="text-sm font-bold text-blue-600">{stats.users_ldap}</span>
+        </div>
+
+        {/* Local DB */}
+        <div className="group flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-200 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+              <Database size={16} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase block leading-none mb-1">Локальная БД</span>
+              <span className="text-[9px] text-slate-400 italic">Активные профили</span>
+            </div>
+          </div>
+          <span className="text-sm font-bold text-slate-900">{stats.users_db}</span>
+        </div>
+      </div>
+
+      <div className="mt-6 pt-6 border-t border-slate-50">
+        <p className="text-[10px] text-slate-400 leading-relaxed italic">
+          * Локальные пользователи включают в себя учетные записи, созданные вручную, и LDAP-аккаунты, прошедшие активацию в системе KPI.
+        </p>
+      </div>
 
           <div className="bg-white border border-slate-200 p-6 rounded-2xl flex justify-between items-center group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
              <div className="flex items-center gap-4">

@@ -126,7 +126,7 @@ class DashboardController extends Controller
                     'online' => true
                 ];
             });
-
+            $facultyStats = $this->getFacultyDeadlineComparison()->getData()->data;
             return response()->json([
                 'status' => 'success',
                 'specialization' => $user->academic_specialization,
@@ -139,7 +139,8 @@ class DashboardController extends Controller
                     'timeline' => $timeline,
                     'users_db' => User::count(),
                     'users_ldap' => $ldapData['count'],
-                    'ldap' => $ldapData['online']
+                    'ldap' => $ldapData['online'],
+                    'faculty_analysis' => $facultyStats // Передаем сюда
                 ]
             ]);
 
@@ -147,4 +148,55 @@ class DashboardController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+    public function getFacultyDeadlineComparison()
+{
+    try {
+        // Получаем список всех факультетов с подсчетом планов
+        // Мы считаем планы (KpiPlan) через связь с пользователями
+        $faculties = \App\Models\Faculty::with(['users' => function($q) {
+            $q->withCount([
+                // Все планы факультета
+                'kpiPlans as total',
+                // Выполненные (есть запись в activities)
+                'kpiPlans as approved' => function($q) {
+                    $q->whereHas('indicator.activities', function($sub) {
+                        $sub->whereColumn('user_id', 'users.id');
+                    });
+                },
+                // Просроченные (дедлайн прошел, активности нет)
+                'kpiPlans as overdue' => function($q) {
+                    $q->where('deadline', '<', now())
+                      ->whereDoesntHave('indicator.activities', function($sub) {
+                          $sub->whereColumn('user_id', 'users.id');
+                      });
+                }
+            ]);
+        }])->get();
+
+        // Форматируем данные специально под Recharts (для фронтенда)
+        $chartData = $faculties->map(function($faculty) {
+            $approved = $faculty->users->sum('approved');
+            $overdue = $faculty->users->sum('overdue');
+            $total = $faculty->users->sum('total');
+            
+            // "В ожидании" — это те, что не выполнены и еще не просрочены
+            $pending = $total - ($approved + $overdue);
+
+            return [
+                'name' => $faculty->short_title ?? $faculty->title,
+                'approved' => (int)$approved,
+                'pending' => (int)max(0, $pending),
+                'rejected' => (int)$overdue, 
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $chartData
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+}
 }

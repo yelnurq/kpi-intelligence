@@ -3,7 +3,7 @@ import {
   Search, UserPlus, Mail, Building2, Filter, 
   ChevronRight, Loader2, Trash2, Edit2, X, 
   ShieldCheck, Users, UserCheck, UserMinus, 
-  ArrowRight, Shield, User, Globe
+  ArrowRight, Shield, User, GraduationCap
 } from 'lucide-react';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
@@ -53,10 +53,10 @@ const StaffManagement = () => {
 
   const [options, setOptions] = useState({ faculties: [], departments: [], positions: [], degrees: [] });
   
-  // Начальное состояние формы с ролью по умолчанию
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', password_confirmation: '',
     faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
+    academic_specialization: '', 
     role: 'teacher' 
   });
 
@@ -93,23 +93,19 @@ const StaffManagement = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  useEffect(() => { 
-    fetchUsers(); 
-  }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedFaculty]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedFaculty]);
 
   useEffect(() => {
     const loadInitialOptions = async () => {
-        const res = await fetch(`${API_BASE}/admin/helpers/options`, {
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-        });
-        const data = await res.json();
-        if (data.faculties) {
-            setFaculties(data.faculties.map(f => f.name));
-        }
+        try {
+            const res = await fetch(`${API_BASE}/admin/helpers/options`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.faculties) setFaculties(data.faculties.map(f => f.name));
+        } catch (e) { console.error(e); }
     };
     loadInitialOptions();
   }, [token, API_BASE]);
@@ -122,15 +118,14 @@ const StaffManagement = () => {
       const data = await res.json();
       setOptions(data);
       return data;
-    } catch (error) {
-      console.error("Ошибка справочников:", error);
-    }
+    } catch (error) { console.error("Ошибка справочников:", error); }
   }, [token, API_BASE]);
 
   const resetForm = () => {
     setFormData({
       name: '', email: '', password: '', password_confirmation: '',
       faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
+      academic_specialization: '',
       role: 'teacher'
     });
     setEditingId(null);
@@ -141,35 +136,43 @@ const StaffManagement = () => {
     setIsModalOpen(true);
     fetchOptions();
   };
+const SPECIALIZATION_CATEGORIES = [
+  'учеб.работа',
+  'учебно-методическая работа',
+  'организационно-методическая работа',
+  'научно-исследовательская работа',
+  'воспитательная работа',
+  'профориентационная работа'
+];
+const handleEditClick = async (user) => {
+  setEditingId(user.id);
+  setIsModalOpen(true);
+  const freshOptions = await fetchOptions(); 
 
-  const handleEditClick = async (user) => {
-    setEditingId(user.id);
-    setIsModalOpen(true);
-    
-    const freshOptions = await fetchOptions(); 
+  if (freshOptions) {
+    const foundFaculty = freshOptions.faculties.find(f => 
+      f.name?.toLowerCase() === user.faculty?.toLowerCase() || 
+      f.short_name?.toLowerCase() === user.faculty_short?.toLowerCase()
+    );
+    const foundDept = freshOptions.departments.find(d => d.name?.toLowerCase() === user.department?.toLowerCase());
+    const foundPos = freshOptions.positions.find(p => p.name?.toLowerCase() === user.position?.toLowerCase());
+    const foundDeg = freshOptions.degrees.find(d => d.name?.toLowerCase() === user.academic_degree?.toLowerCase());
 
-    if (freshOptions) {
-      const foundFaculty = freshOptions.faculties.find(f => 
-        f.name?.toLowerCase() === user.faculty?.toLowerCase() || 
-        f.short_name?.toLowerCase() === user.faculty_short?.toLowerCase()
-      );
-      const foundDept = freshOptions.departments.find(d => d.name?.toLowerCase() === user.department?.toLowerCase());
-      const foundPos = freshOptions.positions.find(p => p.name?.toLowerCase() === user.position?.toLowerCase());
-      const foundDeg = freshOptions.degrees.find(d => d.name?.toLowerCase() === user.academic_degree?.toLowerCase());
-
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        password: '', 
-        password_confirmation: '',
-        role: user.role || 'teacher',
-        faculty_id: foundFaculty ? foundFaculty.id.toString() : '',
-        department_id: foundDept ? foundDept.id.toString() : '',
-        position_id: foundPos ? foundPos.id.toString() : '',
-        academic_degree_id: foundDeg ? foundDeg.id.toString() : '',
-      });
-    }
-  };
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      password: '', 
+      password_confirmation: '',
+      role: user.role || 'teacher',
+      // ВАЖНО: берем значение специализации напрямую из объекта пользователя
+      academic_specialization: user.academic_specialization || '', 
+      faculty_id: foundFaculty ? foundFaculty.id.toString() : '',
+      department_id: foundDept ? foundDept.id.toString() : '',
+      position_id: foundPos ? foundPos.id.toString() : '',
+      academic_degree_id: foundDeg ? foundDeg.id.toString() : '',
+    });
+  }
+};
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Удалить пользователя?")) return;
@@ -212,7 +215,26 @@ const StaffManagement = () => {
       }
     } finally { setIsSubmitting(false); }
   };
+  const getSpecializationPlaceholder = () => {
+    // Находим объект выбранного факультета, чтобы получить его название
+    const selectedFacObj = options.faculties?.find(f => f.id.toString() === formData.faculty_id);
+    const facultyName = selectedFacObj ? selectedFacObj.name : "факультета";
 
+    switch (formData.role) {
+      case 'dean':
+        return `Декан какого факультета? (напр: ${facultyName})`;
+      case 'head_of_dept':
+        return `Зав. кафедрой (напр: Кафедра ИТ)`;
+      case 'teacher':
+        return "Напр: 6B06101 - Информационные системы";
+      case 'academic_office':
+        return "Укажите отдел или специализацию в офисе";
+      case 'super_admin':
+        return "Специализация для администратора (необязательно)";
+      default:
+        return "Введите специализацию...";
+    }
+  };
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
@@ -220,7 +242,7 @@ const StaffManagement = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
           <div className="text-left">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Управление штатом</h1>
-            <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Список сотрудников и ролей доступа</p>
+            <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Система ролей и академических данных сотрудников</p>
           </div>
 
         <button 
@@ -267,7 +289,7 @@ const StaffManagement = () => {
         </div>
       </div>
 
-      {/* CONTENT AREA */}
+      {/* CONTENT */}
       <div className="relative min-h-[400px]">
         {loading && users.length > 0 && (
           <div className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] flex items-start justify-center pt-20">
@@ -292,13 +314,11 @@ const StaffManagement = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-slate-900 text-base">{user.name}</h4>
-                        
                         {user.auth_type === 'ldap' ? (
                           <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[9px] font-black uppercase tracking-wider">LDAP</span>
                         ) : (
                           <span className="px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded text-[9px] font-black uppercase tracking-wider">local</span>
                         )}
-
                         {user.role === 'super_admin' ? <Shield size={14} className="text-blue-600" title="Администратор" /> : <User size={14} className="text-slate-300" />}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
@@ -313,6 +333,9 @@ const StaffManagement = () => {
                     <div className="text-left md:text-right min-w-[120px]">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.position || 'Должность...'}</p>
                       <p className="text-xs font-bold text-slate-700">{user.academic_degree || 'Без степени'}</p>
+                      {user.academic_specialization && (
+                        <p className="text-[9px] font-medium text-blue-500 italic mt-0.5 max-w-[180px] leading-tight">{user.academic_specialization}</p>
+                      )}
                     </div>
                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase border ${
                       user.activities_count > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
@@ -332,7 +355,6 @@ const StaffManagement = () => {
           <div className="bg-white rounded-[32px] border border-slate-200 border-dashed p-20 text-center">
              <Users size={32} className="text-slate-200 mx-auto mb-6" />
              <h3 className="text-xl font-bold text-slate-900">Пользователи не найдены</h3>
-             <p className="text-sm text-slate-400 mt-2">Попробуйте изменить параметры поиска или фильтрации</p>
           </div>
         )}
       </div>
@@ -340,24 +362,10 @@ const StaffManagement = () => {
       {/* PAGINATION */}
       {meta.last_page > 1 && (
         <div className="mt-10 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-4">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest md:ml-4">
-            Страница {currentPage} из {meta.last_page} (Всего: {meta.total})
-          </p>
-          
-          <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-2 md:pb-0">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all">Назад</button>
-
-            {[...Array(meta.last_page)].map((_, i) => {
-                const pageNum = i + 1;
-                if (pageNum === 1 || pageNum === meta.last_page || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
-                    return (
-                        <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`min-w-[40px] h-10 rounded-xl text-[10px] font-bold transition-all ${currentPage === pageNum ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-slate-400 border border-slate-100 hover:border-blue-200'}`}>{pageNum}</button>
-                    );
-                }
-                return null;
-            })}
-
-            <button disabled={currentPage === meta.last_page} onClick={() => setCurrentPage(prev => prev + 1)} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all">Вперед</button>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest md:ml-4">Страница {currentPage} из {meta.last_page}</p>
+          <div className="flex items-center gap-2">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-100 disabled:opacity-50">Назад</button>
+            <button disabled={currentPage === meta.last_page} onClick={() => setCurrentPage(p => p + 1)} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-100 disabled:opacity-50">Вперед</button>
           </div>
         </div>
       )}
@@ -369,7 +377,7 @@ const StaffManagement = () => {
             <div className="p-10 pb-6 flex justify-between items-start text-left">
               <div>
                 <h3 className="text-2xl font-bold text-slate-900 tracking-tighter">{editingId ? 'Редактирование профиля' : 'Новый сотрудник'}</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Настройка роли и персональных данных</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Настройка ролей и академических данных</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"><X size={24} /></button>
             </div>
@@ -377,14 +385,14 @@ const StaffManagement = () => {
             <div className="px-10 pb-10 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6 text-left">
                 
-                {/* ROLE TOGGLE & SELECT */}
+                {/* ROLE SELECTION */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${formData.role === 'super_admin' ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}><Shield size={18} /></div>
                       <div>
                         <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Полный доступ (Super Admin)</p>
-                        <p className="text-[10px] text-slate-500 font-medium italic">Максимальные права управления</p>
+                        <p className="text-[10px] text-slate-500 font-medium italic">Управление пользователями и настройками</p>
                       </div>
                     </div>
                     <button 
@@ -397,12 +405,10 @@ const StaffManagement = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Конкретная роль в системе</label>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Тип доступа</label>
                     <select 
-                      required
-                      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all cursor-pointer"
-                      value={formData.role}
-                      onChange={e => setFormData({...formData, role: e.target.value})}
+                      required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none cursor-pointer"
+                      value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
                     >
                       <option value="teacher">Преподаватель</option>
                       <option value="head_of_dept">Заведующий кафедрой</option>
@@ -413,62 +419,99 @@ const StaffManagement = () => {
                   </div>
                 </div>
 
+                {/* PERSONAL INFO */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Полное ФИО</label>
-                    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Email (Логин)</label>
-                    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
-                    <select className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none cursor-pointer" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
-                      <option value="">Выберите подразделение</option>
-                      {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
-                    <select className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none cursor-pointer" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
-                      <option value="">Выберите кафедру</option>
-                      {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
-                    <select className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none cursor-pointer" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
-                      <option value="">Выберите должность</option>
-                      {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
-                    <select className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none cursor-pointer" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
-                      <option value="">Выберите степень</option>
-                      {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
-                    </select>
+                    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   </div>
                 </div>
 
+                {/* ACADEMIC INFO */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
+                      <option value="">Выберите...</option>
+                      {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
+                      <option value="">Выберите...</option>
+                      {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
+                      <option value="">Выберите...</option>
+                      {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
+                      <option value="">Выберите...</option>
+                      {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
+                    </select>
+                  </div>
+<div className="space-y-1.5 md:col-span-2">
+  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5">
+    <GraduationCap size={12}/> Тип деятельности (Специализация)
+  </label>
+
+  {formData.role === 'academic_office' ? (
+    /* Если Офис-регистратор — показываем СЕЛЕКТ */
+    <select 
+      required
+      className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
+      value={formData.academic_specialization} 
+      onChange={e => setFormData({...formData, academic_specialization: e.target.value})} 
+    >
+      <option value="">Выберите категорию...</option>
+      {SPECIALIZATION_CATEGORIES.map(category => (
+        <option key={category} value={category}>
+          {category}
+        </option>
+      ))}
+    </select>
+  ) : (
+    /* Для всех остальных ролей — показываем ИНПУТ */
+    <input 
+      type="text"
+      placeholder={getSpecializationPlaceholder()}
+      className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all"
+      value={formData.academic_specialization}
+      onChange={e => setFormData({...formData, academic_specialization: e.target.value})}
+    />
+  )}
+  
+  <p className="text-[9px] text-slate-400 mt-1 ml-1 italic">
+    {getSpecializationPlaceholder()}
+  </p>
+</div>
+                </div>
+
+                {/* PASSWORD */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6 border-t border-slate-100">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль' : 'Пароль'}</label>
-                    <input type="password" required={!editingId} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder={editingId ? "Оставьте пустым" : "••••••••"} />
+                    <input type="password" required={!editingId} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder={editingId ? "Оставьте пустым" : "••••••••"} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
-                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} />
+                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="flex gap-4 mt-10">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Отмена</button>
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600">Отмена</button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-3 transition-all">
                     {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <>{editingId ? 'Обновить данные' : 'Сохранить'} <ArrowRight size={16} /></>}
                   </button>

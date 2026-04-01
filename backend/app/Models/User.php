@@ -26,7 +26,7 @@ class User extends Authenticatable
         'role',
         
         'auth_type',
-
+        'academic_specialization',
         'department_id',
         'academic_degree_id',
         'faculty_id',

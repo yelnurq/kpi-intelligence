@@ -148,6 +148,7 @@ public function index(Request $request)
                 'role' => $user->role,
                 'faculty' => $user->faculty->title ?? 'Не указан',
                 'department' => $user->department->title ?? 'Не указана',
+                'academic_specialization' => $user->academic_specialization,
                 'faculty_short' => $user->faculty->short_title ?? '—',
                 'position' => $user->position->title ?? 'Сотрудник',
                 'academic_degree' => $user->academic_degree->title ?? 'Нет',
@@ -198,7 +199,8 @@ public function update(Request $request, $id)
                 'department_id' => 'nullable|exists:departments,id',
                 'position_id' => 'nullable|exists:positions,id',
                 'academic_degree_id' => 'nullable|exists:academic_degrees,id',
-                'role' => 'nullable|string'
+                'role' => 'nullable|string',
+                'academic_specialization' => 'nullable|string|max:255',
             ]);
 
         $updateData = [
@@ -208,7 +210,8 @@ public function update(Request $request, $id)
             'department_id' => $validated['department_id'],
             'position_id' => $validated['position_id'],
             'academic_degree_id' => $validated['academic_degree_id'],
-'role' => $request->role ?? $user->role,
+            'role' => $request->role ?? $user->role,
+            'academic_specialization' => $validated['academic_specialization'],
         ];
 
         // Обновляем пароль только если он введен

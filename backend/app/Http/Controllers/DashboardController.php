@@ -86,17 +86,22 @@ class DashboardController extends Controller
                 'rejected' => (clone $planQuery)->where('kpi_plan_submissions.status', 'rejected')->count(),
             ];
 
-            // --- 3. ТАЙМЛАЙН (14 дней) ---
             $timeline = [];
             for ($i = 14; $i >= 0; $i--) {
                 $date = now()->subDays($i)->format('Y-m-d');
                 $label = now()->subDays($i)->format('d.m');
+                
+                // Фильтруем коллекцию KPI по конкретной дате один раз для оптимизации
+                $dayKpis = $allKpi->filter(fn($x) => \Carbon\Carbon::parse($x->created_at)->format('Y-m-d') === $date);
+                
                 $timeline[] = [
                     'date' => $label,
-                    'received' => $allKpi->filter(fn($x) => Carbon::parse($x->created_at)->format('Y-m-d') === $date)->count(),
+                    // Сколько всего поступило (все статусы)
+                    'received' => $dayKpis->count(), 
+                    // Сколько из них уже отработано (статус approved)
+                    'processed' => $dayKpis->where('status', 'approved')->count(), 
                 ];
             }
-
             // --- 4. LDAP СТАТИСТИКА (Кэшируем на 10 минут) ---
             $ldapStats = Cache::remember('ldap_admin_count', 600, function() {
                 $ldapConn = $this->connectLdap();

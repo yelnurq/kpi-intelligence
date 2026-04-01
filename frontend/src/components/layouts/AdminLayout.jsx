@@ -99,33 +99,22 @@ const AdminLayout = () => {
         ${isSidebarOpen ? 'w-72' : 'w-20'} 
         bg-slate-900 border-r border-white/5 flex flex-col fixed h-full transition-all duration-300 z-50 shadow-2xl
       `}>
-        <div className="p-6 flex items-center gap-3 h-20 border-b border-white/5 bg-slate-950/50">
-          <div className="min-w-[45px] h-12 flex items-center justify-center">
-            <img src="/images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" />
-          </div>
-          {isSidebarOpen && (
-            <div className="flex flex-col animate-in fade-in duration-500">
-              <span className="font-black text-lg tracking-tighter text-white leading-none">
-                KAZUTB <span className="text-blue-500">ADMIN</span>
-              </span>
-            </div>
-          )}
+        <div className={`flex items-center border-white/5 bg-slate-950/50 h-20 transition-all duration-300 ${isSidebarOpen ? 'px-6 gap-3' : 'px-0 justify-center'}`}>
+        
+       <div className="w-11 h-11">
+            <img src="/images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" /></div>
+          {isSidebarOpen && <span className="font-black text-xl tracking-tighter text-white uppercase">KAZ<span className="text-blue-400">UTB</span><span className='lowercase'></span></span>}
         </div>
 
-        <nav className="flex-1 p-4 space-y-1.5 mt-4 overflow-y-auto">
+
+        <nav className="flex-1 p-3 space-y-2 mt-4 overflow-y-auto">
           {filteredMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
-              <Link
-                key={item.id}
-                to={item.path}
-                className={`
-                  w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative
-                  ${isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'}
-                `}
-              >
+                <Link key={item.id} to={item.path} className={`w-full flex items-center rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'px-4 py-3.5 gap-4' : 'justify-center py-3.5'} ${isActive ? 
+                'bg-blue-600 text-white shadow-lg shadow-blue-900/20' :
+                   'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+
                 <span className={`${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
                   {item.icon}
                 </span>

@@ -83,15 +83,12 @@ const AdminDashboard = () => {
       <main className="mx-auto px-4 md:px-10 py-10 bg-[#f8fafc] min-h-screen font-sans border rounded-lg">
       
       {/* HEADER (Как в LdapManagement) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tighter italic">Дэшборд системы</h1>
-        <p className="flex items-center gap-2 mt-1 text-sm text-slate-500 font-medium">
-          <Globe size={14} className="text-blue-600 animate-pulse" /> 
-          Центр управления эффективностью и академического мониторинга
-        </p>
-      </div>
+     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
 
+ <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Дэшборд системы</h1>
+          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Центр управления эффективностью и академического мониторинга</p>
+        </div>
         <div className="flex gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:flex-none">
             <select 

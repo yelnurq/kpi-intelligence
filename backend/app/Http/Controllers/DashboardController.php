@@ -119,6 +119,9 @@ class DashboardController extends Controller
                 return ['count' => $total, 'online' => true];
             });
 
+        // Добавьте этот расчет перед return в методе admin()
+            $apiLogsCount = \DB::table('api_logs')->count();
+
             return response()->json([
                 'status' => 'success',
                 'stats' => [
@@ -129,6 +132,8 @@ class DashboardController extends Controller
                     'users_db' => User::count(),
                     'users_ldap' => $ldapStats['count'],
                     'ldap' => $ldapStats['online'],
+                    // Добавляем новую метрику
+                    'api_logs_total' => $apiLogsCount, 
                     'faculty_analysis' => $this->getFacultyDeadlineComparisonInternal(),
                     'faculties' => Faculty::select('id', 'short_title', 'title')->get()
                 ]

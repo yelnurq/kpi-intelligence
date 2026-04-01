@@ -80,17 +80,17 @@ const AdminDashboard = () => {
   const completionRate = Math.round((stats.plan_monitoring.approved / stats.plan_monitoring.total) * 100) || 0;
 
   return (
-    <main className="mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
+      <main className="mx-auto px-4 md:px-10 py-10 bg-[#f8fafc] min-h-screen font-sans border rounded-lg">
       
       {/* HEADER (Как в LdapManagement) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">KPI Intelligence System</h1>
-          <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-            <Globe size={14} className="text-blue-500" /> 
-            Панель глобального мониторинга университета
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tighter italic">Дэшборд системы</h1>
+        <p className="flex items-center gap-2 mt-1 text-sm text-slate-500 font-medium">
+          <Globe size={14} className="text-blue-600 animate-pulse" /> 
+          Центр управления эффективностью и академического мониторинга
+        </p>
+      </div>
 
         <div className="flex gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:flex-none">
@@ -116,32 +116,6 @@ const AdminDashboard = () => {
             Обновить
           </button>
         </div>
-      </div>
-
-      {/* STATS ROW (StatCards как в твоем примере) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard 
-          label="Всего пользователей" 
-          value={stats.users_db + stats.users_ldap} 
-          icon={Users} 
-          colorClass="bg-slate-100 text-slate-600" 
-          description="Общая база сотрудников" 
-        />
-        <StatCard 
-          label="Синхронизация LDAP" 
-          value={stats.ldap ? 'Активна' : 'Отключена'} 
-          icon={CheckCircle2} 
-          colorClass="bg-emerald-100 text-emerald-600" 
-          description="Статус AD соединения" 
-        />
-        <StatCard 
-          label="Системный аудит" 
-          value={stats.api_logs_total?.toLocaleString()} 
-          icon={Database} 
-          colorClass="bg-blue-100 text-blue-600" 
-          description="Записей в логах" 
-        />
-    
       </div>
 
       {/* CHARTS GRID */}

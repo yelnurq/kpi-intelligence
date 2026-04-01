@@ -56,7 +56,7 @@ const StaffManagement = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', password_confirmation: '',
     faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-    is_admin: 0 
+    role: '' 
   });
 
   const API_BASE = 'http://localhost:8000/api';
@@ -135,7 +135,7 @@ const StaffManagement = () => {
     setFormData({
       name: '', email: '', password: '', password_confirmation: '',
       faculty_id: '', department_id: '', position_id: '', academic_degree_id: '',
-      is_admin: 0
+      role : ''
     });
     setEditingId(null);
   };
@@ -436,20 +436,20 @@ const handleEditClick = async (user) => {
                     </div>
                   </div>
             <button 
-  type="button"
-  onClick={() => setFormData({
-    ...formData, 
-    // Если роль уже super_admin, ставим user, иначе ставим super_admin
-    role: formData.role === 'super_admin' ? 'user' : 'super_admin'
-  })}
-  className={`w-12 h-6 rounded-full relative transition-all ${
-    formData.role === 'super_admin' ? 'bg-blue-600' : 'bg-slate-300'
-  }`}
->
-  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-    formData.role === 'super_admin' ? 'left-7' : 'left-1'
-  }`} />
-</button>
+                type="button"
+                onClick={() => setFormData({
+                  ...formData, 
+                  // Если роль уже super_admin, ставим user, иначе ставим super_admin
+                  role: formData.role === 'super_admin' ? 'user' : 'super_admin'
+                })}
+                className={`w-12 h-6 rounded-full relative transition-all ${
+                  formData.role === 'super_admin' ? 'bg-blue-600' : 'bg-slate-300'
+                }`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+                  formData.role === 'super_admin' ? 'left-7' : 'left-1'
+                }`} />
+              </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -461,34 +461,53 @@ const handleEditClick = async (user) => {
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Email (Логин)</label>
                     <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
-                      <option value="">Выберите подразделение</option>
-                      {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
-                      <option value="">Выберите кафедру</option>
-                      {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
-                      <option value="">Выберите должность</option>
-                      {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
-                    <select required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
-                      <option value="">Выберите степень</option>
-                      {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
-                    </select>
-                  </div>
+                        <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
+                  <select 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" 
+                    value={formData.faculty_id} 
+                    onChange={e => setFormData({...formData, faculty_id: e.target.value})}
+                  >
+                    <option value="">Выберите подразделение</option>
+                    {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
+                  <select 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" 
+                    value={formData.department_id} 
+                    onChange={e => setFormData({...formData, department_id: e.target.value})}
+                  >
+                    <option value="">Выберите кафедру</option>
+                    {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
+                  <select 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" 
+                    value={formData.position_id} 
+                    onChange={e => setFormData({...formData, position_id: e.target.value})}
+                  >
+                    <option value="">Выберите должность</option>
+                    {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
+                  <select 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer" 
+                    value={formData.academic_degree_id} 
+                    onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}
+                  >
+                    <option value="">Выберите степень</option>
+                    {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
+                  </select>
+                </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6 border-t border-slate-100">

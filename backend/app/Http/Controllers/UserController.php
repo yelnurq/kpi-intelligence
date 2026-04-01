@@ -188,15 +188,18 @@ public function update(Request $request, $id)
             return response()->json(['status' => 'error', 'message' => 'Пользователь не найден'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'faculty_id' => 'required|exists:faculties,id',
-            'department_id' => 'required|exists:departments,id',
-            'position_id' => 'required|exists:positions,id',
-            'academic_degree_id' => 'required|exists:academic_degrees,id',
-        ]);
+                $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+                'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+                
+                // МЕНЯЕМ 'required' НА 'nullable'
+                'faculty_id' => 'nullable|exists:faculties,id',
+                'department_id' => 'nullable|exists:departments,id',
+                'position_id' => 'nullable|exists:positions,id',
+                'academic_degree_id' => 'nullable|exists:academic_degrees,id',
+                'role' => 'nullable|string'
+            ]);
 
         $updateData = [
             'name' => $validated['name'],
@@ -205,7 +208,7 @@ public function update(Request $request, $id)
             'department_id' => $validated['department_id'],
             'position_id' => $validated['position_id'],
             'academic_degree_id' => $validated['academic_degree_id'],
-            'is_admin' => $request->is_admin ?? $user->is_admin,
+'role' => $request->role ?? $user->role,
         ];
 
         // Обновляем пароль только если он введен

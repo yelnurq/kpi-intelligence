@@ -26,7 +26,6 @@ const AdminLayout = () => {
   const location = useLocation(); 
   const navigate = useNavigate();
 
-  // 1. Определение всех пунктов меню с привязкой к ролям
   const allMenuItems = [
     { id: 'dean', path: '/admin/dean', icon: <CopyCheckIcon size={20} />, label: 'Утверждение планов', roles: ['super_admin', 'dean', 'head_of_dept'] },
     { id: 'monitor', path: '/admin/monitor', icon: <MonitorDotIcon size={20} />, label: 'Мониторинг дедлайнов', roles: ['super_admin', 'dean', 'head_of_dept'] },

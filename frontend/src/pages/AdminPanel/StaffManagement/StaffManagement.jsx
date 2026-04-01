@@ -38,10 +38,6 @@ const ListSkeleton = () => (
 // --- ОСНОВНОЙ КОМПОНЕНТ ---
 
 const StaffManagement = () => {
-  // Определяем права текущего пользователя
-  const currentUserRole = localStorage.getItem("role"); // Предполагаем, что роль хранится тут
-  const isSuperAdmin = currentUserRole === 'super_admin';
-
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,15 +62,6 @@ const StaffManagement = () => {
 
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
-
-  const SPECIALIZATION_CATEGORIES = [
-    'учеб.работа',
-    'учебно-методическая работа',
-    'организационно-методическая работа',
-    'научно-исследовательская работа',
-    'воспитательная работа',
-    'профориентационная работа'
-  ];
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -145,44 +132,49 @@ const StaffManagement = () => {
   };
 
   const handleOpenCreateModal = () => {
-    if (!isSuperAdmin) return;
     resetForm();
     setIsModalOpen(true);
     fetchOptions();
   };
+const SPECIALIZATION_CATEGORIES = [
+  'учеб.работа',
+  'учебно-методическая работа',
+  'организационно-методическая работа',
+  'научно-исследовательская работа',
+  'воспитательная работа',
+  'профориентационная работа'
+];
+const handleEditClick = async (user) => {
+  setEditingId(user.id);
+  setIsModalOpen(true);
+  const freshOptions = await fetchOptions(); 
 
-  const handleEditClick = async (user) => {
-    if (!isSuperAdmin) return;
-    setEditingId(user.id);
-    setIsModalOpen(true);
-    const freshOptions = await fetchOptions(); 
+  if (freshOptions) {
+    const foundFaculty = freshOptions.faculties.find(f => 
+      f.name?.toLowerCase() === user.faculty?.toLowerCase() || 
+      f.short_name?.toLowerCase() === user.faculty_short?.toLowerCase()
+    );
+    const foundDept = freshOptions.departments.find(d => d.name?.toLowerCase() === user.department?.toLowerCase());
+    const foundPos = freshOptions.positions.find(p => p.name?.toLowerCase() === user.position?.toLowerCase());
+    const foundDeg = freshOptions.degrees.find(d => d.name?.toLowerCase() === user.academic_degree?.toLowerCase());
 
-    if (freshOptions) {
-      const foundFaculty = freshOptions.faculties.find(f => 
-        f.name?.toLowerCase() === user.faculty?.toLowerCase() || 
-        f.short_name?.toLowerCase() === user.faculty_short?.toLowerCase()
-      );
-      const foundDept = freshOptions.departments.find(d => d.name?.toLowerCase() === user.department?.toLowerCase());
-      const foundPos = freshOptions.positions.find(p => p.name?.toLowerCase() === user.position?.toLowerCase());
-      const foundDeg = freshOptions.degrees.find(d => d.name?.toLowerCase() === user.academic_degree?.toLowerCase());
-
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        password: '', 
-        password_confirmation: '',
-        role: user.role || 'teacher',
-        academic_specialization: user.academic_specialization || '', 
-        faculty_id: foundFaculty ? foundFaculty.id.toString() : '',
-        department_id: foundDept ? foundDept.id.toString() : '',
-        position_id: foundPos ? foundPos.id.toString() : '',
-        academic_degree_id: foundDeg ? foundDeg.id.toString() : '',
-      });
-    }
-  };
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      password: '', 
+      password_confirmation: '',
+      role: user.role || 'teacher',
+      // ВАЖНО: берем значение специализации напрямую из объекта пользователя
+      academic_specialization: user.academic_specialization || '', 
+      faculty_id: foundFaculty ? foundFaculty.id.toString() : '',
+      department_id: foundDept ? foundDept.id.toString() : '',
+      position_id: foundPos ? foundPos.id.toString() : '',
+      academic_degree_id: foundDeg ? foundDeg.id.toString() : '',
+    });
+  }
+};
 
   const handleDeleteUser = async (id) => {
-    if (!isSuperAdmin) return;
     if (!window.confirm("Удалить пользователя?")) return;
     try {
       const res = await fetch(`${API_BASE}/admin/users/${id}`, {
@@ -195,7 +187,6 @@ const StaffManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isSuperAdmin) return;
     if (formData.password !== formData.password_confirmation) {
       alert("Пароли не совпадают!");
       return;
@@ -224,39 +215,43 @@ const StaffManagement = () => {
       }
     } finally { setIsSubmitting(false); }
   };
-
   const getSpecializationPlaceholder = () => {
+    // Находим объект выбранного факультета, чтобы получить его название
     const selectedFacObj = options.faculties?.find(f => f.id.toString() === formData.faculty_id);
     const facultyName = selectedFacObj ? selectedFacObj.name : "факультета";
 
     switch (formData.role) {
-      case 'dean': return `Декан какого факультета? (напр: ${facultyName})`;
-      case 'head_of_dept': return `Зав. кафедрой (напр: Кафедра ИТ)`;
-      case 'teacher': return "Напр: 6B06101 - Информационные системы";
-      case 'academic_office': return "Укажите отдел или специализацию в офисе";
-      default: return "Введите специализацию...";
+      case 'dean':
+        return `Декан какого факультета? (напр: ${facultyName})`;
+      case 'head_of_dept':
+        return `Зав. кафедрой (напр: Кафедра ИТ)`;
+      case 'teacher':
+        return "Напр: 6B06101 - Информационные системы";
+      case 'academic_office':
+        return "Укажите отдел или специализацию в офисе";
+      case 'super_admin':
+        return "Специализация для администратора (необязательно)";
+      default:
+        return "Введите специализацию...";
     }
   };
-
   return (
     <main className="border rounded-lg mx-auto px-10 py-10 bg-[#f8fafc] min-h-screen font-sans">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 text-left">
-          <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
+          <div className="text-left">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tighter">Управление штатом</h1>
             <p className="flex items-center gap-2 mt-2 text-sm text-gray-500">Система ролей и академических данных сотрудников</p>
           </div>
 
-        {isSuperAdmin && (
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95"
-          >
-            <UserPlus size={18} />
-            Добавить сотрудника
-          </button>
-        )}
+        <button 
+          onClick={handleOpenCreateModal}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95"
+        >
+          <UserPlus size={18} />
+          Добавить сотрудника
+        </button>
       </div>
 
       {/* STATS */}
@@ -322,23 +317,25 @@ const StaffManagement = () => {
                         {user.auth_type === 'ldap' ? (
                           <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[9px] font-black uppercase tracking-wider">LDAP</span>
                         ) : (
-                          <span className="px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded text-[9px] font-black uppercase tracking-wider">LOCAL</span>
+                          <span className="px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded text-[9px] font-black uppercase tracking-wider">local</span>
                         )}
                         {user.role === 'super_admin' ? <Shield size={14} className="text-blue-600" title="Администратор" /> : <User size={14} className="text-slate-300" />}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
                         <span className="flex items-center gap-1.5"><Mail size={12} /> {user.email}</span>
                         <span className="flex items-center gap-1.5"><Building2 size={12} /> {user.faculty_short}</span>
-                        
-                        {/* Логика отображения ролей: не показываем для учителей и админов */}
                         {user.role !== 'teacher' && user.role !== 'super_admin' && (
-                          <span className="text-blue-500 font-bold">
-                            [{user.role === 'academic_office' 
-                                ? (user.academic_specialization || 'Акад. спец.') 
-                                : user.role}]
+                          <span className="text-blue-500 font-bold uppercase tracking-tight">
+                            [
+                            {user.role === 'academic_office' 
+                              ? (user.academic_specialization || 'Офис-регистратор') 
+                              : user.role
+                            }
+                            ]
                           </span>
-                        )}
-                      </div>
+                        )}           
+                        
+                       </div>
                     </div>
                   </div>
 
@@ -355,17 +352,9 @@ const StaffManagement = () => {
                     }`}>
                       {user.activities_count > 0 ? `Активен (${user.activities_count})` : 'Нет заявок'}
                     </span>
-
-                    {/* Кнопки управления видны ТОЛЬКО Super Admin */}
                     <div className="flex items-center gap-2 border-l border-slate-100 pl-6">
-                      {isSuperAdmin ? (
-                        <>
-                          <button onClick={() => handleEditClick(user)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Редактировать"><Edit2 size={18}/></button>
-                          <button onClick={() => handleDeleteUser(user.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Удалить"><Trash2 size={18}/></button>
-                        </>
-                      ) : (
-                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Только просмотр</span>
-                      )}
+                      <button onClick={() => handleEditClick(user)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Редактировать"><Edit2 size={18}/></button>
+                      <button onClick={() => handleDeleteUser(user.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Удалить"><Trash2 size={18}/></button>
                     </div>
                   </div>
                 </div>
@@ -391,8 +380,8 @@ const StaffManagement = () => {
         </div>
       )}
 
-      {/* MODAL - виден только если isSuperAdmin смог его открыть */}
-      {isModalOpen && isSuperAdmin && (
+      {/* MODAL */}
+      {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
             <div className="p-10 pb-6 flex justify-between items-start text-left">
@@ -405,6 +394,7 @@ const StaffManagement = () => {
 
             <div className="px-10 pb-10 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                
                 {/* ROLE SELECTION */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
@@ -481,13 +471,13 @@ const StaffManagement = () => {
                       {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
                     </select>
                   </div>
-                  
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5">
                       <GraduationCap size={12}/> Тип деятельности (Специализация)
                     </label>
 
                     {formData.role === 'academic_office' ? (
+                      /* Если Офис-регистратор — показываем СЕЛЕКТ */
                       <select 
                         required
                         className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
@@ -496,10 +486,13 @@ const StaffManagement = () => {
                       >
                         <option value="">Выберите категорию...</option>
                         {SPECIALIZATION_CATEGORIES.map(category => (
-                          <option key={category} value={category}>{category}</option>
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
                         ))}
                       </select>
                     ) : (
+                      /* Для всех остальных ролей — показываем ИНПУТ */
                       <input 
                         type="text"
                         placeholder={getSpecializationPlaceholder()}
@@ -508,6 +501,10 @@ const StaffManagement = () => {
                         onChange={e => setFormData({...formData, academic_specialization: e.target.value})}
                       />
                     )}
+                    
+                    <p className="text-[9px] text-slate-400 mt-1 ml-1 italic">
+                      {getSpecializationPlaceholder()}
+                    </p>
                   </div>
                 </div>
 

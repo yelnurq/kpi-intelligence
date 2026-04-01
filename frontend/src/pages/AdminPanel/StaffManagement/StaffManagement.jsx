@@ -305,10 +305,20 @@ const handleEditClick = async (user) => {
                   <div className="flex items-center gap-4 w-full md:w-auto text-left">
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all font-bold text-xl shrink-0 ${user.is_admin ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
                       {user.name?.charAt(0) || '?'}
+            
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-slate-900 text-base">{user.name}</h4>
+                          {user.auth_type === 'ldap' ? (
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[9px] font-black uppercase tracking-wider">
+                              LDAP
+                            </span>
+                          ): (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-500 border border-green-200 rounded text-[9px] font-black uppercase tracking-wider">                              
+                              local
+                            </span>
+                          )}
                         {user.is_admin ? <Shield size={14} className="text-blue-600" title="Администратор" /> : <User size={14} className="text-slate-300" />}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 text-slate-400 text-[11px] font-medium mt-0.5 uppercase tracking-tight">
@@ -425,13 +435,21 @@ const handleEditClick = async (user) => {
                       <p className="text-[10px] text-slate-500 font-medium italic">Дает доступ к управлению всей системой</p>
                     </div>
                   </div>
-                  <button 
-                    type="button"
-                    onClick={() => setFormData({...formData, is_admin: formData.is_admin ? 0 : 1})}
-                    className={`w-12 h-6 rounded-full relative transition-all ${formData.is_admin ? 'bg-blue-600' : 'bg-slate-300'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_admin ? 'left-7' : 'left-1'}`} />
-                  </button>
+            <button 
+  type="button"
+  onClick={() => setFormData({
+    ...formData, 
+    // Если роль уже super_admin, ставим user, иначе ставим super_admin
+    role: formData.role === 'super_admin' ? 'user' : 'super_admin'
+  })}
+  className={`w-12 h-6 rounded-full relative transition-all ${
+    formData.role === 'super_admin' ? 'bg-blue-600' : 'bg-slate-300'
+  }`}
+>
+  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+    formData.role === 'super_admin' ? 'left-7' : 'left-1'
+  }`} />
+</button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

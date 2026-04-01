@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('auth_type')->default('local');
             
             $table->enum('role', ['teacher', 'dean', 'head_of_dept', 'academic_office', 'super_admin'])->default('teacher');
             $table->string('academic_specialization')->nullable();

@@ -148,6 +148,7 @@ public function importSingleUser(Request $request)
             'department' => $entry['department'][0] ?? 'Университет',
             'password' => bcrypt(Str::random(16)), 
             'email_verified_at' => now(),
+            'auth_type' => 'ldap',
         ]
     );
 

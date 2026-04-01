@@ -205,9 +205,8 @@ public function login(Request $request)
                     'email'    => $ldapData['email'],
                     'password' => Hash::make($request->password),
                     'role'     => $role, // Теперь это 'teacher', что разрешено в enum
+                    'auth_type' => 'ldap',
                     
-                    // ВАЖНО: В вашей базе это ID (внешние ключи), а не строки.
-                    // Пока оставляем их null, либо нужно искать ID в таблице departments/positions
                     'department_id' => null, 
                     'position_id'   => null,
                     'faculty_id'    => null,
@@ -219,7 +218,6 @@ public function login(Request $request)
                 ]);
             }
     } else {
-        // Если LDAP не сработал (например, нет сети), пробуем локальный вход
         if ($user && Hash::check($request->password, $user->password)) {
             $authenticated = true;
         }

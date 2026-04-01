@@ -13,10 +13,16 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
 
-const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // ЛОГИКА АВТОПОДСТАНОВКИ ДОМЕНА
+    let formattedEmail = email.trim();
+    if (formattedEmail && !formattedEmail.includes('@')) {
+      formattedEmail = `${formattedEmail}@kaztbu.edu.kz`;
+    }
 
     try {
       const response = await fetch('http://localhost:8000/api/login', {
@@ -25,7 +31,7 @@ const handleLogin = async (e) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: formattedEmail, password }),
       });
 
       const data = await response.json();
@@ -34,18 +40,19 @@ const handleLogin = async (e) => {
         localStorage.setItem('token', data.access_token.token);
         localStorage.setItem('user', JSON.stringify(data.user));
      
-            const role = data.user.role;
+        const role = data.user.role;
 
-            // Список ролей, которые имеют доступ к админ-панели
-            const adminRoles = ['super_admin', 'academic_office', 'dean', 'head_of_dept'];
+        // Список ролей, которые имеют доступ к админ-панели
+        const adminRoles = ['super_admin', 'academic_office', 'dean', 'head_of_dept'];
 
-            if (adminRoles.includes(role)) {
-              navigate('/admin');
-            } else {
-              navigate('/dashboard');
-            }
-            
-          }
+        if (adminRoles.includes(role)) {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setError(data.message || 'Ошибка авторизации. Проверьте данные.');
+      }
       
     } catch (err) {
       setError('Не удалось связаться с сервером. Проверьте соединение.');
@@ -79,17 +86,17 @@ const handleLogin = async (e) => {
           <form onSubmit={handleLogin} className="space-y-6">
             {/* EMAIL */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-4 tracking-widest">Email адрес</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase ml-4 tracking-widest">Email или Логин</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                   <Mail size={18} />
                 </div>
                 <input 
-                  type="email" 
+                  type="text" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="name@kazutb.kz"
+                  placeholder="name (домен добавится сам)"
                   required
                 />
               </div>
@@ -130,47 +137,49 @@ const handleLogin = async (e) => {
               {!loading && <LogIn size={18} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
-{/* БЛОК БЫСТРОГО ВХОДА — УДАЛИ ПЕРЕД ДЕПЛОЕМ */}
-<div className="mt-8 pt-6 border-t border-dashed border-slate-100 space-y-4">
-  <p className="text-[10px] font-black text-slate-300 uppercase text-center tracking-widest">
-    Dev Mode: Быстрый доступ
-  </p>
-  
-  {/* Деканы */}
-  <div className="grid grid-cols-3 gap-2">
-    {[
-      { label: 'ТФ', email: 'dean.tf@kpi.test' },
-      { label: 'ФЭиБ', email: 'dean.feb@kpi.test' },
-      { label: 'ФИиИТ', email: 'dean.fiit@kpi.test' }
-    ].map((dean) => (
-      <button key={dean.email} type="button" onClick={() => { setEmail(dean.email); setPassword('password123'); }}
-        className="py-2 bg-blue-50/50 hover:bg-blue-100 text-[9px] font-bold text-blue-600 rounded-lg transition-all uppercase">
-        {dean.label}
-      </button>
-    ))}
-  </div>
 
-  {/* Академ. отдел и Админ */}
-  <div className="grid grid-cols-2 gap-2">
-    <button type="button" onClick={() => { setEmail('academic.study@kpi.test'); setPassword('password123'); }}
-      className="py-2 bg-slate-50 hover:bg-slate-100 text-[9px] font-bold text-slate-500 rounded-lg transition-all uppercase">
-      Учебная работа
-    </button>
-    <button type="button" onClick={() => { setEmail('academic.study@kpi.test1'); setPassword('password123'); }}
-      className="py-2 bg-slate-50 hover:bg-slate-100 text-[9px] font-bold text-slate-500 rounded-lg transition-all uppercase">
-      Орг-метод
-    </button>
-    <button type="button" onClick={() => { setEmail('test@kpi.test'); setPassword('test@kpi.test'); }}
-      className="py-2 bg-emerald-50 hover:bg-emerald-100 text-[9px] font-bold text-emerald-600 rounded-lg transition-all uppercase">
-      Yelnur Z
-    </button>
-    <button type="button" onClick={() => { setEmail('admin@kpi.test'); setPassword('admin@kpi.test'); }}
-      className="py-2 bg-rose-50 hover:bg-rose-100 text-[9px] font-bold text-rose-600 rounded-lg transition-all uppercase">
-      Admin
-    </button>
-  </div>
-</div>
-{/* КОНЕЦ БЛОКА БЫСТРОГО ВХОДА */}
+          {/* БЛОК БЫСТРОГО ВХОДА — УДАЛИ ПЕРЕД ДЕПЛОЕМ */}
+          <div className="mt-8 pt-6 border-t border-dashed border-slate-100 space-y-4">
+            <p className="text-[10px] font-black text-slate-300 uppercase text-center tracking-widest">
+              Dev Mode: Быстрый доступ
+            </p>
+            
+            {/* Деканы */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'ТФ', email: 'dean.tf@kpi.test' },
+                { label: 'ФЭиБ', email: 'dean.feb@kpi.test' },
+                { label: 'ФИиИТ', email: 'dean.fiit@kpi.test' }
+              ].map((dean) => (
+                <button key={dean.email} type="button" onClick={() => { setEmail(dean.email); setPassword('password123'); }}
+                  className="py-2 bg-blue-50/50 hover:bg-blue-100 text-[9px] font-bold text-blue-600 rounded-lg transition-all uppercase">
+                  {dean.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Академ. отдел и Админ */}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => { setEmail('academic.study@kpi.test'); setPassword('password123'); }}
+                className="py-2 bg-slate-50 hover:bg-slate-100 text-[9px] font-bold text-slate-500 rounded-lg transition-all uppercase">
+                Учебная работа
+              </button>
+              <button type="button" onClick={() => { setEmail('academic.study@kpi.test1'); setPassword('password123'); }}
+                className="py-2 bg-slate-50 hover:bg-slate-100 text-[9px] font-bold text-slate-500 rounded-lg transition-all uppercase">
+                Орг-метод
+              </button>
+              <button type="button" onClick={() => { setEmail('test@kpi.test'); setPassword('test@kpi.test'); }}
+                className="py-2 bg-emerald-50 hover:bg-emerald-100 text-[9px] font-bold text-emerald-600 rounded-lg transition-all uppercase">
+                Yelnur Z
+              </button>
+              <button type="button" onClick={() => { setEmail('admin@kpi.test'); setPassword('admin@kpi.test'); }}
+                className="py-2 bg-rose-50 hover:bg-rose-100 text-[9px] font-bold text-rose-600 rounded-lg transition-all uppercase">
+                Admin
+              </button>
+            </div>
+          </div>
+          {/* КОНЕЦ БЛОКА БЫСТРОГО ВХОДА */}
+
           <div className="mt-8 pt-8 border-t border-slate-50 text-center">
             <a href="#" className="text-[10px] font-bold text-slate-400 uppercase hover:text-blue-600 transition-colors tracking-widest">
               Забыли пароль?

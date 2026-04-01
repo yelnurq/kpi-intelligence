@@ -144,6 +144,7 @@ public function index(Request $request)
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'auth_type' => $user->auth_type,
                 'is_admin' => (bool)$user->is_admin,
                 'faculty' => $user->faculty->title ?? 'Не указан',
                 'department' => $user->department->title ?? 'Не указана',

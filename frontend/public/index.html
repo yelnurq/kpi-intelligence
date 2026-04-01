@@ -1,46 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta name="theme-color" content="#f8fafc" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="KPI Intelligence System - Академический мониторинг"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-      -->
-      <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
 
-        <title>React App</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-          tailwind.config = {
-            theme: {
-              extend: {
-                fontFamily: {
-                  sans: ['"Google Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                },
-              },
+    <title>KPI Intelligence System</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Google Sans"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             },
-          }
-        </script>
+            screens: {
+              '3xl': '1920px',
+            },
+          },
+        },
+      }
+    </script>
 
-        <style type="text/css">
-          body {
-            font-family: 'Google Sans', ui-sans-serif, system-ui, sans-serif;
-          }
-        </style>
+    <style type="text/css">
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        font-family: 'Google Sans', ui-sans-serif, system-ui, sans-serif;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .transition-all {
+        transition-duration: 200ms;
+      }
+
+    
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
   </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+  <body class="antialiased text-slate-900">
     <div id="root"></div>
   </body>
 </html>

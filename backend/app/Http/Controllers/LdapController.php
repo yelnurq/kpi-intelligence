@@ -114,7 +114,7 @@ public function importSingleUser(Request $request)
     if (!$ldapConn) return response()->json(['message' => 'LDAP connection failed'], 500);
 
     $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
-    $attributes = ["cn", "mail", "title", "department", "displayname", "userprincipalname", "samaccountname"];
+    $attributes = ["cn", "mail", "title", "department", "displayname","mobile", "userprincipalname", "samaccountname"];
 
     $search = @ldap_search($ldapConn, $baseDn, $filter, $attributes);
     $entries = ldap_get_entries($ldapConn, $search);
@@ -143,6 +143,7 @@ public function importSingleUser(Request $request)
             'name' => $entry['displayname'][0] ?? ($entry['cn'][0] ?? $inputName),
             'position' => $entry['title'][0] ?? 'Сотрудник',
             'department' => $entry['department'][0] ?? 'Университет',
+            'mobile' => $entry['mobile'][0] ?? 'N/A',
             'password' => bcrypt(Str::random(16)), 
             'email_verified_at' => now(),
             'auth_type' => 'ldap',

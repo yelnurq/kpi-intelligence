@@ -19,15 +19,13 @@ use App\Http\Controllers\ApiLogController;
 Route::middleware("logs")->group(function() {
     Route::post("/login", [AuthController::class, "login"]);
     Route::post("/register", [AuthController::class, "register"]);   
-    });
+});
     
-    Route::prefix('admin/ldap')->group(function () {
-        Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
-        
-        Route::post('/import-single', [LdapController::class, 'importSingleUser']);
-        
-        Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
-        });
+Route::prefix('admin/ldap')->group(function () {
+    Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
+    Route::post('/import-single', [LdapController::class, 'importSingleUser']);
+    Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
+});
         
 Route::middleware(["token", "logs"])->group(function(){
     

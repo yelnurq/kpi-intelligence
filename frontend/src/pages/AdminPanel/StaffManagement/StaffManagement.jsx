@@ -101,7 +101,19 @@ const [formData, setFormData] = useState({
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedFaculty]);
-
+// Блокировка скролла body при открытии модалки
+useEffect(() => {
+  if (isModalOpen) {
+    // Сохраняем текущий стиль, чтобы не испортить другие инлайновые стили, если они есть
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    
+    // Возвращаем исходное состояние при закрытии
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }
+}, [isModalOpen]);
   useEffect(() => {
     const loadInitialOptions = async () => {
         try {
@@ -390,27 +402,32 @@ const [formData, setFormData] = useState({
 
       {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center md:items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-md">
-          <div className="bg-white w-full h-full md:h-auto md:max-w-2xl md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 md:p-4 bg-slate-900/60 backdrop-blur-md">
+          <div className="bg-white w-full max-w-2xl max-h-[95vh] rounded-[24px] md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col relative">
             
-            {/* Modal Header */}
-            <div className="p-6 md:p-10 pb-4 flex justify-between items-start text-left">
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tighter">{editingId ? 'Редактирование' : 'Новый сотрудник'}</h3>
-                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Параметры доступа и академический профиль</p>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"><X size={24} /></button>
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+              <X size={20} />
+            </button>
+
+            <div className="p-6 md:p-8 pb-4 text-left border-b border-slate-50">
+              <h3 className="text-xl font-bold text-slate-900 tracking-tighter">
+                {editingId ? 'Редактирование' : 'Новый сотрудник'}
+              </h3>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                Параметры доступа и академический профиль
+              </p>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 px-6 md:px-10 pb-10 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
               <form onSubmit={handleSubmit} className="space-y-6 text-left">
                 
-                {/* ROLE SELECTION */}
+                {/* ROLE */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${formData.role === 'super_admin' ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}><Shield size={18} /></div>
+                      <div className={`p-2 rounded-lg ${formData.role === 'super_admin' ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}>
+                        <Shield size={18} />
+                      </div>
                       <div>
                         <p className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">Super Admin</p>
                         <p className="text-[9px] text-slate-500 font-medium italic">Полный доступ к системе</p>
@@ -426,9 +443,9 @@ const [formData, setFormData] = useState({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Тип доступа</label>
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Тип доступа</label>
                     <select 
-                      required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none"
+                      required className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none appearance-none"
                       value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
                     >
                       <option value="teacher">Преподаватель</option>
@@ -440,104 +457,81 @@ const [formData, setFormData] = useState({
                   </div>
                 </div>
 
-                {/* PERSONAL INFO SECTION В МОДАЛКЕ */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5"> {/* Изменил на 3 колонки для баланса */}
-  <div className="space-y-1.5">
-    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Полное ФИО</label>
-    <input type="text" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-  </div>
-  <div className="space-y-1.5">
-    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Email</label>
-    <input type="email" required className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-  </div>
-  {/* НОВОЕ ПОЛЕ ВВОДА */}
-  <div className="space-y-1.5">
-    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Телефон</label>
-    <input 
-      type="text" 
-      placeholder="+7 (___) ___ __ __"
-      className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" 
-      value={formData.mobile} 
-      onChange={e => setFormData({...formData, mobile: e.target.value})} 
-    />
-  </div>
-</div>
+                {/* PERSONAL INFO */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">ФИО</label>
+                    <input type="text" required className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Email</label>
+                    <input type="text" required className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Мобильный номер</label>
+                    <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} placeholder="+7 (___) ___ __ __" />
+                  </div>
+                </div>
 
                 {/* ACADEMIC INFO */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 p-4 md:p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 md:p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
-                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Факультет</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[13px] font-bold outline-none" value={formData.faculty_id} onChange={e => setFormData({...formData, faculty_id: e.target.value})}>
                       <option value="">Выберите...</option>
                       {options.faculties?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
-                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Кафедра</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[13px] font-bold outline-none" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
                       <option value="">Выберите...</option>
                       {options.departments?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Должность</label>
-                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Должность</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[13px] font-bold outline-none" value={formData.position_id} onChange={e => setFormData({...formData, position_id: e.target.value})}>
                       <option value="">Выберите...</option>
                       {options.positions?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Ученая степень</label>
-                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Степень</label>
+                    <select className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[13px] font-bold outline-none" value={formData.academic_degree_id} onChange={e => setFormData({...formData, academic_degree_id: e.target.value})}>
                       <option value="">Выберите...</option>
                       {options.degrees?.map(deg => <option key={deg.id} value={deg.id}>{deg.name}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5">
-                      <GraduationCap size={12}/> Тип деятельности
-                    </label>
-
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1 flex items-center gap-1.5"><GraduationCap size={12}/> Специализация / Отдел</label>
                     {formData.role === 'academic_office' ? (
-                      <select 
-                        required
-                        className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer appearance-none" 
-                        value={formData.academic_specialization} 
-                        onChange={e => setFormData({...formData, academic_specialization: e.target.value})} 
-                      >
+                      <select required className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.academic_specialization} onChange={e => setFormData({...formData, academic_specialization: e.target.value})}>
                         <option value="">Выберите категорию...</option>
-                        {SPECIALIZATION_CATEGORIES.map(category => (
-                          <option key={category} value={category}>{category}</option>
-                        ))}
+                        {SPECIALIZATION_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}
                       </select>
                     ) : (
-                      <input 
-                        type="text"
-                        placeholder={getSpecializationPlaceholder()}
-                        className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none"
-                        value={formData.academic_specialization}
-                        onChange={e => setFormData({...formData, academic_specialization: e.target.value})}
-                      />
+                      <input type="text" placeholder={getSpecializationPlaceholder()} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none" value={formData.academic_specialization} onChange={e => setFormData({...formData, academic_specialization: e.target.value})} />
                     )}
                   </div>
                 </div>
 
                 {/* PASSWORD */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 pt-6 border-t border-slate-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль' : 'Пароль'}</label>
-                    <input type="password" required={!editingId} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">{editingId ? 'Новый пароль' : 'Пароль'}</label>
+                    <input type="password" required={!editingId} className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] md:text-[10px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
-                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} placeholder="••••••••" />
+                    <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Подтверждение</label>
+                    <input type="password" required={!editingId || formData.password !== ''} className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={formData.password_confirmation} onChange={e => setFormData({...formData, password_confirmation: e.target.value})} placeholder="••••••••" />
                   </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="flex gap-3 md:gap-4 mt-6 md:mt-10 pb-6 md:pb-0">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest">Отмена</button>
-                  <button type="submit" disabled={isSubmitting} className="flex-2 md:flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] md:text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2">
+                {/* ACTIONS */}
+                <div className="flex gap-3 md:gap-4 pt-4 pb-2">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Отмена</button>
+                  <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
                     {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <>{editingId ? 'Обновить' : 'Сохранить'} <ArrowRight size={16} /></>}
                   </button>
                 </div>

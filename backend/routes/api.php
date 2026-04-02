@@ -15,25 +15,26 @@ use App\Http\Controllers\KPIPlanController;
 use App\Http\Controllers\ApiLogController;
 
 
-Route::post('/chat/send', [ChatController::class, 'sendMessage']);
-Route::post('/chat/reset', [ChatController::class, 'resetChat']);
 
 Route::middleware("logs")->group(function() {
     Route::post("/login", [AuthController::class, "login"]);
     Route::post("/register", [AuthController::class, "register"]);   
     });
-
-Route::prefix('admin/ldap')->group(function () {
+    
+    Route::prefix('admin/ldap')->group(function () {
         Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
         
         Route::post('/import-single', [LdapController::class, 'importSingleUser']);
         
         Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
-    });
-    
-    Route::middleware(["token", "logs"])->group(function(){
+        });
         
-        Route::get('/admin/dashboard', [DashboardController::class, 'admin']);
+Route::middleware(["token", "logs"])->group(function(){
+    
+    Route::post('/chat/send', [ChatController::class, 'sendMessage']);
+    Route::post('/chat/reset', [ChatController::class, 'resetChat']);
+            
+    Route::get('/admin/dashboard', [DashboardController::class, 'admin']);
     Route::get('/admin/logs', [ApiLogController::class, 'index']);
     Route::get('/admin/logs/{id}', [ApiLogController::class, 'show']);
 

@@ -48,16 +48,20 @@ const SubmissionPortal = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // --- ЛОГИКА ПРОВЕРКИ ДЕДЛАЙНА ---
+  // Проверка дедлайна
   const isExpired = (deadline) => {
     if (!deadline) return false;
-    return new Date(deadline) < new Date();
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return deadlineDate < now;
   };
 
   useEffect(() => {
     const fetchIndicators = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/user/kpi-indicators`, {
+        // Используем новый маршрут
+        const response = await axios.get(`${API_BASE}/get-my-indicators`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -108,8 +112,13 @@ const SubmissionPortal = () => {
   };
 
   const selectedIndicator = indicators.find(i => i.id === parseInt(formData.indicator_id));
+  
+  // Логика блокировки: либо срок истек, либо статус 'completed' (уже одобрено)
   const isSelectedExpired = selectedIndicator ? isExpired(selectedIndicator.deadline) : false;
-  const indicatorWeight = selectedIndicator?.weight || selectedIndicator?.points || 0;
+  const isCompleted = selectedIndicator?.db_status === 'completed';
+  const isPending = selectedIndicator?.db_status === 'checking';
+  
+  const indicatorWeight = selectedIndicator?.weight || 0;
   const predictedPoints = indicatorWeight * formData.quantity;
 
   if (status === 'success') {
@@ -156,7 +165,7 @@ const SubmissionPortal = () => {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 bg-[#f8fafc] min-h-screen font-sans text-left">
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:col-span-2 flex-1 space-y-8">
           <div className="text-left">
@@ -165,17 +174,23 @@ const SubmissionPortal = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* ALERT ПРИ ПРОСРОЧКЕ */}
+            {/* ALERT ПРИ ПРОСРОЧКЕ ИЛИ СТАТУСЕ */}
             {isSelectedExpired && (
               <div className="bg-red-50 border-b border-red-100 p-4 flex items-center gap-3 text-red-600">
                 <AlertCircle size={20} />
-                <p className="text-xs font-black uppercase tracking-wider">Срок подачи документов по этому KPI истек ({new Date(selectedIndicator.deadline).toLocaleDateString()})</p>
+                <p className="text-xs font-black uppercase tracking-wider">Срок подачи документов по этому KPI истек ({selectedIndicator.deadline})</p>
+              </div>
+            )}
+            {isCompleted && !isSelectedExpired && (
+              <div className="bg-emerald-50 border-b border-emerald-100 p-4 flex items-center gap-3 text-emerald-600">
+                <CheckCircle2 size={20} />
+                <p className="text-xs font-black uppercase tracking-wider">Этот индикатор уже выполнен и подтвержден</p>
               </div>
             )}
 
             <div className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 space-y-3 text-left">
+                <div className="md:col-span-2 space-y-3">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Выберите индикатор</label>
                   <div className="relative">
                     <select 
@@ -189,9 +204,10 @@ const SubmissionPortal = () => {
                       <option value="">{loadingIndicators ? 'Загрузка данных...' : 'Выберите KPI из вашего плана...'}</option>
                       {indicators.map(item => {
                         const expired = isExpired(item.deadline);
+                        const completed = item.db_status === 'completed';
                         return (
                           <option key={item.id} value={item.id} disabled={expired} className={expired ? "text-slate-400" : "text-slate-900"}>
-                            {item.title} ({item.weight || item.points} б.) {expired ? '— Срок истек' : ''}
+                            {item.title} ({item.weight} б.) {expired ? '— Срок истек' : completed ? '— Выполнено' : ''}
                           </option>
                         );
                       })}
@@ -200,7 +216,7 @@ const SubmissionPortal = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 text-left">
+                <div className="space-y-3">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Количество</label>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setFormData(prev => ({...prev, quantity: Math.max(1, prev.quantity - 1)}))} className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all"><Minus size={18} /></button>
@@ -211,7 +227,7 @@ const SubmissionPortal = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div className="md:col-span-3 space-y-3 text-left">
+                <div className="md:col-span-3 space-y-3">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Название выполненной работы</label>
                   <input 
                     type="text" required
@@ -221,7 +237,7 @@ const SubmissionPortal = () => {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all"
                   />
                 </div>
-                <div className="space-y-3 text-left">
+                <div className="space-y-3">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Дата выполнения</label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -235,7 +251,7 @@ const SubmissionPortal = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 text-left">
+              <div className="space-y-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Подтверждающие документы</label>
                 <div 
                   onDragOver={(e) => {e.preventDefault(); setDragActive(true)}}
@@ -254,7 +270,7 @@ const SubmissionPortal = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {files.map((file, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm group">
-                      <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="flex items-center gap-3 overflow-hidden text-left">
                         <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
                           <FileText size={16} />
                         </div>
@@ -289,7 +305,7 @@ const SubmissionPortal = () => {
             value={predictedPoints > 0 ? `+${predictedPoints}` : '0'} 
             icon={Zap} 
             colorClass={isSelectedExpired ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"} 
-            description={isSelectedExpired ? "Баллы недоступны (срок истек)" : `Формула: ${indicatorWeight} б. × ${formData.quantity} шт.`}
+            description={isSelectedExpired ? "Срок истек" : isCompleted ? "Уже начислено" : `Формула: ${indicatorWeight} б. × ${formData.quantity} шт.`}
             isPrimary={!isSelectedExpired}
           />
           

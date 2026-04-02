@@ -73,6 +73,7 @@ class UserController extends Controller
             "id"              => $user->id,
             "name"            => $user->name,
             "position_title"  => $user->position?->title ?? 'Не указана',
+            "mobile"  => $user->mobile ?? 'Не указана',
             "academic_degree" => $user->academic_degree?->title ?? 'Без степени',
             "current_kpi"     => (int)$currentKpi, 
             "pending_kpi"     => (int)$pendingKpi,
@@ -143,6 +144,7 @@ public function index(Request $request)
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+                'mobile' => $user->mobile,
                 'email' => $user->email,
                 'auth_type' => $user->auth_type,
                 'role' => $user->role,
@@ -194,7 +196,7 @@ public function update(Request $request, $id)
                 'email' => 'required|string|email|max:255|unique:users,email,' . $id,
                 'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
                 
-                // МЕНЯЕМ 'required' НА 'nullable'
+                'mobile' => 'nullable',
                 'faculty_id' => 'nullable|exists:faculties,id',
                 'department_id' => 'nullable|exists:departments,id',
                 'position_id' => 'nullable|exists:positions,id',
@@ -206,6 +208,7 @@ public function update(Request $request, $id)
         $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'mobile' => $validated['mobile'],
             'faculty_id' => $validated['faculty_id'],
             'department_id' => $validated['department_id'],
             'position_id' => $validated['position_id'],
@@ -266,6 +269,7 @@ public function store(Request $request)
     try {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'mobile' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'faculty_id' => 'required|exists:faculties,id',
@@ -276,6 +280,7 @@ public function store(Request $request)
 
         $user = User::create([
             'name' => $validated['name'],
+            'mobile' => $validated['mobile'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'faculty_id' => $validated['faculty_id'],

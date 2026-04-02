@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
         
+        'mobile',
         'auth_type',
         'academic_specialization',
         'department_id',

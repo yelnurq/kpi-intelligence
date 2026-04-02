@@ -10,7 +10,7 @@ import {
   User, Calendar, Loader2
 } from 'lucide-react';
 
-const API_URL = "http://localhost:8000/api";
+const API_URL = "http://10.0.1.54:8000/api";
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
 
@@ -58,7 +58,7 @@ const AssetManagement = () => {
         size: item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : "---",
         date: new Date(item.created_at).toLocaleDateString('ru-RU'),
         status: "verified",
-        url: item.file_url ? item.file_url.replace('http://localhost/', 'http://localhost:8000/') : null,
+        url: item.file_url ? item.file_url.replace('http://localhost/', 'http://10.0.1.54:8000/') : null,
       }));
 
       setAssets(formattedData);

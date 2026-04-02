@@ -45,7 +45,7 @@ const SubmissionPortal = () => {
     quantity: 1,
   });
 
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = 'http://10.0.1.54:8000/api';
   const token = localStorage.getItem("token");
 
   // Проверка дедлайна

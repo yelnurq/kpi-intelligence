@@ -42,7 +42,7 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const url = `http://localhost:8000/api/admin/dashboard?faculty_id=${selectedFaculty}`;
+      const url = `http://10.0.1.54:8000/api/admin/dashboard?faculty_id=${selectedFaculty}`;
       const res = await fetch(url, {
         headers: { 
           'Authorization': `Bearer ${token}`, 

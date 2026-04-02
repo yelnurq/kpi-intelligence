@@ -64,7 +64,7 @@ const ChatAIWidget = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/chat/send', 
+      const response = await axios.post('http://10.0.1.54:8000/api/chat/send', 
         { message: input },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );

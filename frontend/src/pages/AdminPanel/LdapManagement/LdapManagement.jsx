@@ -29,7 +29,7 @@ const LdapManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState({ total: 0, inLdap: 0, imported: 0 });
 
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = 'http://10.0.1.54:8000/api';
   const token = localStorage.getItem("token");
 
   const fetchLdapUsers = useCallback(async () => {

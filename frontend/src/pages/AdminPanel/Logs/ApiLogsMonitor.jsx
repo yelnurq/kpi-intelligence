@@ -41,7 +41,7 @@ const ApiLogsMonitor = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState({ last_page: 1, total: 0 });
 
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = 'http://10.0.1.54:8000/api';
   const token = localStorage.getItem("token");
 
   const fetchLogs = useCallback(async () => {
@@ -188,7 +188,7 @@ const ApiLogsMonitor = () => {
                     </div>
                     <div className="overflow-hidden">
                       <h4 className="font-bold text-slate-900 text-sm truncate max-w-[300px] lg:max-w-[500px]">
-                        {log.url.replace('http://localhost:8000/api', '')}
+                        {log.url.replace('http://10.0.1.54:8000/api', '')}
                       </h4>
                       <div className="flex items-center gap-3 mt-1">
                          <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">

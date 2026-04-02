@@ -45,7 +45,7 @@ const FacultyRank = () => {
     const fetchRanking = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8000/api/faculty-ranking', {
+        const response = await fetch('http://10.0.1.54:8000/api/faculty-ranking', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const result = await response.json();

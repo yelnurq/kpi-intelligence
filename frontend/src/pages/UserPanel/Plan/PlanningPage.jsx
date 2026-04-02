@@ -148,8 +148,8 @@ const PlanningPage = () => {
         };
 
         const [resIndicators, resStatus] = await Promise.all([
-          fetch('http://localhost:8000/api/kpi-indicators', { headers }),
-          fetch(`http://localhost:8000/api/get-plan-status?year=${selectedYear}`, { headers })
+          fetch('http://10.0.1.54:8000/api/kpi-indicators', { headers }),
+          fetch(`http://10.0.1.54:8000/api/get-plan-status?year=${selectedYear}`, { headers })
         ]);
 
         const dataIndicators = await resIndicators.json();
@@ -200,7 +200,7 @@ useEffect(() => {
     setExporting(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8000/api/export", {
+      const response = await fetch("http://10.0.1.54:8000/api/export", {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -273,7 +273,7 @@ useEffect(() => {
         indicator_id: id,
         deadline: deadlines[String(id)] || deadlines[Number(id)]
       }));
-      const response = await fetch('http://localhost:8000/api/submit-plan', {
+      const response = await fetch('http://10.0.1.54:8000/api/submit-plan', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: payload, academic_year: selectedYear })

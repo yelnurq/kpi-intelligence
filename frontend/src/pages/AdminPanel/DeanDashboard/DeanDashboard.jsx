@@ -49,7 +49,7 @@
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [comment, setComment] = useState('');
     const [globalStats, setGlobalStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
-    const API_BASE = 'http://localhost:8000/api';
+    const API_BASE = 'http://10.0.1.54:8000/api';
     const ACADEMIC_YEAR = '2025/2026';
 
     // Загрузка списка с учетом пагинации и фильтров

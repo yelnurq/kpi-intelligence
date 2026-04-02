@@ -37,7 +37,7 @@ const TaxonomySettings = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get('http://localhost:8000/api/admin/helpers/options', {
+      const response = await axios.get('http://10.0.1.54:8000/api/admin/helpers/options', {
           headers: { Authorization : `Bearer ${token}` }
       }); 
       
@@ -84,8 +84,8 @@ const TaxonomySettings = () => {
     try {
       const token = localStorage.getItem("token");
       const url = editId 
-        ? `http://localhost:8000/api/admin/helpers/options/${editId}` 
-        : 'http://localhost:8000/api/admin/helpers/options';
+        ? `http://10.0.1.54:8000/api/admin/helpers/options/${editId}` 
+        : 'http://10.0.1.54:8000/api/admin/helpers/options';
       
       const method = editId ? 'put' : 'post';
 
@@ -107,7 +107,7 @@ const TaxonomySettings = () => {
     if (!window.confirm("Вы уверены, что хотите удалить эту запись?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8000/api/admin/helpers/options/${id}?type=${activeSection}`, {
+      await axios.delete(`http://10.0.1.54:8000/api/admin/helpers/options/${id}?type=${activeSection}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchOptions();

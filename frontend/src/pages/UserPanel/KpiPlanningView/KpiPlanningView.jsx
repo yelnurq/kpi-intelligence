@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'http://10.0.1.54:8000/api';
 
 const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "баллов" }) => (
   <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group transition-all hover:shadow-md ${isPrimary ? 'ring-1 ring-blue-600/10' : ''}`}>

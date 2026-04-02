@@ -23,6 +23,7 @@ import KpiPlanningView from './pages/UserPanel/KpiPlanningView/KpiPlanningView';
 import StaffDeadlineMonitor from './pages/AdminPanel/StaffDeadlineMonitor/StaffDeadlineMonitor';
 import ApiLogsMonitor from './pages/AdminPanel/Logs/ApiLogsMonitor';
 import LdapManagement from './pages/AdminPanel/LdapManagement/LdapManagement';
+import ChatAI from './pages/UserPanel/Chat/ChatAI';
 
 
 
@@ -91,6 +92,7 @@ function App() {
           <Route path="view" element={<KpiPlanningView />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="chat" element={<ChatAI />} />
           <Route path="submit" element={<SubmissionPortal />} />
           <Route path="archive" element={<ActivityArchive />} />
           <Route path="rating" element={<FacultyRanking />} />

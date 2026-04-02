@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Api\KpiEvidenceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\KPIPlanController;
 use App\Http\Controllers\ApiLogController;
+
+
+Route::post('/chat/send', [ChatController::class, 'sendMessage']);
 
 Route::middleware("logs")->group(function() {
     Route::post("/login", [AuthController::class, "login"]);

@@ -72,13 +72,10 @@ class LdapController extends Controller
     $users[] = [
         'name' => $entries[$i]["displayname"][0] ?? ($entries[$i]["cn"][0] ?? 'N/A'),
         
-        // Ключ ОБЯЗАТЕЛЬНО должен быть в нижнем регистре
         'userPrincipalName' => $entries[$i]["userprincipalname"][0] ?? 'N/A', 
         
         'company'    => $entries[$i]["company"][0] ?? 'N/A',
         
-        // В AD атрибут должности обычно называется 'title', а не 'position'
-        // Проверьте, какой атрибут используется у вас. Если 'title', то:
         'position'   => $entries[$i]["title"][0] ?? 'N/A', 
         
         'mobile' => $entries[$i]["mobile"][0] ?? 'N/A',

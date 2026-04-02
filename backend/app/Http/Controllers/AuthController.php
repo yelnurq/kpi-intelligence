@@ -39,17 +39,16 @@ class AuthController extends Controller
             $isAuthenticated = @ldap_bind($ldapConn, $request->email, $request->password);
 
             if ($isAuthenticated) {
-                // 4. Поиск или создание пользователя в вашей БД (MySQL)
                 $user = User::where('email', $request->email)->first();
 
                 if (!$user) {
-                    // Автоматическая регистрация, если пользователя еще нет в системе KPI
                     $user = User::create([
                         'name' => explode('@', $request->email)[0], // берем часть до @
                         'email' => $request->email,
                         'password' => Hash::make(Str::random(24)), // пароль в БД не важен
                         'role' => 'teacher', // роль по умолчанию
                         'faculty_id' => null, // позже назначим через админку или логику AD
+                        'mobile' => $request->email, // позже назначим через админку или логику AD
                     ]);
                 }
 
@@ -177,6 +176,7 @@ public function login(Request $request)
                         'name' => $entries[0]['displayname'][0] ?? $entries[0]['cn'][0] ?? 'User',
                         'email' => $entries[0]['userprincipalname'][0],
                         'position' => $entries[0]['title'][0] ?? 'N/A',
+                        'mobile' => $entries[0]['mobile'][0] ?? 'N/A',
                         'department' => $entries[0]['department'][0] ?? 'N/A',
                     ];
                 }
@@ -203,6 +203,7 @@ public function login(Request $request)
                 $user = User::create([
                     'name'     => $ldapData['name'],
                     'email'    => $ldapData['email'],
+                    'mobile'    => $ldapData['mobile'],
                     'password' => Hash::make($request->password),
                     'role'     => $role, // Теперь это 'teacher', что разрешено в enum
                     'auth_type' => 'ldap',

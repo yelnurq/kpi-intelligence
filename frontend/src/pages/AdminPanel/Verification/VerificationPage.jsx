@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  CheckCircle, XCircle, Clock, Search, 
-  User, FileText, ArrowLeft, ArrowRight, Shield, 
+  CheckCircle, XCircle, Clock,  
+  User, ArrowRight, 
   Download, Loader2, X, ChevronRight, ChevronLeft,
-  Filter, CheckCircle2, Inbox, Activity, AlertCircle, ArrowUpRight, ShieldCheck
+  Filter, CheckCircle2, Inbox, AlertCircle, ArrowUpRight
 } from 'lucide-react';
 
 const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, isPrimary, unit = "записей" }) => (

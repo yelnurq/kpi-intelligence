@@ -39,7 +39,6 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   if (adminOnly) {
-    // Проверяем, входит ли роль пользователя в список разрешенных для админки
     const hasAdminAccess = adminRoles.includes(user.role);
     
     if (!hasAdminAccess) {

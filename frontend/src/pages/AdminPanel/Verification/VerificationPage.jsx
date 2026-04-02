@@ -37,7 +37,7 @@ const StatCard = ({ icon: Icon, label, value, trend, colorClass, description, is
 );
 
 const StaffManagement = () => {
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending' или 'history'
+  const [activeTab, setActiveTab] = useState('pending'); 
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
@@ -48,7 +48,6 @@ const StaffManagement = () => {
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, rejected: 0 });
   
-  // Состояния пагинации
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState({ last_page: 1, total_items: 0 });
 
@@ -87,7 +86,6 @@ const StaffManagement = () => {
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
-  // Сброс страницы при смене таба или фильтра
   useEffect(() => { setCurrentPage(1); }, [activeTab, selectedFaculty]);
 
   const teachersList = useMemo(() => {
@@ -151,7 +149,6 @@ const StaffManagement = () => {
         </div>
       </div>
 
-      {/* STATS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Всего активов" value={stats.total} icon={Inbox} colorClass="bg-slate-100 text-slate-600" description="Общий объем данных" />
         <StatCard label="Ожидают" value={stats.pending} icon={Clock} colorClass="bg-amber-100 text-amber-600" description="Требуют внимания" isPrimary={activeTab === 'pending'} />

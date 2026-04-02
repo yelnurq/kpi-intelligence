@@ -107,7 +107,6 @@ const KpiPlanMonitor = () => {
         priority: 1 
       };
     }
-
     if (!deadline) return { label: 'Бессрочно', color: 'bg-slate-50 text-slate-400 border-slate-100', icon: <Calendar size={14} />, priority: 4 };
 
     const diff = Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));

@@ -1,0 +1,85 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: kpi_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: kpi_db
+      MYSQL_USER: kpi_user
+      MYSQL_PASSWORD: kpi_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - kpi_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kpi_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: KPI-Intelligence
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: kpi_db
+      DB_USERNAME: kpi_user
+      DB_PASSWORD: kpi_password
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      FILESYSTEM_DISK: local
+    volumes:
+      - ./backend/app:/var/www/app
+      - ./backend/config:/var/www/config
+      - ./backend/database:/var/www/database
+      - ./backend/resources:/var/www/resources
+      - ./backend/routes:/var/www/routes
+      - backend_storage:/var/www/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - kpi_network
+
+  frontend:
+    image: node:20-alpine
+    container_name: kpi_frontend_dev
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - WDS_SOCKET_PORT=3000
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - kpi_network
+
+volumes:
+  mysql_data:
+  backend_storage:
+  frontend_node_modules:
+
+networks:
+  kpi_network:
+    driver: bridge

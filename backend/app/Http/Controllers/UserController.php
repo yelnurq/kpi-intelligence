@@ -98,7 +98,7 @@ public function index(Request $request)
         // 1. Инициализируем запрос с отношениями
         $query = User::with([
             'faculty:id,title,short_title',
-            'department:id,title,short_title',
+            'department:id,title,short_name',
             'position:id,title',
             'academic_degree:id,title'
         ]);

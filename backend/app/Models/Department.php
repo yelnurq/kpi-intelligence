@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
-    protected $fillable = ['title', 'leader', 'short_name', 'short_title'];
+    protected $fillable = ['title', 'leader', 'short_name'];
 
     public function users() {
         return $this->hasMany(User::class);

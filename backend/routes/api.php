@@ -16,6 +16,7 @@ use App\Http\Controllers\ApiLogController;
 
 
 Route::post('/chat/send', [ChatController::class, 'sendMessage']);
+Route::post('/chat/reset', [ChatController::class, 'resetChat']);
 
 Route::middleware("logs")->group(function() {
     Route::post("/login", [AuthController::class, "login"]);

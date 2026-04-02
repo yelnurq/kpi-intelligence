@@ -3,6 +3,7 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, User as UserIcon, Bell, Search, Menu, Zap, X, ChevronRight, Phone } from 'lucide-react';
 // Импортируем данные
 import allSearchItems, { sidebarMenuItems } from './menu';
+import ChatAIWidget from '../../pages/UserPanel/Chat/ChatAI';
 
 const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -47,7 +48,8 @@ const MainLayout = () => {
       {/* SIDEBAR */}
       <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} bg-white border-r border-slate-200 flex flex-col fixed h-full transition-all duration-300 z-50`}>
         <div className={`flex items-center border-b border-slate-50 h-20 transition-all duration-300 ${isSidebarOpen ? 'px-6 gap-3' : 'px-0 justify-center'}`}>
-          <div className="w-11 h-11"><img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" /></div>
+          <div className="w-11 h-11">
+            <img src="images/icons/logo.png" alt="Logo" className="h-full w-full object-contain" /></div>
           {isSidebarOpen && <span className="font-black text-xl tracking-tighter text-slate-800 uppercase">KAZ<span className="text-blue-600">UTB</span></span>}
         </div>
 
@@ -139,6 +141,7 @@ const MainLayout = () => {
 
         <div className="p-6 overflow-x-hidden"><Outlet /></div>
       </main>
+      <ChatAIWidget />
     </div>
   );
 };

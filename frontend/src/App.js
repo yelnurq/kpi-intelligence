@@ -31,7 +31,6 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Список ролей, имеющих доступ к админ-панели (контроль и верификация)
   const adminRoles = ['super_admin', 'academic_office', 'dean', 'head_of_dept'];
 
   if (!token) {

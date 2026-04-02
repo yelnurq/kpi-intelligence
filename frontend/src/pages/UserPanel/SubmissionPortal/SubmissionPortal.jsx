@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileUp, CheckCircle2, FileText, Loader2, Calendar as CalendarIcon, 
   Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight,
-  ArrowUpRight
+  ArrowUpRight, AlertCircle
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Добавили useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary, unit = "баллов" }) => (
@@ -30,7 +30,7 @@ const StatCard = ({ icon: Icon, label, value, colorClass, description, isPrimary
 
 const SubmissionPortal = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Хук для работы с URL
+  const location = useLocation();
   
   const [indicators, setIndicators] = useState([]);
   const [files, setFiles] = useState([]);
@@ -48,7 +48,12 @@ const SubmissionPortal = () => {
   const API_BASE = 'http://localhost:8000/api';
   const token = localStorage.getItem("token");
 
-  // 1. Загрузка индикаторов и авто-выбор из URL
+  // --- ЛОГИКА ПРОВЕРКИ ДЕДЛАЙНА ---
+  const isExpired = (deadline) => {
+    if (!deadline) return false;
+    return new Date(deadline) < new Date();
+  };
+
   useEffect(() => {
     const fetchIndicators = async () => {
       try {
@@ -57,14 +62,9 @@ const SubmissionPortal = () => {
         });
         
         if (response.data.status === 'success') {
-          const fetchedIndicators = response.data.data;
-          setIndicators(fetchedIndicators);
-
-          // Пытаемся достать ID из параметров (?indicator_id=...)
+          setIndicators(response.data.data);
           const params = new URLSearchParams(location.search);
           const idFromUrl = params.get('indicator_id');
-
-          // Если ID есть в URL, устанавливаем его в форму
           if (idFromUrl) {
             setFormData(prev => ({ ...prev, indicator_id: idFromUrl }));
           }
@@ -76,16 +76,7 @@ const SubmissionPortal = () => {
       }
     };
     fetchIndicators();
-  }, [token, location.search]); // Следим за изменением URL параметров
-
-  useEffect(() => {
-    if (status === 'success') {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [status]);
+  }, [token, location.search]);
 
   const handleFileAction = (newFiles) => {
     const validFiles = Array.from(newFiles).filter(f => f.size <= 10 * 1024 * 1024);
@@ -95,6 +86,8 @@ const SubmissionPortal = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (files.length === 0) return alert("Загрузите подтверждающие документы");
+    if (isSelectedExpired) return alert("Срок подачи по этому показателю истек");
+
     setStatus('uploading');
     const data = new FormData();
     data.append('indicator_id', formData.indicator_id);
@@ -115,6 +108,7 @@ const SubmissionPortal = () => {
   };
 
   const selectedIndicator = indicators.find(i => i.id === parseInt(formData.indicator_id));
+  const isSelectedExpired = selectedIndicator ? isExpired(selectedIndicator.deadline) : false;
   const indicatorWeight = selectedIndicator?.weight || selectedIndicator?.points || 0;
   const predictedPoints = indicatorWeight * formData.quantity;
 
@@ -149,7 +143,7 @@ const SubmissionPortal = () => {
                 setStatus('idle'); 
                 setFiles([]); 
                 setFormData(prev => ({...prev, title: '', indicator_id: ''})); 
-                navigate('/submit', { replace: true }); // Очищаем URL
+                navigate('/submit', { replace: true });
               }} 
               className="w-full py-4 bg-white text-slate-500 hover:text-blue-600 font-bold text-sm transition-all"
             >
@@ -171,6 +165,14 @@ const SubmissionPortal = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* ALERT ПРИ ПРОСРОЧКЕ */}
+            {isSelectedExpired && (
+              <div className="bg-red-50 border-b border-red-100 p-4 flex items-center gap-3 text-red-600">
+                <AlertCircle size={20} />
+                <p className="text-xs font-black uppercase tracking-wider">Срок подачи документов по этому KPI истек ({new Date(selectedIndicator.deadline).toLocaleDateString()})</p>
+              </div>
+            )}
+
             <div className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-3 text-left">
@@ -180,12 +182,19 @@ const SubmissionPortal = () => {
                       required
                       value={formData.indicator_id}
                       onChange={(e) => setFormData({...formData, indicator_id: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none appearance-none transition-all cursor-pointer"
+                      className={`w-full border rounded-xl px-5 py-4 text-sm font-bold outline-none appearance-none transition-all cursor-pointer ${
+                        isSelectedExpired ? 'bg-red-50 border-red-200 text-red-900' : 'bg-slate-50 border-slate-200 focus:border-blue-500 focus:bg-white'
+                      }`}
                     >
                       <option value="">{loadingIndicators ? 'Загрузка данных...' : 'Выберите KPI из вашего плана...'}</option>
-                      {indicators.map(item => (
-                        <option key={item.id} value={item.id}>{item.title} ({item.weight || item.points} б.)</option>
-                      ))}
+                      {indicators.map(item => {
+                        const expired = isExpired(item.deadline);
+                        return (
+                          <option key={item.id} value={item.id} disabled={expired} className={expired ? "text-slate-400" : "text-slate-900"}>
+                            {item.title} ({item.weight || item.points} б.) {expired ? '— Срок истек' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                     <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
                   </div>
@@ -201,7 +210,6 @@ const SubmissionPortal = () => {
                 </div>
               </div>
 
-              {/* Остальные поля без изменений */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="md:col-span-3 space-y-3 text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Название выполненной работы</label>
@@ -260,11 +268,15 @@ const SubmissionPortal = () => {
 
               <button 
                 type="submit"
-                disabled={status === 'uploading' || !formData.indicator_id || files.length === 0}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-blue-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none flex items-center justify-center gap-3 group"
+                disabled={status === 'uploading' || !formData.indicator_id || files.length === 0 || isSelectedExpired}
+                className={`w-full py-5 rounded-2xl font-bold text-sm transition-all shadow-xl flex items-center justify-center gap-3 group ${
+                  isSelectedExpired 
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100'
+                }`}
               >
                 {status === 'uploading' ? <Loader2 className="animate-spin" size={20} /> : (
-                  <>Отправить на модерацию <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+                  isSelectedExpired ? "Прием документов завершен" : <>Отправить на модерацию <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
                 )}
               </button>
             </div>
@@ -276,21 +288,21 @@ const SubmissionPortal = () => {
             label="Прогноз" 
             value={predictedPoints > 0 ? `+${predictedPoints}` : '0'} 
             icon={Zap} 
-            colorClass="bg-amber-100 text-amber-600" 
-            description={`Формула: ${indicatorWeight} б. × ${formData.quantity} шт.`}
-            isPrimary={true}
+            colorClass={isSelectedExpired ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"} 
+            description={isSelectedExpired ? "Баллы недоступны (срок истек)" : `Формула: ${indicatorWeight} б. × ${formData.quantity} шт.`}
+            isPrimary={!isSelectedExpired}
           />
-          {/* Чек-лист без изменений */}
+          
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-10">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <ShieldCheck size={16} className="text-emerald-500" /> Чек-лист готовности
+              <ShieldCheck size={16} className={isSelectedExpired ? "text-red-500" : "text-emerald-500"} /> Чек-лист готовности
             </h3>
             <ul className="space-y-4">
               {[
                 { label: "Выбран показатель", check: !!formData.indicator_id },
+                { label: "Срок не истек", check: formData.indicator_id && !isSelectedExpired },
                 { label: "Описана работа", check: formData.title.length > 5 },
-                { label: "Файлы загружены", check: files.length > 0 },
-                { label: "Верная дата", check: !!formData.date }
+                { label: "Файлы загружены", check: files.length > 0 }
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-left">
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all ${item.check ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-100 bg-slate-50 text-transparent'}`}>

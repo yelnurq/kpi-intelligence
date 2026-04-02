@@ -242,7 +242,7 @@ const StaffManagement = () => {
                                     </span>
                                     <div className="flex gap-2">
                                       {(req.files || []).map((file, idx) => (
-                                        <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
+                                        <a key={idx} href={`http://localhost:8000${file.url}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-200 text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all uppercase">
                                           <Download size={10}/> Doc #{idx + 1}
                                         </a>
                                       ))}

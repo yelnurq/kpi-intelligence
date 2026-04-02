@@ -13,10 +13,10 @@ class LdapController extends Controller
      */
     private function connectLdap()
     {
-        $ldapHost = "ldap://10.0.1.30";
-        $ldapPort = 389;
-        $user = "api@kaztbu.edu.kz";
-        $password = "KazUTB2023@";
+        $ldapHost = env('LDAP_HOST', 'ldap://10.0.1.30');
+        $ldapPort = env('LDAP_PORT', 389);
+        $user = env('LDAP_BIND_USER');
+        $password = env('LDAP_BIND_PASSWORD');
 
         putenv('LDAPTLS_REQCERT=never');
         @ldap_set_option(null, LDAP_OPT_X_TLS_REQUIRE_CERT, LDAP_OPT_X_TLS_NEVER);

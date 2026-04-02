@@ -21,14 +21,16 @@ Route::middleware("logs")->group(function() {
     Route::post("/register", [AuthController::class, "register"]);   
 });
     
-Route::prefix('admin/ldap')->group(function () {
-    Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
-    Route::post('/import-single', [LdapController::class, 'importSingleUser']);
-    Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
-});
+
         
 Route::middleware(["token", "logs"])->group(function(){
-    
+    Route::prefix('admin/ldap')->group(function () {
+        Route::get('/users', [LdapController::class, 'getAllLdapUsers']);
+        Route::post('/import-single', [LdapController::class, 'importSingleUser']);
+        Route::post('/sync-all', [LdapController::class, 'syncAllLdapUsers']);
+    });    
+
+
     Route::post('/chat/send', [ChatController::class, 'sendMessage']);
     Route::post('/chat/reset', [ChatController::class, 'resetChat']);
             

@@ -175,7 +175,7 @@ public function index(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка: ' . $e->getMessage()
+            'message' => 'Внутренняя ошибка сервера'
         ], 500);
     }
 }
@@ -233,7 +233,7 @@ public function update(Request $request, $id)
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка при обновлении: ' . $e->getMessage()
+            'message' => 'Внутренняя ошибка сервера'
         ], 422);
     }
 }
@@ -299,7 +299,7 @@ public function store(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка при создании: ' . $e->getMessage()
+            'message' => 'Внутренняя ошибка сервера'
         ], 422);
     }
 }
@@ -355,7 +355,7 @@ public function getOptions()
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Ошибка при получении справочников: ' . $e->getMessage()
+            'message' => 'Внутренняя ошибка сервера'
         ], 500);
     }
 }
@@ -413,7 +413,7 @@ public function postOptions(Request $request)
         return response()->json(['status' => 'success', 'item' => $item], 201);
 
     } catch (\Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        return response()->json(['status' => 'error', 'message' => 'Внутренняя ошибка сервера'], 500);
     }
 }
 // Метод для УДАЛЕНИЯ
@@ -436,7 +436,7 @@ public function deleteOption(Request $request, $id)
 
         return response()->json(['status' => 'success']);
     } catch (\Exception $e) {
-        return response()->json(['message' => $e->getMessage()], 500);
+        return response()->json(['message' => 'Внутренняя ошибка сервера'], 500);
     }
 }
 
@@ -473,7 +473,7 @@ public function updateOption(Request $request, $id)
         $item->save();
         return response()->json(['status' => 'success', 'item' => $item]);
     } catch (\Exception $e) {
-        return response()->json(['message' => $e->getMessage()], 500);
+        return response()->json(['message' => 'Внутренняя ошибка сервера'], 500);
     }
 }
 }

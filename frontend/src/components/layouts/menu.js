@@ -15,7 +15,7 @@ export const sidebarMenuItems = [
   { id: 'dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Личный кабинет', type: 'route' },
   { 
   id: 'plan', 
-  path: '/view', 
+  path: '/plan/user', 
   icon: <PanelRightCloseIcon size={20} />, 
   label: 'Мой план',
   type: 'route' 

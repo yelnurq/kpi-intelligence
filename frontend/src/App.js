@@ -86,7 +86,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="plan" element={<PlanningPage />} />
-          <Route path="view" element={<KpiPlanningView />} />
+          <Route path="plan/user" element={<KpiPlanningView />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="chat" element={<ChatAI />} />

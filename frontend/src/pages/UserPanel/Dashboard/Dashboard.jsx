@@ -178,7 +178,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        <Link to="/planning" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
+        <Link to="/plan" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
           KPI Планирование <ArrowUpRight size={14} />
         </Link>
       </div>
@@ -237,7 +237,7 @@ const Dashboard = () => {
             <ClipboardCheck size={18} className="text-slate-900" />
             <h3 className="font-bold text-sm text-slate-800 uppercase tracking-tight text-left">Внимание: приоритетные задачи</h3>
           </div>
-          <Link to="/planning" className="text-[10px] font-bold text-blue-600 uppercase flex items-center gap-1 hover:underline">
+          <Link to="/plan/user" className="text-[10px] font-bold text-blue-600 uppercase flex items-center gap-1 hover:underline">
             Весь план <ChevronRight size={14} />
           </Link>
         </div>

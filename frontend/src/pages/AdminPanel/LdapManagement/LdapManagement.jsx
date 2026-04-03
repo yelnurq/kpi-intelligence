@@ -121,10 +121,10 @@ body: JSON.stringify({
                 <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                 Обновить
             </button>
-            <button onClick={handleSyncAll} disabled={syncing} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 disabled:opacity-50">
+            {/* <button onClick={handleSyncAll} disabled={syncing} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-200 disabled:opacity-50">
                 {syncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                 Синхронизировать всех
-            </button>
+            </button> */}
         </div>
       </div>
 

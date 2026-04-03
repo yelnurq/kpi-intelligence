@@ -100,51 +100,63 @@ class LdapController extends Controller
 public function importSingleUser(Request $request)
 {
     $inputEmail = trim($request->input('email'));
-    $inputName = trim($request->input('name')); // Добавим имя как запасной вариант
+    $inputName = trim($request->input('name'));
+
+    // Экранируем ввод, чтобы предотвратить LDAP-инъекцию
+    // Флаг LDAP_ESCAPE_FILTER заменяет спецсимволы (*, (, ), \, NUL) на безопасные последовательности
+    $safeEmail = ldap_escape($inputEmail, '', LDAP_ESCAPE_FILTER);
+    $safeName = ldap_escape($inputName, '', LDAP_ESCAPE_FILTER);
 
     if (!$inputEmail || $inputEmail === 'N/A') {
-        // Если почты нет, пробуем искать по точному ФИО
-        $filter = "(|(cn=$inputName)(displayname=$inputName))";
+        // Используем экранированное имя
+        $filter = "(|(cn=$safeName)(displayname=$safeName))";
     } else {
-        // Если почта есть, ищем по почте или логину
-        $filter = "(|(mail=$inputEmail)(userPrincipalName=$inputEmail)(sAMAccountName=$inputEmail))";
+        // Используем экранированный email/логин
+        $filter = "(|(mail=$safeEmail)(userPrincipalName=$safeEmail)(sAMAccountName=$safeEmail))";
     }
 
     $ldapConn = $this->connectLdap();
     if (!$ldapConn) return response()->json(['message' => 'LDAP connection failed'], 500);
 
     $baseDn = "OU=Univer,DC=kaztbu,DC=edu,DC=kz";
-    $attributes = ["cn", "mail", "title", "department", "displayname","mobile", "userprincipalname", "samaccountname"];
+    $attributes = ["cn", "mail", "title", "department", "displayname", "mobile", "userprincipalname", "samaccountname"];
 
+    // Выполняем поиск с безопасным фильтром
     $search = @ldap_search($ldapConn, $baseDn, $filter, $attributes);
+    
+    if (!$search) {
+        ldap_unbind($ldapConn);
+        return response()->json(['message' => 'Ошибка при поиске в LDAP'], 500);
+    }
+
     $entries = ldap_get_entries($ldapConn, $search);
 
     if ($entries['count'] == 0) {
         ldap_unbind($ldapConn);
         return response()->json([
-            'message' => "Пользователь [$inputName] не найден в AD ни по почте, ни по имени.",
-            'debug_filter' => $filter
+            'message' => "Пользователь не найден в AD.",
+            // В продакшене лучше не выводить debug_filter, чтобы не помогать злоумышленникам
+            'debug_info' => "Email: $inputEmail, Name: $inputName"
         ], 404);
     }
 
     $entry = $entries[0];
     
-    // Пытаемся вытащить почту из AD, если её нет — создаем временную на основе логина
     $ldapEmail = $entry['mail'][0] ?? ($entry['userprincipalname'][0] ?? null);
     
     if (!$ldapEmail) {
-        $login = $entry['samaccountname'][0] ?? Str::slug($inputName);
-        $ldapEmail = $login . "@kaztbu.edu.kz"; // Генерируем, если в AD пусто
+        $login = $entry['samaccountname'][0] ?? \Illuminate\Support\Str::slug($inputName);
+        $ldapEmail = $login . "@kaztbu.edu.kz";
     }
 
-    $user = User::updateOrCreate(
+    $user = \App\Models\User::updateOrCreate(
         ['email' => $ldapEmail],
         [
             'name' => $entry['displayname'][0] ?? ($entry['cn'][0] ?? $inputName),
             'position' => $entry['title'][0] ?? 'Сотрудник',
             'department' => $entry['department'][0] ?? 'Университет',
             'mobile' => $entry['mobile'][0] ?? 'N/A',
-            'password' => bcrypt(Str::random(16)), 
+            'password' => bcrypt(\Illuminate\Support\Str::random(16)), 
             'email_verified_at' => now(),
             'auth_type' => 'ldap',
         ]

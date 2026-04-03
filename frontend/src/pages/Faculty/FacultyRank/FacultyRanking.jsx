@@ -241,9 +241,9 @@ const FacultyRanking = () => {
             </p>
           </div>
         </div>
-        <button className="whitespace-nowrap px-6 py-2.5 bg-white border border-blue-200 text-blue-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-100 transition-all">
+        {/* <button className="whitespace-nowrap px-6 py-2.5 bg-white border border-blue-200 text-blue-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-100 transition-all">
           Методика расчета
-        </button>
+        </button> */}
       </div>
 
     </main>

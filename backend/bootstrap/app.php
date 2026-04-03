@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\LogApiRequests;
 use App\Http\Middleware\TokenCheck;
+use App\Http\Middleware\AdminCheck;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            "admin"=>AdminCheck::class,
             "token"=>TokenCheck::class,
             "logs"=>LogApiRequests::class,
         ]);

@@ -17,7 +17,7 @@ use App\Http\Controllers\ApiLogController;
 
 
 Route::middleware("logs")->group(function() {
-    Route::post("/login", [AuthController::class, "login"]);
+    Route::post("/login", [AuthController::class, "login"])->middleware('throttle:5,1');
     Route::post("/register", [AuthController::class, "register"]);   
 });
     

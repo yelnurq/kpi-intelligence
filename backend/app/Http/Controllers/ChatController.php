@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\ChatGptService; // Импортируем новый сервис
+use App\Services\ChatGptService;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller

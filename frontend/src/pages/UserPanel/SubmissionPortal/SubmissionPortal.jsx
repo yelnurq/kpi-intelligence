@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FileUp, CheckCircle2, FileText, Loader2, Calendar as CalendarIcon, 
   Trash2, Zap, ShieldCheck, ChevronDown, Plus, Minus, ArrowRight,

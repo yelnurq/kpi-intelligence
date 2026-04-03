@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  BarChart3, 
-  Users, 
   ArrowUpRight, 
   ArrowDownRight, 
   Calendar,
   Search,
-  FileSpreadsheet,
   ChevronRight,
   Info,
   Loader2,
@@ -14,7 +11,6 @@ import {
   Target 
 } from 'lucide-react';
 
-// Скелетон для топовых карточек
 const TopCardSkeleton = () => (
   <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm animate-pulse">
     <div className="flex justify-between items-start mb-4">
@@ -87,7 +83,6 @@ const FacultyRanking = () => {
      
       </div>
 
-      {/* TOP ANALYTICS */}
       <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-6">
         {loading ? (
           <>

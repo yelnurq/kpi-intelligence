@@ -22,7 +22,7 @@ class KpiEvidenceController extends Controller
     {
         $request->validate([
             'kpi_activity_id' => 'required|exists:kpi_activities,id',
-            'file' => 'required|file|max:10240', // макс 10MB
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx', // макс 10MB
         ]);
 
         if ($request->hasFile('file')) {
